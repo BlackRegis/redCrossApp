@@ -3,8 +3,18 @@
 -- Table des paramètres d'application
 CREATE TABLE IF NOT EXISTS app_settings (
     id SERIAL PRIMARY KEY,
-    setting_key VARCHAR(255) NOT NULL UNIQUE,
-    setting_value TEXT
+    nom_organisation VARCHAR(255) NOT NULL,
+    sigle VARCHAR(10),
+    adresse_siege TEXT,
+    telephone VARCHAR(20),
+    email VARCHAR(100),
+    site_web VARCHAR(100),
+    description TEXT,
+    logo_url VARCHAR(255),
+    couleur_primaire VARCHAR(7) DEFAULT '#dc2626',
+    couleur_secondaire VARCHAR(7) DEFAULT '#991b1b',
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
 );
 
 -- Table des paramètres du pays hôte
@@ -48,37 +58,17 @@ CREATE TABLE IF NOT EXISTS arrondissements (
     UNIQUE(code, departement_id)
 );
 
--- Table des couleurs de la Croix Rouge
-CREATE TABLE IF NOT EXISTS red_cross_colors (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL UNIQUE,
-    hex_code VARCHAR(7) NOT NULL
-);
-
 -- Insertion des données par défaut
-INSERT INTO app_settings (setting_key, setting_value) 
+INSERT INTO app_settings (nom_organisation, sigle, adresse_siege, telephone, email, site_web, description) 
 VALUES (
-    'nom_organisation',
-    'Croix Rouge de la République du Congo'
-), (
-    'sigle',
-    'CRC'
-), (
-    'adresse_siege',
-    'Avenue Félix Éboué, Brazzaville'
-), (
-    'telephone',
-    '+242 123 456 789'
-), (
-    'email',
-    'contact@croixrouge-congo.org'
-), (
-    'site_web',
-    'www.croixrouge-congo.org'
-), (
-    'description',
+    'Croix Rouge de la République du Congo',
+    'CRC',
+    'Avenue Félix Éboué, Brazzaville',
+    '+242 123 456 789',
+    'contact@croixrouge-congo.org',
+    'www.croixrouge-congo.org',
     'Organisation humanitaire dédiée à l''aide aux populations vulnérables'
-) ON CONFLICT (setting_key) DO NOTHING;
+) ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO pays_settings (nom_pays, code_pays, capitale, langue, monnaie, code_monnaie, fuseau_horaire, prefixe_telephone)
 VALUES (
@@ -115,9 +105,3 @@ INSERT INTO arrondissements (nom, code, departement_id, population) VALUES
 ('Kinkala', 'KNK', (SELECT id FROM departements WHERE code = 'POL'), 67000),
 ('Djambala', 'DJB', (SELECT id FROM departements WHERE code = 'PLA'), 45000)
 ON CONFLICT (nom, departement_id) DO NOTHING;
-
--- Insertion des couleurs de la Croix Rouge par défaut
-INSERT INTO red_cross_colors (name, hex_code) VALUES
-('Primary Color', '#dc2626'),
-('Secondary Color', '#991b1b')
-ON CONFLICT (name) DO NOTHING;

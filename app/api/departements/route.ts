@@ -1,32 +1,48 @@
-import { neon } from "@neondatabase/serverless"
 import { type NextRequest, NextResponse } from "next/server"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { createDepartement, fetchDepartements, deleteDepartement } from "@/lib/database"
 
 export async function GET() {
   try {
-    const departements = await sql`SELECT * FROM departements ORDER BY nom`
+    const departements = await fetchDepartements()
     return NextResponse.json(departements)
   } catch (error) {
-    console.error("Error fetching departements:", error)
-    return NextResponse.json({ error: "Failed to fetch departements" }, { status: 500 })
+    console.error("API Error: Failed to fetch departements.", error)
+    return NextResponse.json({ message: "Failed to fetch departements" }, { status: 500 })
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const { nom, description } = await req.json()
-    if (!nom) {
-      return NextResponse.json({ error: "Nom is required" }, { status: 400 })
+    const departement = await request.json()
+    const result = await createDepartement(departement)
+
+    if (result.success) {
+      return NextResponse.json(result.data, { status: 201 })
+    } else {
+      return NextResponse.json({ error: "Erreur lors de la création" }, { status: 500 })
     }
-    const result = await sql`
-      INSERT INTO departements (nom, description)
-      VALUES (${nom}, ${description || null})
-      RETURNING *
-    `
-    return NextResponse.json(result[0], { status: 201 })
   } catch (error) {
-    console.error("Error creating departement:", error)
-    return NextResponse.json({ error: "Failed to create departement" }, { status: 500 })
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get("id")
+
+    if (!id) {
+      return NextResponse.json({ error: "ID manquant" }, { status: 400 })
+    }
+
+    const result = await deleteDepartement(id)
+
+    if (result.success) {
+      return NextResponse.json({ message: "Département supprimé avec succès" })
+    } else {
+      return NextResponse.json({ error: "Erreur lors de la suppression" }, { status: 500 })
+    }
+  } catch (error) {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

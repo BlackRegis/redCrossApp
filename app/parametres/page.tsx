@@ -1,6 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import type React from "react"
+
+import { useState } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { toast } from "sonner"
 import {
   Settings,
   Globe,
@@ -44,18 +47,53 @@ interface Arrondissement {
   superficie?: number
 }
 
-interface AppSetting {
-  setting_key: string
-  setting_value: string
-}
-
-interface RedCrossColor {
-  id: number
-  name: string
-  hex_code: string
+interface AppSettings {
+  app_name?: string
+  contact_email?: string
+  phone_number?: string
 }
 
 export default function ParametresPage() {
+  const queryClient = useQueryClient()
+  const [settings, setSettings] = useState<AppSettings>({})
+
+  const { isLoading, error } = useQuery<AppSettings>({
+    queryKey: ["appSettings"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/app")
+      if (!res.ok) {
+        throw new Error("Failed to fetch app settings")
+      }
+      const data = await res.json()
+      setSettings(data) // Initialize state with fetched data
+      return data
+    },
+  })
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (updatedSettings: AppSettings) => {
+      const res = await fetch("/api/settings/app", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedSettings),
+      })
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.message || "Failed to update settings")
+      }
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["appSettings"] })
+      toast.success("Paramètres mis à jour avec succès!")
+    },
+    onError: (error) => {
+      toast.error(`Erreur lors de la mise à jour des paramètres: ${error.message}`)
+    },
+  })
+
   const [activeTab, setActiveTab] = useState("application")
   const [appSettings, setAppSettings] = useState({
     nomOrganisation: "Croix Rouge de la République du Congo",
@@ -143,44 +181,14 @@ export default function ParametresPage() {
     superficie: "",
   })
 
-  const [appName, setAppName] = useState("")
-  const [redCrossColors, setRedCrossColors] = useState<RedCrossColor[]>([])
-  const [redColorHex, setRedColorHex] = useState("#ED1C24") // Default Red Cross Red
-
-  useEffect(() => {
-    fetchSettings()
-    fetchRedCrossColors()
-  }, [])
-
-  const fetchSettings = async () => {
-    try {
-      const response = await fetch("/api/settings/app")
-      if (!response.ok) throw new Error("Failed to fetch settings")
-      const data: AppSetting[] = await response.json()
-      const appNameSetting = data.find((s) => s.setting_key === "appName")
-      if (appNameSetting) {
-        setAppName(appNameSetting.setting_value)
-      }
-    } catch (error) {
-      toast.error("Erreur lors du chargement des paramètres de l'application.")
-      console.error("Error fetching app settings:", error)
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
+    setSettings((prev) => ({ ...prev, [id]: value }))
   }
 
-  const fetchRedCrossColors = async () => {
-    try {
-      const response = await fetch("/api/settings/colors")
-      if (!response.ok) throw new Error("Failed to fetch Red Cross colors")
-      const data: RedCrossColor[] = await response.json()
-      setRedCrossColors(data)
-      const redColor = data.find((color) => color.name.toLowerCase() === "red")
-      if (redColor) {
-        setRedColorHex(redColor.hex_code)
-      }
-    } catch (error) {
-      toast.error("Erreur lors du chargement des couleurs de la Croix-Rouge.")
-      console.error("Error fetching Red Cross colors:", error)
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    updateSettingsMutation.mutate(settings)
   }
 
   const handleSaveAppSettings = async () => {
@@ -378,36 +386,6 @@ export default function ParametresPage() {
     }
   }
 
-  const handleSaveAppName = async () => {
-    try {
-      const response = await fetch("/api/settings/app", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ setting_key: "appName", setting_value: appName }),
-      })
-      if (!response.ok) throw new Error("Failed to save app name")
-      toast.success("Nom de l'application mis à jour avec succès.")
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour du nom de l'application.")
-      console.error("Error saving app name:", error)
-    }
-  }
-
-  const handleSaveRedColor = async () => {
-    try {
-      const response = await fetch("/api/settings/colors", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "Red", hex_code: redColorHex }),
-      })
-      if (!response.ok) throw new Error("Failed to save Red Cross color")
-      toast.success("Couleur de la Croix-Rouge mise à jour avec succès.")
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour de la couleur de la Croix-Rouge.")
-      console.error("Error saving Red Cross color:", error)
-    }
-  }
-
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -455,7 +433,7 @@ export default function ParametresPage() {
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader>
             <CardTitle className="text-sm font-medium">Base de Données</CardTitle>
             <Database className="h-4 w-4 text-purple-600" />
           </CardHeader>
@@ -1164,49 +1142,6 @@ export default function ParametresPage() {
           </Tabs>
         </CardContent>
       </Card>
-
-      {/* Application Name and Red Cross Color Settings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations Générales</CardTitle>
-            <CardDescription>Configurez le nom de l'application.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="appName">Nom de l'Application</Label>
-              <Input id="appName" value={appName} onChange={(e) => setAppName(e.target.value)} />
-            </div>
-            <Button onClick={handleSaveAppName}>Enregistrer le Nom</Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Couleurs de la Croix-Rouge</CardTitle>
-            <CardDescription>Définissez la couleur principale de la Croix-Rouge.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="redCrossColor">Couleur Rouge (Hex)</Label>
-              <Input
-                id="redCrossColor"
-                type="color"
-                value={redColorHex}
-                onChange={(e) => setRedColorHex(e.target.value)}
-                className="h-10 w-full"
-              />
-              <Input
-                type="text"
-                value={redColorHex}
-                onChange={(e) => setRedColorHex(e.target.value)}
-                className="mt-2"
-              />
-            </div>
-            <Button onClick={handleSaveRedColor}>Enregistrer la Couleur</Button>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   )
 }

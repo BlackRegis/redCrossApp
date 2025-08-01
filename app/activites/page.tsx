@@ -1,106 +1,171 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Plus, Edit, Trash2, CalendarIcon } from "lucide-react"
-import { toast } from "sonner"
-import Link from "next/link"
+import type React from "react"
 
-interface Activite {
+import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useQuery } from "@tanstack/react-query"
+import { format } from "date-fns"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import { Badge } from "@/components/ui/badge"
+import { PlusCircle, SearchIcon } from "lucide-react"
+
+interface Activity {
   id: number
-  nom: string
+  name: string
   description: string
-  date_debut: string
-  date_fin: string
-  lieu: string
-  statut: string
+  start_date: string
+  end_date: string
+  location: string
+  status: string
 }
 
-export default function ActivitesPage() {
-  const [activites, setActivites] = useState<Activite[]>([])
+export default function ActivitiesPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("query") || "")
+  const currentPage = Number.parseInt(searchParams.get("page") || "1")
 
-  useEffect(() => {
-    fetchActivites()
-  }, [])
-
-  const fetchActivites = async () => {
-    try {
-      const response = await fetch("/api/activites")
-      if (!response.ok) {
+  const { data, isLoading, error } = useQuery<{ data: Activity[]; totalPages: number; currentPage: number }>({
+    queryKey: ["activities", searchQuery, currentPage],
+    queryFn: async () => {
+      const res = await fetch(`/api/activities?query=${searchQuery}&page=${currentPage}`)
+      if (!res.ok) {
         throw new Error("Failed to fetch activities")
       }
-      const data = await response.json()
-      setActivites(data)
-    } catch (error) {
-      toast.error("Erreur lors du chargement des activités.")
-      console.error("Error fetching activities:", error)
-    }
+      return res.json()
+    },
+  })
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    router.push(`/activites?query=${searchQuery}&page=1`)
   }
 
-  const handleDeleteActivite = async (id: number) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette activité ?")) {
-      return
-    }
-    try {
-      const response = await fetch(`/api/activites/${id}`, {
-        method: "DELETE",
-      })
-      if (!response.ok) {
-        throw new Error("Failed to delete activity")
-      }
-      toast.success("Activité supprimée avec succès.")
-      fetchActivites() // Refresh the list
-    } catch (error) {
-      toast.error("Erreur lors de la suppression de l'activité.")
-      console.error("Error deleting activity:", error)
-    }
+  const handlePageChange = (page: number) => {
+    router.push(`/activites?query=${searchQuery}&page=${page}`)
   }
+
+  if (isLoading) return <p className="p-4 md:p-6">Chargement des activités...</p>
+  if (error) return <p className="p-4 md:p-6">Erreur: {error.message}</p>
+
+  const activities = data?.data || []
+  const totalPages = data?.totalPages || 0
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestion des Activités</h1>
-        <Link href="/activites/nouvelle">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" /> Nouvelle Activité
-          </Button>
-        </Link>
+    <div className="flex-1 p-4 md:p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Activités</h1>
+        <Button onClick={() => router.push("/activites/nouvelle")}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Nouvelle Activité
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {activites.length === 0 ? (
-          <p className="col-span-full text-center text-muted-foreground">Aucune activité trouvée.</p>
-        ) : (
-          activites.map((activite) => (
-            <Card key={activite.id}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                  {activite.nom}
-                </CardTitle>
-                <CardDescription>{activite.lieu}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-2">{activite.description}</p>
-                <p className="text-sm">Du: {new Date(activite.date_debut).toLocaleDateString()}</p>
-                <p className="text-sm">Au: {new Date(activite.date_fin).toLocaleDateString()}</p>
-                <p className="text-sm font-medium mt-2">Statut: {activite.statut}</p>
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" size="sm">
-                    <Edit className="h-4 w-4" />
-                    <span className="sr-only">Modifier</span>
-                  </Button>
-                  <Button variant="destructive" size="sm" onClick={() => handleDeleteActivite(activite.id)}>
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Supprimer</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Liste des Activités</CardTitle>
+          <CardDescription>Gérez les activités de la Croix-Rouge.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+            <Input
+              placeholder="Rechercher par nom ou description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-sm"
+            />
+            <Button type="submit">
+              <SearchIcon className="h-4 w-4" />
+              <span className="sr-only">Rechercher</span>
+            </Button>
+          </form>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nom</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Date Début</TableHead>
+                <TableHead>Date Fin</TableHead>
+                <TableHead>Lieu</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {activities.length > 0 ? (
+                activities.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell className="font-medium">{activity.name}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{activity.description}</TableCell>
+                    <TableCell>{format(new Date(activity.start_date), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>{format(new Date(activity.end_date), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>{activity.location}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          activity.status === "Completed"
+                            ? "default"
+                            : activity.status === "Planned"
+                              ? "secondary"
+                              : "outline"
+                        }
+                      >
+                        {activity.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm">
+                        Voir
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">
+                    Aucune activité trouvée.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          {totalPages > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationPrevious
+                  href="#"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                />
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink href="#" isActive={currentPage === i + 1} onClick={() => handlePageChange(i + 1)}>
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationNext
+                  href="#"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                />
+              </PaginationContent>
+            </Pagination>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

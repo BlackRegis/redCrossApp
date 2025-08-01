@@ -1,25 +1,10 @@
 "use client"
 
-import React from "react"
-
 import { Label } from "@/components/ui/label"
-
+import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  Calendar,
-  Cross,
-  Home,
-  Inbox,
-  Search,
-  Settings,
-  Users,
-  CreditCard,
-  Building2,
-  ChevronDown,
-  ChevronUp,
-  BarChart3,
-} from "lucide-react"
+import { Home, Search, Users, Cross, ChevronDown, ChevronUp } from "lucide-react"
 
 import {
   Sidebar,
@@ -40,60 +25,38 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar"
 
-// Menu items.
-const navItems = [
-  {
-    title: "Accueil",
-    href: "/",
-    icon: Home,
-  },
-  {
-    title: "Membres",
-    href: "/membres",
-    icon: Users,
-    submenu: [
-      { title: "Liste des Membres", href: "/membres" },
-      { title: "Nouveau Membre", href: "/membres/nouveau" },
-    ],
-  },
-  {
-    title: "Cartes",
-    href: "/cartes",
-    icon: CreditCard,
-  },
-  {
-    title: "Activités",
-    href: "/activites",
-    icon: Calendar,
-  },
-  {
-    title: "Bureau Exécutif",
-    href: "/bureau-executif",
-    icon: Building2,
-  },
-  {
-    title: "Organisation",
-    href: "/organisation",
-    icon: Inbox,
-  },
-  {
-    title: "Rapports",
-    href: "/rapports",
-    icon: BarChart3,
-  },
-  {
-    title: "Paramètres",
-    href: "/parametres",
-    icon: Settings,
-  },
-]
-
-interface CustomSidebarProps {
+interface CustomSidebarProps extends React.ComponentProps<typeof Sidebar> {
   redCrossColor: string // Prop for the Red Cross color
 }
 
-export function CustomSidebar({ redCrossColor, ...props }) {
+const navItems = [
+  {
+    title: "Home",
+    href: "/",
+    icon: Home,
+    submenu: null,
+  },
+  {
+    title: "Users",
+    href: "/users",
+    icon: Users,
+    submenu: [
+      {
+        title: "List Users",
+        href: "/users/list",
+      },
+      {
+        title: "Add User",
+        href: "/users/add",
+      },
+    ],
+  },
+  // Add more navigation items as needed
+]
+
+export function CustomSidebar({ redCrossColor, ...props }: CustomSidebarProps) {
   const pathname = usePathname()
   const { state } = useSidebar()
 
@@ -137,7 +100,7 @@ export function CustomSidebar({ redCrossColor, ...props }) {
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton isActive={item.submenu.some((sub) => pathname === sub.href)}>
+                          <SidebarMenuButton>
                             <item.icon />
                             <span>{item.title}</span>
                             <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
@@ -145,17 +108,17 @@ export function CustomSidebar({ redCrossColor, ...props }) {
                         </CollapsibleTrigger>
                       </SidebarMenuItem>
                       <CollapsibleContent>
-                        <SidebarMenu>
+                        <SidebarMenuSub>
                           {item.submenu.map((subItem) => (
-                            <SidebarMenuItem key={subItem.title}>
-                              <SidebarMenuButton asChild isActive={pathname === subItem.href}>
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
                                 <Link href={subItem.href}>
                                   <span>{subItem.title}</span>
                                 </Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
                           ))}
-                        </SidebarMenu>
+                        </SidebarMenuSub>
                       </CollapsibleContent>
                     </Collapsible>
                   ) : (

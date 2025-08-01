@@ -6,9 +6,17 @@ export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState(false)
 
   React.useEffect(() => {
-    const userAgent = typeof navigator === "undefined" ? "SSR" : navigator.userAgent
-    const mobile = Boolean(userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i))
-    setIsMobile(mobile)
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768) // Tailwind's 'md' breakpoint is 768px
+    }
+
+    checkIfMobile() // Check on initial render
+
+    window.addEventListener("resize", checkIfMobile) // Add event listener for resize
+
+    return () => {
+      window.removeEventListener("resize", checkIfMobile) // Clean up on unmount
+    }
   }, [])
 
   return isMobile

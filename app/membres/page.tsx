@@ -1,12 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import type React from "react"
+
+import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useQuery } from "@tanstack/react-query"
+import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { Plus, Edit, Trash2, Search } from "lucide-react"
-import { toast } from "sonner"
-import Link from "next/link"
 import {
   Pagination,
   PaginationContent,
@@ -15,147 +18,147 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import { PlusCircle, SearchIcon } from "lucide-react"
 
 interface Membre {
   id: number
   nom: string
   prenom: string
-  telephone: string
   email: string
-  type_membre: string
+  telephone: string
+  date_adhesion: string
   statut: string
+  departement_nom: string
+  arrondissement_nom: string
 }
 
 export default function MembresPage() {
-  const [membres, setMembres] = useState<Membre[]>([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const membersPerPage = 10
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("query") || "")
+  const currentPage = Number.parseInt(searchParams.get("page") || "1")
 
-  useEffect(() => {
-    fetchMembres()
-  }, [])
-
-  const fetchMembres = async () => {
-    try {
-      const response = await fetch("/api/membres")
-      if (!response.ok) {
-        throw new Error("Failed to fetch members")
+  const { data, isLoading, error } = useQuery<{ data: Membre[]; totalPages: number; currentPage: number }>({
+    queryKey: ["membres", searchQuery, currentPage],
+    queryFn: async () => {
+      const res = await fetch(`/api/membres?query=${searchQuery}&page=${currentPage}`)
+      if (!res.ok) {
+        throw new Error("Failed to fetch membres")
       }
-      const data = await response.json()
-      setMembres(data)
-    } catch (error) {
-      toast.error("Erreur lors du chargement des membres.")
-      console.error("Error fetching members:", error)
-    }
+      return res.json()
+    },
+  })
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    router.push(`/membres?query=${searchQuery}&page=1`)
   }
 
-  const handleDeleteMembre = async (id: number) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce membre ?")) {
-      return
-    }
-    try {
-      const response = await fetch(`/api/membres/${id}`, {
-        method: "DELETE",
-      })
-      if (!response.ok) {
-        throw new Error("Failed to delete member")
-      }
-      toast.success("Membre supprimé avec succès.")
-      fetchMembres() // Refresh the list
-    } catch (error) {
-      toast.error("Erreur lors de la suppression du membre.")
-      console.error("Error deleting member:", error)
-    }
+  const handlePageChange = (page: number) => {
+    router.push(`/membres?query=${searchQuery}&page=${page}`)
   }
 
-  const filteredMembres = membres.filter(
-    (membre) =>
-      membre.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      membre.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      membre.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      membre.telephone.includes(searchTerm),
-  )
+  if (isLoading) return <p className="p-4 md:p-6">Chargement des membres...</p>
+  if (error) return <p className="p-4 md:p-6">Erreur: {error.message}</p>
 
-  // Pagination logic
-  const indexOfLastMember = currentPage * membersPerPage
-  const indexOfFirstMember = indexOfLastMember - membersPerPage
-  const currentMembers = filteredMembres.slice(indexOfFirstMember, indexOfLastMember)
-  const totalPages = Math.ceil(filteredMembres.length / membersPerPage)
-
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber)
+  const membres = data?.data || []
+  const totalPages = data?.totalPages || 0
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestion des Membres</h1>
-        <Link href="/membres/nouveau">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" /> Nouveau Membre
-          </Button>
-        </Link>
+    <div className="flex-1 p-4 md:p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Membres</h1>
+        <Button onClick={() => router.push("/membres/nouveau")}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Nouveau Membre
+        </Button>
       </div>
 
-      <div className="relative mb-6">
-        <Input
-          placeholder="Rechercher un membre..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {currentMembers.length === 0 ? (
-          <p className="col-span-full text-center text-muted-foreground">Aucun membre trouvé.</p>
-        ) : (
-          currentMembers.map((membre) => (
-            <Card key={membre.id}>
-              <CardHeader>
-                <CardTitle>
-                  {membre.nom} {membre.prenom}
-                </CardTitle>
-                <CardDescription>
-                  {membre.type_membre} - {membre.statut}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Téléphone: {membre.telephone}</p>
-                <p className="text-sm text-muted-foreground">Email: {membre.email}</p>
-                <div className="flex justify-end gap-2 mt-4">
-                  <Link href={`/membres/${membre.id}`}>
-                    <Button variant="outline" size="sm">
-                      <Edit className="h-4 w-4" />
-                      <span className="sr-only">Modifier</span>
-                    </Button>
-                  </Link>
-                  <Button variant="destructive" size="sm" onClick={() => handleDeleteMembre(membre.id)}>
-                    <Trash2 className="h-4 w-4" />
-                    <span className="sr-only">Supprimer</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
-
-      {totalPages > 1 && (
-        <Pagination className="mt-6">
-          <PaginationContent>
-            <PaginationPrevious href="#" onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} />
-            {Array.from({ length: totalPages }, (_, i) => (
-              <PaginationItem key={i}>
-                <PaginationLink href="#" isActive={i + 1 === currentPage} onClick={() => paginate(i + 1)}>
-                  {i + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            <PaginationNext href="#" onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} />
-          </PaginationContent>
-        </Pagination>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Liste des Membres</CardTitle>
+          <CardDescription>Gérez les membres de la Croix-Rouge.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSearch} className="flex gap-2 mb-4">
+            <Input
+              placeholder="Rechercher par nom, prénom ou email..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-sm"
+            />
+            <Button type="submit">
+              <SearchIcon className="h-4 w-4" />
+              <span className="sr-only">Rechercher</span>
+            </Button>
+          </form>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nom Complet</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Téléphone</TableHead>
+                <TableHead>Date Adhésion</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Département</TableHead>
+                <TableHead>Arrondissement</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {membres.length > 0 ? (
+                membres.map((membre) => (
+                  <TableRow key={membre.id}>
+                    <TableCell className="font-medium">
+                      {membre.prenom} {membre.nom}
+                    </TableCell>
+                    <TableCell>{membre.email}</TableCell>
+                    <TableCell>{membre.telephone}</TableCell>
+                    <TableCell>{format(new Date(membre.date_adhesion), "dd/MM/yyyy")}</TableCell>
+                    <TableCell>{membre.statut}</TableCell>
+                    <TableCell>{membre.departement_nom}</TableCell>
+                    <TableCell>{membre.arrondissement_nom}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => router.push(`/membres/${membre.id}`)}>
+                        Voir/Modifier
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center">
+                    Aucun membre trouvé.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          {totalPages > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationPrevious
+                  href="#"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                />
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink href="#" isActive={currentPage === i + 1} onClick={() => handlePageChange(i + 1)}>
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationNext
+                  href="#"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                />
+              </PaginationContent>
+            </Pagination>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
