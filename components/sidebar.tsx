@@ -1,32 +1,50 @@
 "use client"
 
-import { useState } from "react"
+import React from "react"
+
+import { Label } from "@/components/ui/label"
+
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import {
-  Home,
-  Users,
-  Building2,
-  CreditCard,
   Calendar,
-  BarChart3,
+  Cross,
+  Home,
+  Inbox,
+  Search,
   Settings,
-  Menu,
-  X,
+  Users,
+  CreditCard,
+  Building2,
   ChevronDown,
-  ChevronRight,
-  Crown,
+  ChevronUp,
+  BarChart3,
 } from "lucide-react"
 
-interface SidebarProps {
-  className?: string
-}
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  SidebarSeparator,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const menuItems = [
+// Menu items.
+const navItems = [
   {
-    title: "Tableau de Bord",
+    title: "Accueil",
     href: "/",
     icon: Home,
   },
@@ -40,17 +58,7 @@ const menuItems = [
     ],
   },
   {
-    title: "Organisation",
-    href: "/organisation",
-    icon: Building2,
-  },
-  {
-    title: "Bureau Exécutif",
-    href: "/bureau-executif",
-    icon: Crown,
-  },
-  {
-    title: "Cartes de Membre",
+    title: "Cartes",
     href: "/cartes",
     icon: CreditCard,
   },
@@ -58,6 +66,16 @@ const menuItems = [
     title: "Activités",
     href: "/activites",
     icon: Calendar,
+  },
+  {
+    title: "Bureau Exécutif",
+    href: "/bureau-executif",
+    icon: Building2,
+  },
+  {
+    title: "Organisation",
+    href: "/organisation",
+    icon: Inbox,
   },
   {
     title: "Rapports",
@@ -71,119 +89,151 @@ const menuItems = [
   },
 ]
 
-export function Sidebar({ className }: SidebarProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [expandedItems, setExpandedItems] = useState<string[]>([])
+interface CustomSidebarProps {
+  redCrossColor: string // Prop for the Red Cross color
+}
+
+export function CustomSidebar({ redCrossColor, ...props }) {
   const pathname = usePathname()
-
-  const toggleExpanded = (title: string) => {
-    setExpandedItems((prev) => (prev.includes(title) ? prev.filter((item) => item !== title) : [...prev, title]))
-  }
-
-  const sidebarContent = (
-    <div className="flex flex-col h-full bg-red-600 text-white">
-      {/* Header */}
-      <div className="p-6 border-b border-red-500">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-            <svg viewBox="0 0 24 24" className="w-6 h-6 text-red-600 fill-current">
-              <path d="M12 2L12 10L20 10L20 14L12 14L12 22L8 22L8 14L0 14L0 10L8 10L8 2L12 2Z" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="font-bold text-lg text-white">Croix Rouge</h2>
-            <p className="text-sm text-red-100">République du Congo</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => (
-          <div key={item.title}>
-            <div className="flex items-center">
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1",
-                  pathname === item.href ? "bg-red-700 text-white" : "text-red-100 hover:bg-red-700 hover:text-white",
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                <span>{item.title}</span>
-              </Link>
-              {item.submenu && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => toggleExpanded(item.title)}
-                  className="p-1 h-8 w-8 text-red-100 hover:bg-red-700 hover:text-white"
-                >
-                  {expandedItems.includes(item.title) ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </Button>
-              )}
-            </div>
-
-            {item.submenu && expandedItems.includes(item.title) && (
-              <div className="ml-8 mt-2 space-y-1">
-                {item.submenu.map((subItem) => (
-                  <Link
-                    key={subItem.href}
-                    href={subItem.href}
-                    className={cn(
-                      "block px-3 py-2 rounded-lg text-sm transition-colors",
-                      pathname === subItem.href
-                        ? "bg-red-800 text-white"
-                        : "text-red-200 hover:bg-red-700 hover:text-white",
-                    )}
-                  >
-                    {subItem.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-red-500">
-        <div className="text-xs text-red-200 text-center">Version 1.0.0</div>
-      </div>
-    </div>
-  )
+  const { state } = useSidebar()
 
   return (
-    <>
-      {/* Mobile menu button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="fixed top-4 left-4 z-50 lg:hidden"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
+    <Sidebar {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild className="group/sidebar-logo">
+              <Link href="/">
+                <Cross
+                  className="h-6 w-6 transition-all duration-200 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8"
+                  style={{ color: redCrossColor }}
+                />
+                <span className="text-lg font-semibold">Croix-Rouge</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <SidebarGroup className="py-0">
+          <SidebarGroupContent className="relative">
+            <Label htmlFor="search" className="sr-only">
+              Rechercher
+            </Label>
+            <SidebarInput id="search" placeholder="Rechercher..." className="pl-8" />
+            <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <React.Fragment key={item.title}>
+                  {item.submenu ? (
+                    <Collapsible
+                      defaultOpen={item.submenu.some((sub) => pathname === sub.href)}
+                      className="group/collapsible"
+                    >
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton isActive={item.submenu.some((sub) => pathname === sub.href)}>
+                            <item.icon />
+                            <span>{item.title}</span>
+                            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                      </SidebarMenuItem>
+                      <CollapsibleContent>
+                        <SidebarMenu>
+                          {item.submenu.map((subItem) => (
+                            <SidebarMenuItem key={subItem.title}>
+                              <SidebarMenuButton asChild isActive={pathname === subItem.href}>
+                                <Link href={subItem.href}>
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          ))}
+                        </SidebarMenu>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild isActive={pathname === item.href}>
+                        <Link href={item.href}>
+                          <item.icon />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )}
+                </React.Fragment>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setIsOpen(false)} />
-      )}
+        <SidebarSeparator />
 
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed left-0 top-0 z-40 h-full w-64 bg-red-600 border-r border-red-500 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:z-0",
-          isOpen ? "translate-x-0" : "-translate-x-full",
-          className,
-        )}
-      >
-        {sidebarContent}
-      </aside>
-    </>
+        <SidebarGroup>
+          <Collapsible defaultOpen className="group/collapsible">
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger>
+                Aide
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="#">
+                        <span>Documentation</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="#">
+                        <span>Support</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton>
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src="/placeholder.svg?height=100&width=100" alt="User Avatar" />
+                    <AvatarFallback>JD</AvatarFallback>
+                  </Avatar>
+                  <span>John Doe</span>
+                  <ChevronUp className="ml-auto" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
+                <DropdownMenuItem>
+                  <span>Mon Profil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <span>Déconnexion</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   )
 }

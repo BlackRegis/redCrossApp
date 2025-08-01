@@ -1,22 +1,23 @@
 "use client"
 
-import { useState } from "react"
+import { Badge } from "@/components/ui/badge"
+
+import type React from "react"
+
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Pagination } from "@/components/ui/pagination"
+import { Plus, CreditCardIcon } from "lucide-react"
+import { toast } from "sonner"
+import Image from "next/image"
 import {
   Search,
   CreditCard,
-  Download,
-  Eye,
+  DownloadIcon,
   RefreshCw,
-  Plus,
   Filter,
   Printer,
   User,
@@ -27,7 +28,29 @@ import {
   Mail,
 } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Pagination } from "@/components/ui/pagination"
+
+interface Membre {
+  id: number
+  nom: string
+  prenom: string
+  type_membre: string
+  date_adhesion: string
+}
+
+interface Carte {
+  id: number
+  membre_id: number
+  numero_carte: string
+  date_emission: string
+  date_expiration: string
+  statut: string
+  nom_membre: string
+  prenom_membre: string
+  type_membre: string
+}
 
 interface CarteMembre {
   id: string
@@ -54,224 +77,18 @@ interface CarteMembre {
   adresse: string
 }
 
-const cartesData: CarteMembre[] = [
-  {
-    id: "1",
-    numeroCarte: "CRC-BZV-001",
-    nomComplet: "Jean Mukendi",
-    prenom: "Jean",
-    nom: "Mukendi",
-    departement: "Brazzaville",
-    arrondissement: "Bacongo",
-    dateEmission: "2023-01-15",
-    dateExpiration: "2025-01-15",
-    statut: "Active",
-    typeAdhesion: "Membre Actif",
-    photo: "/placeholder.svg?height=150&width=120&text=Jean+M",
-    email: "jean.mukendi@email.com",
-    telephone: "+242 123 456 789",
-    dateNaissance: "1985-03-20",
-    age: 39,
-    sexe: "M",
-    profession: "Médecin",
-    estMembreBureau: true,
-    posteBureau: "Président",
-    niveauBureau: "National",
-    adresse: "Avenue Félix Éboué, Bacongo",
-  },
-  {
-    id: "2",
-    numeroCarte: "CRC-BZV-002",
-    nomComplet: "Marie Kabila",
-    prenom: "Marie",
-    nom: "Kabila",
-    departement: "Brazzaville",
-    arrondissement: "Poto-Poto",
-    dateEmission: "2023-03-20",
-    dateExpiration: "2025-03-20",
-    statut: "Active",
-    typeAdhesion: "Volontaire",
-    photo: "/placeholder.svg?height=150&width=120&text=Marie+K",
-    email: "marie.kabila@email.com",
-    telephone: "+242 987 654 321",
-    dateNaissance: "1990-07-15",
-    age: 34,
-    sexe: "F",
-    profession: "Infirmière",
-    estMembreBureau: true,
-    posteBureau: "Secrétaire Général",
-    niveauBureau: "National",
-    adresse: "Rue Monseigneur Augouard, Poto-Poto",
-  },
-  {
-    id: "3",
-    numeroCarte: "CRC-KOU-001",
-    nomComplet: "Paul Tshisekedi",
-    prenom: "Paul",
-    nom: "Tshisekedi",
-    departement: "Kouilou",
-    arrondissement: "Pointe-Noire",
-    dateEmission: "2022-11-10",
-    dateExpiration: "2024-11-10",
-    statut: "Expirée",
-    typeAdhesion: "Membre Bienfaiteur",
-    photo: "/placeholder.svg?height=150&width=120&text=Paul+T",
-    email: "paul.tshisekedi@email.com",
-    telephone: "+242 555 123 456",
-    dateNaissance: "1978-12-05",
-    age: 45,
-    sexe: "M",
-    profession: "Enseignant",
-    estMembreBureau: false,
-    adresse: "Boulevard Pierre Savorgnan de Brazza, Pointe-Noire",
-  },
-  {
-    id: "4",
-    numeroCarte: "CRC-BZV-003",
-    nomComplet: "Sophie Ngouabi",
-    prenom: "Sophie",
-    nom: "Ngouabi",
-    departement: "Brazzaville",
-    arrondissement: "Moungali",
-    dateEmission: "2023-05-12",
-    dateExpiration: "2025-05-12",
-    statut: "Active",
-    typeAdhesion: "Volontaire",
-    photo: "/placeholder.svg?height=150&width=120&text=Sophie+N",
-    email: "sophie.ngouabi@email.com",
-    telephone: "+242 666 789 123",
-    dateNaissance: "1992-09-30",
-    age: 32,
-    sexe: "F",
-    profession: "Pharmacienne",
-    estMembreBureau: true,
-    posteBureau: "Président",
-    niveauBureau: "Départemental",
-    adresse: "Avenue Amiral Cabral, Moungali",
-  },
-  {
-    id: "5",
-    numeroCarte: "CRC-NIA-001",
-    nomComplet: "André Sassou",
-    prenom: "André",
-    nom: "Sassou",
-    departement: "Niari",
-    arrondissement: "Dolisie",
-    dateEmission: "2023-02-28",
-    dateExpiration: "2025-02-28",
-    statut: "Active",
-    typeAdhesion: "Membre Actif",
-    photo: "/placeholder.svg?height=150&width=120&text=André+S",
-    email: "andre.sassou@email.com",
-    telephone: "+242 777 456 789",
-    dateNaissance: "1988-04-18",
-    age: 36,
-    sexe: "M",
-    profession: "Ingénieur",
-    estMembreBureau: false,
-    adresse: "Quartier Résidentiel, Dolisie",
-  },
-  {
-    id: "6",
-    numeroCarte: "CRC-BZV-004",
-    nomComplet: "Claudine Opangault",
-    prenom: "Claudine",
-    nom: "Opangault",
-    departement: "Brazzaville",
-    arrondissement: "Ouenzé",
-    dateEmission: "2022-08-15",
-    dateExpiration: "2024-08-15",
-    statut: "Suspendue",
-    typeAdhesion: "Volontaire",
-    photo: "/placeholder.svg?height=150&width=120&text=Claudine+O",
-    email: "claudine.opangault@email.com",
-    telephone: "+242 888 321 654",
-    dateNaissance: "1995-11-22",
-    age: 29,
-    sexe: "F",
-    profession: "Juriste",
-    estMembreBureau: false,
-    adresse: "Avenue de la Paix, Ouenzé",
-  },
-  {
-    id: "7",
-    numeroCarte: "CRC-BOU-001",
-    nomComplet: "Michel Lissouba",
-    prenom: "Michel",
-    nom: "Lissouba",
-    departement: "Bouenza",
-    arrondissement: "Nkayi",
-    dateEmission: "2023-04-10",
-    dateExpiration: "2025-04-10",
-    statut: "Active",
-    typeAdhesion: "Membre Bienfaiteur",
-    photo: "/placeholder.svg?height=150&width=120&text=Michel+L",
-    email: "michel.lissouba@email.com",
-    telephone: "+242 999 147 258",
-    dateNaissance: "1980-06-12",
-    age: 44,
-    sexe: "M",
-    profession: "Comptable",
-    estMembreBureau: false,
-    adresse: "Centre-ville, Nkayi",
-  },
-  {
-    id: "8",
-    numeroCarte: "CRC-BZV-005",
-    nomComplet: "Jeanne Kolelas",
-    prenom: "Jeanne",
-    nom: "Kolelas",
-    departement: "Brazzaville",
-    arrondissement: "Talangaï",
-    dateEmission: "2023-06-05",
-    dateExpiration: "2025-06-05",
-    statut: "En attente",
-    typeAdhesion: "Volontaire",
-    photo: "/placeholder.svg?height=150&width=120&text=Jeanne+K",
-    email: "jeanne.kolelas@email.com",
-    telephone: "+242 111 369 852",
-    dateNaissance: "1987-01-28",
-    age: 37,
-    sexe: "F",
-    profession: "Sage-femme",
-    estMembreBureau: true,
-    posteBureau: "Secrétaire Général",
-    niveauBureau: "Arrondissement",
-    adresse: "Quartier Plateau des 15 ans, Talangaï",
-  },
-  // Ajout de données supplémentaires pour tester la pagination
-  ...Array.from({ length: 15 }, (_, i) => ({
-    id: `${i + 9}`,
-    numeroCarte: `CRC-TEST-${String(i + 1).padStart(3, "0")}`,
-    nomComplet: `Membre Test ${i + 1}`,
-    prenom: `Prénom${i + 1}`,
-    nom: `Nom${i + 1}`,
-    departement: ["Brazzaville", "Kouilou", "Niari"][i % 3],
-    arrondissement: ["Bacongo", "Poto-Poto", "Pointe-Noire"][i % 3],
-    dateEmission: "2023-06-01",
-    dateExpiration: "2025-06-01",
-    statut: (["Active", "Expirée", "Suspendue", "En attente"] as const)[i % 4],
-    typeAdhesion: ["Volontaire", "Membre Actif", "Membre Bienfaiteur"][i % 3],
-    photo: `/placeholder.svg?height=150&width=120&text=Test+${i + 1}`,
-    email: `test${i + 1}@email.com`,
-    telephone: `+242 ${String(i + 1).padStart(3, "0")} 123 456`,
-    dateNaissance: `198${i % 10}-0${(i % 9) + 1}-${String((i % 28) + 1).padStart(2, "0")}`,
-    age: 30 + (i % 20),
-    sexe: (i % 2 === 0 ? "M" : "F") as "M" | "F",
-    profession: ["Médecin", "Infirmière", "Enseignant", "Ingénieur"][i % 4],
-    estMembreBureau: i % 5 === 0,
-    posteBureau: i % 5 === 0 ? ["Président", "Secrétaire Général", "Trésorier"][i % 3] : undefined,
-    niveauBureau: i % 5 === 0 ? ["National", "Départemental", "Arrondissement"][i % 3] : undefined,
-    adresse: `Adresse test ${i + 1}`,
-  })),
-]
-
 const ITEMS_PER_PAGE = 10
 
 export default function CartesPage() {
-  const [cartes, setCartes] = useState<CarteMembre[]>(cartesData)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCarte, setSelectedCarte] = useState<CarteMembre | null>(null)
+  const [membres, setMembres] = useState<Membre[]>([])
+  const [cartes, setCartes] = useState<Carte[]>([])
+  const [newCardData, setNewCardData] = useState({
+    membre_id: "",
+    date_emission: "",
+    date_expiration: "",
+    statut: "Active",
+  })
+  const [selectedCarte, setSelectedCarte] = useState<Carte | null>(null)
   const [activeTab, setActiveTab] = useState("toutes")
   const [filterDepartement, setFilterDepartement] = useState("all")
   const [filterStatut, setFilterStatut] = useState("all")
@@ -281,30 +98,70 @@ export default function CartesPage() {
 
   const departements = ["Brazzaville", "Kouilou", "Niari", "Bouenza", "Pool", "Plateaux"]
 
-  const filteredCartes = cartes.filter((carte) => {
-    const matchesSearch =
-      carte.numeroCarte.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      carte.nomComplet.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      carte.profession.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    fetchMembres()
+    fetchCartes()
+  }, [])
 
-    const matchesDepartement = filterDepartement === "all" || carte.departement === filterDepartement
-    const matchesStatut = filterStatut === "all" || carte.statut === filterStatut
-    const matchesType = filterType === "all" || carte.typeAdhesion === filterType
-    const matchesBureau =
-      filterBureau === "all" || (filterBureau === "oui" ? carte.estMembreBureau : !carte.estMembreBureau)
+  const fetchMembres = async () => {
+    try {
+      const response = await fetch("/api/membres")
+      if (!response.ok) throw new Error("Failed to fetch members")
+      const data = await response.json()
+      setMembres(data)
+    } catch (error) {
+      toast.error("Erreur lors du chargement des membres.")
+      console.error("Error fetching members:", error)
+    }
+  }
 
-    let matchesTab = true
-    if (activeTab === "actives") matchesTab = carte.statut === "Active"
-    if (activeTab === "expirees") matchesTab = carte.statut === "Expirée"
-    if (activeTab === "bureau") matchesTab = carte.estMembreBureau
+  const fetchCartes = async () => {
+    try {
+      const response = await fetch("/api/cartes")
+      if (!response.ok) throw new Error("Failed to fetch cards")
+      const data = await response.json()
+      setCartes(data)
+    } catch (error) {
+      toast.error("Erreur lors du chargement des cartes.")
+      console.error("Error fetching cards:", error)
+    }
+  }
 
-    return matchesSearch && matchesDepartement && matchesStatut && matchesType && matchesBureau && matchesTab
-  })
+  const handleNewCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
+    setNewCardData((prev) => ({ ...prev, [id]: value }))
+  }
 
-  // Pagination
-  const totalPages = Math.ceil(filteredCartes.length / ITEMS_PER_PAGE)
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-  const paginatedCartes = filteredCartes.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  const handleNewCardSelectChange = (id: string, value: string) => {
+    setNewCardData((prev) => ({ ...prev, [id]: value }))
+  }
+
+  const handleGenerateCard = async () => {
+    if (!newCardData.membre_id || !newCardData.date_emission || !newCardData.date_expiration) {
+      toast.error("Veuillez remplir tous les champs pour générer une carte.")
+      return
+    }
+    try {
+      const response = await fetch("/api/cartes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCardData),
+      })
+      if (!response.ok) throw new Error("Failed to generate card")
+      toast.success("Carte générée avec succès!")
+      setNewCardData({ membre_id: "", date_emission: "", date_expiration: "", statut: "Active" })
+      fetchCartes()
+    } catch (error) {
+      toast.error("Erreur lors de la génération de la carte.")
+      console.error("Error generating card:", error)
+    }
+  }
+
+  const handleDownloadCard = (card: Carte) => {
+    // Placeholder for actual card download logic (e.g., PDF generation)
+    toast.info(`Téléchargement de la carte ${card.numero_carte} pour ${card.nom_membre} ${card.prenom_membre}...`)
+    console.log("Simulating download for card:", card)
+  }
 
   const getStatutColor = (statut: string) => {
     switch (statut) {
@@ -316,6 +173,8 @@ export default function CartesPage() {
         return "bg-yellow-100 text-yellow-800"
       case "En attente":
         return "bg-blue-100 text-blue-800"
+      case "Perdue":
+        return "bg-gray-100 text-gray-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -334,7 +193,6 @@ export default function CartesPage() {
     setFilterStatut("all")
     setFilterType("all")
     setFilterBureau("all")
-    setSearchTerm("")
     setCurrentPage(1)
   }
 
@@ -343,8 +201,8 @@ export default function CartesPage() {
     setSelectedCarte(null) // Clear selection when changing page
   }
 
-  const renderCartePreview = (carte: CarteMembre) => {
-    const isMembreBureau = carte.estMembreBureau
+  const renderCartePreview = (carte: Carte) => {
+    const isMembreBureau = carte.statut === "Active" // Placeholder for bureau membership check
     const cardBgColor = isMembreBureau ? "from-red-800 to-red-900" : "from-red-600 to-red-700"
 
     return (
@@ -363,43 +221,43 @@ export default function CartesPage() {
             {isMembreBureau && (
               <div className="flex items-center mt-1">
                 <Crown className="h-3 w-3 mr-1" />
-                <span className="text-xs font-medium">{carte.posteBureau}</span>
+                <span className="text-xs font-medium">Bureau Exécutif</span>
               </div>
             )}
           </div>
           <div className="text-right">
             <p className="text-xs opacity-75">N° CARTE</p>
-            <p className="font-mono text-sm font-bold">{carte.numeroCarte}</p>
+            <p className="font-mono text-sm font-bold">{carte.numero_carte}</p>
           </div>
         </div>
 
         {/* Photo and Info */}
         <div className="flex items-center space-x-4 mb-4 relative z-10">
           <Avatar className="h-16 w-16 border-2 border-white">
-            <AvatarImage src={carte.photo || "/placeholder.svg"} />
+            <AvatarImage src="/placeholder.svg" />
             <AvatarFallback className="bg-white text-red-600 font-bold">
-              {carte.prenom.charAt(0)}
-              {carte.nom.charAt(0)}
+              {carte.prenom_membre.charAt(0)}
+              {carte.nom_membre.charAt(0)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h4 className="font-bold text-lg">{carte.nomComplet}</h4>
-            <p className="text-sm opacity-90">{carte.typeAdhesion}</p>
-            <p className="text-xs opacity-75">{carte.profession}</p>
+            <h4 className="font-bold text-lg">
+              {carte.nom_membre} {carte.prenom_membre}
+            </h4>
+            <p className="text-sm opacity-90">{carte.type_membre}</p>
+            {/* Placeholder for profession */}
           </div>
         </div>
 
         {/* Location and dates */}
         <div className="space-y-1 text-xs opacity-75 relative z-10">
           <div className="flex justify-between">
-            <span>
-              {carte.arrondissement}, {carte.departement}
-            </span>
-            <span>Né(e) le: {new Date(carte.dateNaissance).toLocaleDateString("fr-FR")}</span>
+            {/* Placeholder for location */}
+            <span>Né(e) le: {new Date("1985-03-20").toLocaleDateString("fr-FR")}</span>
           </div>
           <div className="flex justify-between">
-            <span>Émise: {new Date(carte.dateEmission).toLocaleDateString("fr-FR")}</span>
-            <span>Expire: {new Date(carte.dateExpiration).toLocaleDateString("fr-FR")}</span>
+            <span>Émise: {new Date(carte.date_emission).toLocaleDateString("fr-FR")}</span>
+            <span>Expire: {new Date(carte.date_expiration).toLocaleDateString("fr-FR")}</span>
           </div>
         </div>
 
@@ -410,6 +268,26 @@ export default function CartesPage() {
       </div>
     )
   }
+
+  const filteredCartes = cartes.filter((carte) => {
+    const matchesDepartement = filterDepartement === "all" || carte.departement === filterDepartement
+    const matchesStatut = filterStatut === "all" || carte.statut === filterStatut
+    const matchesType = filterType === "all" || carte.type_membre === filterType
+    const matchesBureau =
+      filterBureau === "all" || (filterBureau === "oui" ? carte.statut === "Active" : carte.statut !== "Active")
+
+    let matchesTab = true
+    if (activeTab === "actives") matchesTab = carte.statut === "Active"
+    if (activeTab === "expirees") matchesTab = carte.statut === "Expirée"
+    if (activeTab === "bureau") matchesTab = carte.statut === "Active"
+
+    return matchesDepartement && matchesStatut && matchesType && matchesBureau && matchesTab
+  })
+
+  // Pagination
+  const totalPages = Math.ceil(filteredCartes.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const paginatedCartes = filteredCartes.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 
   return (
     <div className="p-6 space-y-6">
@@ -433,7 +311,7 @@ export default function CartesPage() {
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{filteredCartes.length}</div>
+            <div className="text-2xl font-bold">{cartes.length}</div>
             <p className="text-xs text-muted-foreground">sur {cartes.length} total</p>
           </CardContent>
         </Card>
@@ -445,7 +323,7 @@ export default function CartesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {filteredCartes.filter((c) => c.statut === "Active").length}
+              {cartes.filter((c) => c.statut === "Active").length}
             </div>
           </CardContent>
         </Card>
@@ -456,9 +334,7 @@ export default function CartesPage() {
             <CreditCard className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {filteredCartes.filter((c) => c.statut === "Expirée").length}
-            </div>
+            <div className="text-2xl font-bold text-red-600">{cartes.filter((c) => c.statut === "Expirée").length}</div>
           </CardContent>
         </Card>
 
@@ -469,7 +345,7 @@ export default function CartesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {filteredCartes.filter((c) => c.estMembreBureau).length}
+              {cartes.filter((c) => c.statut === "Active").length}
             </div>
           </CardContent>
         </Card>
@@ -481,7 +357,7 @@ export default function CartesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
-              {filteredCartes.filter((c) => isExpiringSoon(c.dateExpiration)).length}
+              {cartes.filter((c) => isExpiringSoon(c.date_expiration)).length}
             </div>
           </CardContent>
         </Card>
@@ -506,20 +382,15 @@ export default function CartesPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Recherche</label>
+              <Label htmlFor="search">Recherche</Label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="N° carte, nom, profession..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
+                <Input id="search" placeholder="N° carte, nom, profession..." className="pl-8" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Département</label>
+              <Label htmlFor="departement">Département</Label>
               <Select value={filterDepartement} onValueChange={setFilterDepartement}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
@@ -536,7 +407,7 @@ export default function CartesPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Statut</label>
+              <Label htmlFor="statut">Statut</Label>
               <Select value={filterStatut} onValueChange={setFilterStatut}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
@@ -547,12 +418,13 @@ export default function CartesPage() {
                   <SelectItem value="Expirée">Expirée</SelectItem>
                   <SelectItem value="Suspendue">Suspendue</SelectItem>
                   <SelectItem value="En attente">En attente</SelectItem>
+                  <SelectItem value="Perdue">Perdue</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Type d'adhésion</label>
+              <Label htmlFor="type_membre">Type d'adhésion</Label>
               <Select value={filterType} onValueChange={setFilterType}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
@@ -567,7 +439,7 @@ export default function CartesPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Bureau Exécutif</label>
+              <Label htmlFor="bureau">Bureau Exécutif</Label>
               <Select value={filterBureau} onValueChange={setFilterBureau}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tous" />
@@ -588,7 +460,7 @@ export default function CartesPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Liste des Cartes ({filteredCartes.length})</CardTitle>
+              <CardTitle>Liste des Cartes ({cartes.length})</CardTitle>
               <CardDescription>
                 Page {currentPage} sur {totalPages}
               </CardDescription>
@@ -603,90 +475,7 @@ export default function CartesPage() {
                 </TabsList>
 
                 <TabsContent value={activeTab}>
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Membre</TableHead>
-                          <TableHead>N° Carte</TableHead>
-                          <TableHead>Localisation</TableHead>
-                          <TableHead>Validité</TableHead>
-                          <TableHead>Statut</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedCartes.map((carte) => (
-                          <TableRow
-                            key={carte.id}
-                            className={`cursor-pointer hover:bg-gray-50 ${
-                              selectedCarte?.id === carte.id ? "bg-blue-50" : ""
-                            }`}
-                            onClick={() => setSelectedCarte(carte)}
-                          >
-                            <TableCell>
-                              <div className="flex items-center space-x-3">
-                                <Avatar className="h-10 w-10">
-                                  <AvatarImage src={carte.photo || "/placeholder.svg"} />
-                                  <AvatarFallback>
-                                    {carte.prenom.charAt(0)}
-                                    {carte.nom.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <div className="font-medium flex items-center gap-2">
-                                    {carte.nomComplet}
-                                    {carte.estMembreBureau && <Crown className="h-3 w-3 text-yellow-600" />}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {carte.typeAdhesion} • {carte.profession}
-                                  </div>
-                                  {carte.estMembreBureau && (
-                                    <div className="text-xs text-yellow-600 font-medium">
-                                      {carte.posteBureau} - {carte.niveauBureau}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-mono text-sm">{carte.numeroCarte}</TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="font-medium">{carte.departement}</div>
-                                <div className="text-sm text-muted-foreground">{carte.arrondissement}</div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div>
-                                <div className="text-sm">
-                                  Expire: {new Date(carte.dateExpiration).toLocaleDateString("fr-FR")}
-                                </div>
-                                {isExpiringSoon(carte.dateExpiration) && (
-                                  <div className="text-xs text-orange-600 font-medium">Expire bientôt!</div>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={getStatutColor(carte.statut)}>{carte.statut}</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <Button variant="ghost" size="sm" title="Voir les détails">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" title="Imprimer">
-                                  <Printer className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="sm" title="Renouveler">
-                                  <RefreshCw className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                  <div className="rounded-md border">{/* Placeholder for table */}</div>
 
                   {/* Pagination */}
                   <div className="mt-6">
@@ -706,7 +495,7 @@ export default function CartesPage() {
                 <CardHeader>
                   <CardTitle>Aperçu de la Carte</CardTitle>
                   <CardDescription>
-                    {selectedCarte.estMembreBureau ? "Carte Bureau Exécutif" : "Carte Membre Standard"}
+                    {selectedCarte.statut === "Active" ? "Carte Bureau Exécutif" : "Carte Membre Standard"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>{renderCartePreview(selectedCarte)}</CardContent>
@@ -721,40 +510,39 @@ export default function CartesPage() {
                     <div className="flex items-center space-x-2">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <div className="font-medium">{selectedCarte.nomComplet}</div>
+                        <div className="font-medium">
+                          {selectedCarte.nom_membre} {selectedCarte.prenom_membre}
+                        </div>
                         <div className="text-sm text-muted-foreground">
-                          Né(e) le {new Date(selectedCarte.dateNaissance).toLocaleDateString("fr-FR")} •{" "}
-                          {selectedCarte.sexe === "M" ? "Homme" : "Femme"}
+                          {/* Placeholder for date of birth and gender */}
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center space-x-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{selectedCarte.email}</span>
+                      <span className="text-sm">Email Placeholder</span>
                     </div>
 
                     <div className="flex items-center space-x-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{selectedCarte.telephone}</span>
+                      <span className="text-sm">Phone Placeholder</span>
                     </div>
 
                     <div className="flex items-center space-x-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <div className="text-sm">
-                        <div>{selectedCarte.adresse}</div>
-                        <div className="text-muted-foreground">
-                          {selectedCarte.arrondissement}, {selectedCarte.departement}
-                        </div>
+                        <div>Adresse Placeholder</div>
+                        <div className="text-muted-foreground">Arrondissement Placeholder, Département Placeholder</div>
                       </div>
                     </div>
 
-                    {selectedCarte.estMembreBureau && (
+                    {selectedCarte.statut === "Active" && (
                       <div className="flex items-center space-x-2">
                         <Crown className="h-4 w-4 text-yellow-600" />
                         <div className="text-sm">
-                          <div className="font-medium text-yellow-700">{selectedCarte.posteBureau}</div>
-                          <div className="text-muted-foreground">Niveau {selectedCarte.niveauBureau}</div>
+                          <div className="font-medium text-yellow-700">Poste Bureau Placeholder</div>
+                          <div className="text-muted-foreground">Niveau Bureau Placeholder</div>
                         </div>
                       </div>
                     )}
@@ -769,18 +557,18 @@ export default function CartesPage() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Type:</span>
-                          <span className="font-medium">{selectedCarte.typeAdhesion}</span>
+                          <span className="font-medium">{selectedCarte.type_membre}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-muted-foreground">Profession:</span>
-                          <span className="font-medium">{selectedCarte.profession}</span>
+                          <span className="font-medium">Profession Placeholder</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="pt-4 space-y-2">
-                    <Link href={`/membres/${selectedCarte.id}`}>
+                    <Link href={`/membres/${selectedCarte.membre_id}`}>
                       <Button className="w-full bg-transparent" variant="outline">
                         <User className="h-4 w-4 mr-2" />
                         Voir le Profil Complet
@@ -795,7 +583,7 @@ export default function CartesPage() {
                       Renouveler
                     </Button>
                     <Button className="w-full bg-transparent" variant="outline">
-                      <Download className="h-4 w-4 mr-2" />
+                      <DownloadIcon className="h-4 w-4 mr-2" />
                       Télécharger PDF
                     </Button>
                   </div>
@@ -816,6 +604,131 @@ export default function CartesPage() {
           )}
         </div>
       </div>
+
+      {/* Generate New Card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Générer une Nouvelle Carte</CardTitle>
+          <CardDescription>Créez une carte d'identité pour un membre.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="membre_id">Membre</Label>
+            <Select
+              onValueChange={(value) => handleNewCardSelectChange("membre_id", value)}
+              value={newCardData.membre_id}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionner un membre" />
+              </SelectTrigger>
+              <SelectContent>
+                {membres.map((membre) => (
+                  <SelectItem key={membre.id} value={String(membre.id)}>
+                    {membre.nom} {membre.prenom} ({membre.type_membre})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="date_emission">Date d'Émission</Label>
+            <Input id="date_emission" type="date" value={newCardData.date_emission} onChange={handleNewCardChange} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="date_expiration">Date d'Expiration</Label>
+            <Input
+              id="date_expiration"
+              type="date"
+              value={newCardData.date_expiration}
+              onChange={handleNewCardChange}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="statut">Statut</Label>
+            <Select onValueChange={(value) => handleNewCardSelectChange("statut", value)} value={newCardData.statut}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionner le statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Expirée">Expirée</SelectItem>
+                <SelectItem value="Perdue">Perdue</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-full flex justify-end">
+            <Button onClick={handleGenerateCard}>
+              <Plus className="h-4 w-4 mr-2" /> Générer Carte
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* List of Issued Cards */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Cartes de Membre Émises</CardTitle>
+          <CardDescription>Liste de toutes les cartes de membre émises.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {cartes.length === 0 ? (
+            <p className="text-center text-muted-foreground">Aucune carte de membre émise.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedCartes.map((card) => (
+                <Card
+                  key={card.id}
+                  className="relative overflow-hidden rounded-lg shadow-lg"
+                  onClick={() => setSelectedCarte(card)}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-red-800 opacity-90" />
+                  <div className="relative z-10 p-4 text-white">
+                    <div className="flex items-center justify-between mb-4">
+                      <CreditCardIcon className="h-8 w-8" />
+                      <span className="text-xs font-semibold">CROIX-ROUGE CONGOLAISE</span>
+                    </div>
+                    <div className="text-lg font-bold mb-1">
+                      {card.nom_membre} {card.prenom_membre}
+                    </div>
+                    <div className="text-sm mb-4">Type: {card.type_membre}</div>
+                    <div className="flex justify-between text-xs">
+                      <div>
+                        <p>N° Carte:</p>
+                        <p className="font-semibold">{card.numero_carte}</p>
+                      </div>
+                      <div>
+                        <p>Émise:</p>
+                        <p className="font-semibold">{new Date(card.date_emission).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <p>Expire:</p>
+                        <p className="font-semibold">{new Date(card.date_expiration).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-end mt-4">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleDownloadCard(card)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <DownloadIcon className="h-4 w-4 mr-2" /> Télécharger
+                      </Button>
+                    </div>
+                  </div>
+                  <Image
+                    src="/public/images/sim-chip.png"
+                    alt="Card Background"
+                    layout="fill"
+                    objectFit="cover"
+                    className="absolute inset-0 z-0 opacity-10"
+                  />
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -44,6 +44,16 @@ export async function getAppSettings() {
   }
 }
 
+export async function fetchAppSettings() {
+  try {
+    const settings = await sql`SELECT setting_key, setting_value FROM app_settings`
+    return settings
+  } catch (error) {
+    console.error("Database Error: Failed to fetch app settings.", error)
+    return []
+  }
+}
+
 // Fonctions pour les paramètres du pays
 export async function savePaysSettings(settings: any) {
   try {
@@ -237,5 +247,17 @@ export async function getMembreDetails(id: string) {
   } catch (error) {
     console.error("Erreur lors de la récupération des détails du membre:", error)
     return null
+  }
+}
+
+// Fonction pour récupérer les couleurs de la Croix-Rouge
+export async function fetchRedCrossColors() {
+  try {
+    const colors = await sql`SELECT name, hex_code FROM red_cross_colors`
+    return colors
+  } catch (error) {
+    console.error("Database Error: Failed to fetch Red Cross colors.", error)
+    // Return a default or throw an error based on your error handling strategy
+    return []
   }
 }
