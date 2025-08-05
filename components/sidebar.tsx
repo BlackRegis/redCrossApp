@@ -1,53 +1,33 @@
 "use client"
+
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import {
-  Calendar,
-  Home,
-  Inbox,
-  Search,
-  Settings,
-  Users,
-  CreditCard,
-  Building2,
-  FileText,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react"
-
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInput,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar"
-import { Label } from "@/components/ui/label"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+  Home,
+  Users,
+  Building2,
+  CreditCard,
+  Calendar,
+  BarChart3,
+  Settings,
+  Menu,
+  X,
+  ChevronDown,
+  ChevronRight,
+  Crown,
+} from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
-// Sample user data (centralized as requested)
-const currentUser = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  avatar: "/placeholder.svg?height=32&width=32",
+interface SidebarProps {
+  className?: string
 }
 
-// Sample menu items (centralized as requested)
-const navItems = [
+const menuItems = [
   {
-    title: "Accueil",
+    title: "Tableau de Bord",
     href: "/",
     icon: Home,
   },
@@ -55,9 +35,23 @@ const navItems = [
     title: "Membres",
     href: "/membres",
     icon: Users,
+    submenu: [
+      { title: "Liste des Membres", href: "/membres" },
+      { title: "Nouveau Membre", href: "/membres/nouveau" },
+    ],
   },
   {
-    title: "Cartes",
+    title: "Organisation",
+    href: "/organisation",
+    icon: Building2,
+  },
+  {
+    title: "Bureau Exécutif",
+    href: "/bureau-executif",
+    icon: Crown,
+  },
+  {
+    title: "Cartes de Membre",
     href: "/cartes",
     icon: CreditCard,
   },
@@ -67,19 +61,9 @@ const navItems = [
     icon: Calendar,
   },
   {
-    title: "Bureau Exécutif",
-    href: "/bureau-executif",
-    icon: Building2,
-  },
-  {
-    title: "Organisation",
-    href: "/organisation",
-    icon: FileText,
-  },
-  {
     title: "Rapports",
     href: "/rapports",
-    icon: Inbox, // Using Inbox for reports as a placeholder icon
+    icon: BarChart3,
   },
   {
     title: "Paramètres",
@@ -88,113 +72,131 @@ const navItems = [
   },
 ]
 
-export default function AppSidebar() {
-  const { toggleSidebar, state } = useSidebar()
+// Sample user data
+const currentUser = {
+  name: "John Doe",
+  avatar: "/placeholder.svg?height=40&width=40&text=JD",
+}
+
+export function Sidebar({ className }: SidebarProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<string[]>([])
   const pathname = usePathname()
 
-  return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center justify-between p-2">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <img src="/placeholder.svg?height=24&width=24" alt="Logo" className="h-6 w-6" />
-            <span className={cn("transition-opacity duration-200", state === "collapsed" && "opacity-0")}>
-              Croix Rouge
-            </span>
-          </Link>
-          <SidebarTrigger className={cn("hidden md:block", state === "collapsed" && "opacity-0")} />
-        </div>
-        <div className={cn("p-2", state === "collapsed" && "hidden")}>
-          <Label htmlFor="search" className="sr-only">
-            Rechercher
-          </Label>
-          <SidebarInput id="search" placeholder="Rechercher..." className="pl-8" />
-          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href}>
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+  const toggleExpanded = (title: string) => {
+    setExpandedItems((prev) => (prev.includes(title) ? prev.filter((item) => item !== title) : [...prev, title]))
+  }
 
-        {/* Example of a collapsible group */}
-        <Collapsible defaultOpen className="group/collapsible">
-          <SidebarGroup>
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger
-                className={cn("flex w-full items-center justify-between", state === "collapsed" && "hidden")}
+  const sidebarContent = (
+    <div className="flex flex-col h-full bg-red-600 text-white">
+      {/* Header */}
+      <div className="p-6 border-b border-red-500">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+            <svg viewBox="0 0 24 24" className="w-6 h-6 text-red-600 fill-current">
+              <path d="M12 2L12 10L20 10L20 14L12 14L12 22L8 22L8 14L0 14L0 10L8 10L8 2L12 2Z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="font-bold text-lg text-white">Croix Rouge</h2>
+            <p className="text-sm text-red-100">République du Congo</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 p-4 space-y-2">
+        {menuItems.map((item) => (
+          <div key={item.title}>
+            <div className="flex items-center">
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1",
+                  pathname === item.href ? "bg-red-700 text-white" : "text-red-100 hover:bg-red-700 hover:text-white",
+                )}
               >
-                <span>Aide & Support</span>
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="#">
-                        <span>Documentation</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="#">
-                        <span>FAQ</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </SidebarGroup>
-        </Collapsible>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={currentUser.avatar || "/placeholder.svg"} alt={currentUser.name} />
-                    <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <span className={cn("transition-opacity duration-200", state === "collapsed" && "opacity-0")}>
-                    {currentUser.name}
-                  </span>
-                  <ChevronUp
-                    className={cn("ml-auto transition-opacity duration-200", state === "collapsed" && "opacity-0")}
-                  />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
-                <DropdownMenuItem>
-                  <span>Mon Profil</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Déconnexion</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
+                <item.icon className="h-5 w-5" />
+                <span>{item.title}</span>
+              </Link>
+              {item.submenu && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleExpanded(item.title)}
+                  className="p-1 h-8 w-8 text-red-100 hover:bg-red-700 hover:text-white"
+                >
+                  {expandedItems.includes(item.title) ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
+            </div>
+
+            {item.submenu && expandedItems.includes(item.title) && (
+              <div className="ml-8 mt-2 space-y-1">
+                {item.submenu.map((subItem) => (
+                  <Link
+                    key={subItem.href}
+                    href={subItem.href}
+                    className={cn(
+                      "block px-3 py-2 rounded-lg text-sm transition-colors",
+                      pathname === subItem.href
+                        ? "bg-red-800 text-white"
+                        : "text-red-200 hover:bg-red-700 hover:text-white",
+                    )}
+                  >
+                    {subItem.title}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer - User Profile Button */}
+      <div className="p-4 border-t border-red-500">
+        <Button variant="ghost" className="w-full justify-start text-white hover:bg-red-700 hover:text-white">
+          <Avatar className="h-8 w-8 mr-3">
+            <AvatarImage src={currentUser.avatar || "/placeholder.svg"} alt={currentUser.name} />
+            <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <span className="text-sm font-medium">{currentUser.name}</span>
+        </Button>
+      </div>
+    </div>
+  )
+
+  return (
+    <>
+      {/* Mobile menu button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="fixed top-4 left-4 z-50 lg:hidden"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </Button>
+
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setIsOpen(false)} />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-40 h-full w-64 bg-red-600 border-r border-red-500 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:z-0",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+          className,
+        )}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   )
 }

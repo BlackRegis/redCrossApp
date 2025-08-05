@@ -1,40 +1,58 @@
 "use client"
 
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
 
-const Tree = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div className={cn("flex flex-col", className)} ref={ref} {...props} />
+interface TreeProps extends React.HTMLAttributes<HTMLDivElement> {
+  children?: React.ReactNode
+}
+
+const Tree = React.forwardRef<HTMLDivElement, TreeProps>(({ className, children, ...props }, ref) => (
+  <div ref={ref} className={cn("space-y-1", className)} {...props}>
+    {children}
+  </div>
 ))
 Tree.displayName = "Tree"
 
-const TreeItem = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div className={cn("relative flex items-center", className)} ref={ref} {...props} />
+interface TreeItemProps extends React.HTMLAttributes<HTMLDivElement> {
+  children?: React.ReactNode
+  level?: number
+  isExpanded?: boolean
+  onToggle?: () => void
+  icon?: React.ReactNode
+}
+
+const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
+  ({ className, children, level = 0, isExpanded, onToggle, icon, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "flex items-center py-1 px-2 rounded-md cursor-pointer hover:bg-accent hover:text-accent-foreground",
+        className,
+      )}
+      style={{ paddingLeft: `${level * 1.5 + 0.5}rem` }}
+      onClick={onToggle}
+      {...props}
+    >
+      {icon && <span className="mr-2">{icon}</span>}
+      {children}
+    </div>
   ),
 )
 TreeItem.displayName = "TreeItem"
 
-const TreeItemContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div className={cn("flex-1 text-sm font-medium", className)} ref={ref} {...props} />
+interface TreeGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+  children?: React.ReactNode
+  isExpanded?: boolean
+}
+
+const TreeGroup = React.forwardRef<HTMLDivElement, TreeGroupProps>(
+  ({ className, children, isExpanded = true, ...props }, ref) => (
+    <div ref={ref} className={cn("space-y-1", className)} {...props}>
+      {isExpanded && children}
+    </div>
   ),
 )
-TreeItemContent.displayName = "TreeItemContent"
+TreeGroup.displayName = "TreeGroup"
 
-const TreeItemToggle = React.forwardRef<React.ElementRef<"button">, React.ComponentPropsWithoutRef<"button">>(
-  ({ className, ...props }, ref) => (
-    <button
-      className={cn(
-        "w-8 h-8 inline-flex items-center justify-center rounded-md hover:bg-accent text-muted-foreground shrink-0",
-        className,
-      )}
-      ref={ref}
-      {...props}
-    />
-  ),
-)
-TreeItemToggle.displayName = "TreeItemToggle"
-
-export { Tree, TreeItem, TreeItemContent, TreeItemToggle }
+export { Tree, TreeItem, TreeGroup }

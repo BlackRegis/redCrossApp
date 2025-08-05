@@ -3,32 +3,35 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { PlusCircle } from "lucide-react"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DatePicker } from "@/components/ui/date-picker"
 
 export default function NouveauMembrePage() {
-  const router = useRouter()
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
-    dateNaissance: "",
+    dateNaissance: null,
     lieuNaissance: "",
-    sexe: "",
     nationalite: "",
     adresse: "",
     telephone: "",
     email: "",
     profession: "",
-    typeAdhesion: "",
+    groupeSanguin: "",
+    allergies: "",
+    antecedentsMedicaux: "",
+    personneContactUrgenceNom: "",
+    personneContactUrgenceTelephone: "",
+    dateAdhesion: null,
+    typeMembre: "",
+    departement: "",
+    arrondissement: "",
     statut: "",
-    notes: "",
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -40,113 +43,190 @@ export default function NouveauMembrePage() {
     setFormData((prev) => ({ ...prev, [id]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleDateChange = (id: string, date: Date | undefined) => {
+    setFormData((prev) => ({ ...prev, [id]: date }))
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Ici, vous pouvez envoyer les données à votre API
-    console.log("Form Data:", formData)
-    toast.success("Membre ajouté avec succès!")
-    router.push("/membres") // Rediriger vers la liste des membres
+    console.log("Form Data Submitted:", formData)
+    // Here you would typically send data to your API
+    alert("Membre ajouté avec succès (simulation)!")
   }
 
   return (
     <div className="container mx-auto p-4">
-      <Card className="w-full max-w-3xl mx-auto">
-        <CardHeader>
-          <CardTitle>Ajouter un Nouveau Membre</CardTitle>
-          <CardDescription>Remplissez le formulaire ci-dessous pour ajouter un nouveau membre.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
+      <h1 className="text-3xl font-bold mb-6">Ajouter un Nouveau Membre</h1>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations Personnelles</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
               <Label htmlFor="nom">Nom</Label>
               <Input id="nom" value={formData.nom} onChange={handleChange} required />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="prenom">Prénom</Label>
+            <div>
+              <Label htmlFor="prenom">Prénom(s)</Label>
               <Input id="prenom" value={formData.prenom} onChange={handleChange} required />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="dateNaissance">Date de Naissance</Label>
-              <Input id="dateNaissance" type="date" value={formData.dateNaissance} onChange={handleChange} />
+              <DatePicker
+                selected={formData.dateNaissance}
+                onSelect={(date) => handleDateChange("dateNaissance", date)}
+              />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="lieuNaissance">Lieu de Naissance</Label>
               <Input id="lieuNaissance" value={formData.lieuNaissance} onChange={handleChange} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="sexe">Sexe</Label>
-              <Select onValueChange={(value) => handleSelectChange("sexe", value)} value={formData.sexe}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le sexe" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="M">Masculin</SelectItem>
-                  <SelectItem value="F">Féminin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="nationalite">Nationalité</Label>
               <Input id="nationalite" value={formData.nationalite} onChange={handleChange} />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="adresse">Adresse</Label>
               <Input id="adresse" value={formData.adresse} onChange={handleChange} />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="telephone">Téléphone</Label>
-              <Input id="telephone" type="tel" value={formData.telephone} onChange={handleChange} />
+              <Input id="telephone" type="tel" value={formData.telephone} onChange={handleChange} required />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={formData.email} onChange={handleChange} />
             </div>
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="profession">Profession</Label>
               <Input id="profession" value={formData.profession} onChange={handleChange} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="typeAdhesion">Type d'Adhésion</Label>
-              <Select
-                onValueChange={(value) => handleSelectChange("typeAdhesion", value)}
-                value={formData.typeAdhesion}
-              >
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations Médicales (Optionnel)</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="groupeSanguin">Groupe Sanguin</Label>
+              <Select onValueChange={(value) => handleSelectChange("groupeSanguin", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le type" />
+                  <SelectValue placeholder="Sélectionner" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Actif">Actif</SelectItem>
-                  <SelectItem value="Passif">Passif</SelectItem>
-                  <SelectItem value="Honneur">Honneur</SelectItem>
+                  <SelectItem value="A+">A+</SelectItem>
+                  <SelectItem value="A-">A-</SelectItem>
+                  <SelectItem value="B+">B+</SelectItem>
+                  <SelectItem value="B-">B-</SelectItem>
+                  <SelectItem value="AB+">AB+</SelectItem>
+                  <SelectItem value="AB-">AB-</SelectItem>
+                  <SelectItem value="O+">O+</SelectItem>
+                  <SelectItem value="O-">O-</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
+            <div>
+              <Label htmlFor="allergies">Allergies</Label>
+              <Textarea id="allergies" value={formData.allergies} onChange={handleChange} />
+            </div>
+            <div className="md:col-span-2">
+              <Label htmlFor="antecedentsMedicaux">Antécédents Médicaux</Label>
+              <Textarea id="antecedentsMedicaux" value={formData.antecedentsMedicaux} onChange={handleChange} />
+            </div>
+            <div>
+              <Label htmlFor="personneContactUrgenceNom">Nom Personne Contact Urgence</Label>
+              <Input
+                id="personneContactUrgenceNom"
+                value={formData.personneContactUrgenceNom}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <Label htmlFor="personneContactUrgenceTelephone">Téléphone Personne Contact Urgence</Label>
+              <Input
+                id="personneContactUrgenceTelephone"
+                type="tel"
+                value={formData.personneContactUrgenceTelephone}
+                onChange={handleChange}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations d'Adhésion</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="dateAdhesion">Date d'Adhésion</Label>
+              <DatePicker
+                selected={formData.dateAdhesion}
+                onSelect={(date) => handleDateChange("dateAdhesion", date)}
+              />
+            </div>
+            <div>
+              <Label htmlFor="typeMembre">Type de Membre</Label>
+              <Select onValueChange={(value) => handleSelectChange("typeMembre", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="actif">Actif</SelectItem>
+                  <SelectItem value="benevole">Bénévole</SelectItem>
+                  <SelectItem value="donateur">Donateur</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="departement">Département</Label>
+              <Select onValueChange={(value) => handleSelectChange("departement", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="brazzaville">Brazzaville</SelectItem>
+                  <SelectItem value="pointe-noire">Pointe-Noire</SelectItem>
+                  <SelectItem value="pool">Pool</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="arrondissement">Arrondissement</Label>
+              <Select onValueChange={(value) => handleSelectChange("arrondissement", value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="moungali">Moungali</SelectItem>
+                  <SelectItem value="makalele">Makélékélé</SelectItem>
+                  <SelectItem value="otala">Otalá</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <Label htmlFor="statut">Statut</Label>
-              <Select onValueChange={(value) => handleSelectChange("statut", value)} value={formData.statut}>
+              <Select onValueChange={(value) => handleSelectChange("statut", value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le statut" />
+                  <SelectValue placeholder="Sélectionner" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Actif">Actif</SelectItem>
-                  <SelectItem value="Inactif">Inactif</SelectItem>
-                  <SelectItem value="Suspendu">Suspendu</SelectItem>
+                  <SelectItem value="actif">Actif</SelectItem>
+                  <SelectItem value="inactif">Inactif</SelectItem>
+                  <SelectItem value="suspendu">Suspendu</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea id="notes" value={formData.notes} onChange={handleChange} rows={4} />
-            </div>
-            <div className="md:col-span-2 flex justify-end">
-              <Button type="submit">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Ajouter le Membre
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <Button type="submit" className="w-full">
+          Ajouter Membre
+        </Button>
+      </form>
     </div>
   )
 }

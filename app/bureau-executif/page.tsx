@@ -1,13 +1,14 @@
 "use client"
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { CardDescription } from "@/components/ui/card"
+
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
 import { Building2, MapPin, Users, Plus, Edit, Crown, User, Briefcase, Phone, Mail } from "lucide-react"
-import { useState } from "react"
 
 interface BureauMembre {
   id: string
@@ -99,7 +100,7 @@ const bureauxData: BureauExecutif[] = [
         nom: "Opangault",
         prenom: "Claudine",
         poste: "Trésorier",
-        email: "tresorier.bacongo@croixrouge-congo.org",
+        email: "tresorier.brazzaville@croixrouge-congo.org",
         telephone: "+242 888 321 654",
         dateNomination: "2023-02-01",
         mandatFin: "2027-02-01",
@@ -164,46 +165,48 @@ const bureauxData: BureauExecutif[] = [
   },
 ]
 
-const executiveBoardData = [
+// Sample executive board data (centralized as requested)
+const executiveBoardMembers = [
   {
-    id: "1",
-    name: "Dr. Jean-Luc M'Boulou",
+    id: "exec-1",
+    name: "Dr. Jean-Luc Mambou",
     title: "Président National",
-    image: "/placeholder.svg?height=100&width=100",
-    bio: "Médecin de profession, le Dr. M'Boulou a dédié sa vie à l'humanitaire. Il dirige la Croix-Rouge Congolaise avec une vision axée sur l'innovation et l'impact communautaire.",
+    bio: "Leader expérimenté avec une vision forte pour l'humanitaire.",
+    email: "jeanluc.mambou@crc.org",
+    phone: "+242 06 123 4567",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=JLM",
   },
   {
-    id: "2",
-    name: "Mme. Sophie N'Goma",
+    id: "exec-2",
+    name: "Mme. Sophie Nkouka",
     title: "Secrétaire Générale",
-    image: "/placeholder.svg?height=100&width=100",
-    bio: "Experte en gestion de projets, Mme N'Goma assure la coordination des opérations et la mise en œuvre des stratégies nationales. Son efficacité est un atout majeur.",
+    bio: "Organisatrice méticuleuse et pilier de l'administration.",
+    email: "sophie.nkouka@crc.org",
+    phone: "+242 06 765 4321",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=SN",
   },
   {
-    id: "3",
-    name: "M. Patrick Oba",
-    title: "Trésorier Général",
-    image: "/placeholder.svg?height=100&width=100",
-    bio: "Comptable agréé, M. Oba gère les finances de l'organisation avec rigueur et transparence. Il veille à l'optimisation des ressources pour maximiser l'aide aux populations.",
+    id: "exec-3",
+    name: "M. David Mbemba",
+    title: "Trésorier",
+    bio: "Expert financier assurant la bonne gestion des ressources.",
+    email: "david.mbemba@crc.org",
+    phone: "+242 05 987 6543",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=DM",
   },
   {
-    id: "4",
-    name: "Mme. Chantal Moukassa",
-    title: "Directrice des Programmes Santé",
-    image: "/placeholder.svg?height=100&width=100",
-    bio: "Infirmière de formation, Mme Moukassa supervise tous les programmes liés à la santé, y compris les campagnes de vaccination et les formations aux premiers secours.",
-  },
-  {
-    id: "5",
-    name: "M. David Loubaki",
-    title: "Directeur des Opérations d'Urgence",
-    image: "/placeholder.svg?height=100&width=100",
-    bio: "Spécialiste en gestion des catastrophes, M. Loubaki est en charge de la planification et de la réponse aux urgences, assurant une intervention rapide et efficace.",
+    id: "exec-4",
+    name: "Dr. Chantal Ngoma",
+    title: "Directrice des Programmes",
+    bio: "Passionnée par l'impact sur le terrain et le développement de projets.",
+    email: "chantal.ngoma@crc.org",
+    phone: "+242 05 111 2233",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=CN",
   },
 ]
 
 export default function BureauExecutifPage() {
-  const [bureaux, setBureaux] = useState<BureauExecutif[]>(bureauxData)
+  const [selectedBureau, setSelectedBureau] = useState<BureauExecutif | null>(null)
   const [activeTab, setActiveTab] = useState("national")
 
   const getPosteIcon = (poste: string) => {
@@ -237,7 +240,7 @@ export default function BureauExecutifPage() {
   }
 
   const filteredBureaux = (type: string) => {
-    return bureaux.filter((bureau) => bureau.type === type)
+    return bureauxData.filter((bureau) => bureau.type === type)
   }
 
   const renderBureauCard = (bureau: BureauExecutif) => (
@@ -251,7 +254,7 @@ export default function BureauExecutifPage() {
               {bureau.type === "arrondissement" && <Users className="h-5 w-5 text-orange-600" />}
               {bureau.nom}
             </CardTitle>
-            {/* <CardDescription>{bureau.niveau}</CardDescription> */}
+            <CardDescription>{bureau.niveau}</CardDescription>
           </div>
           <Button variant="outline" size="sm">
             <Edit className="h-4 w-4" />
@@ -320,6 +323,38 @@ export default function BureauExecutifPage() {
         </Button>
       </div>
 
+      {/* Executive Board Members */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        {executiveBoardMembers.map((member) => (
+          <Card key={member.id}>
+            <CardHeader className="flex flex-col items-center text-center">
+              <Avatar className="h-24 w-24 mb-4">
+                <AvatarImage src={member.imageUrl || "/placeholder.svg"} alt={member.name} />
+                <AvatarFallback>
+                  {member.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")}
+                </AvatarFallback>
+              </Avatar>
+              <CardTitle className="text-xl">{member.name}</CardTitle>
+              <p className="text-muted-foreground">{member.title}</p>
+            </CardHeader>
+            <CardContent className="text-sm text-center">
+              <p className="mb-4">{member.bio}</p>
+              <div className="flex items-center justify-center text-muted-foreground mb-2">
+                <Mail className="h-4 w-4 mr-2" />
+                <span>{member.email}</span>
+              </div>
+              <div className="flex items-center justify-center text-muted-foreground">
+                <Phone className="h-4 w-4 mr-2" />
+                <span>{member.phone}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
@@ -366,37 +401,10 @@ export default function BureauExecutifPage() {
       </div>
 
       {/* Main Content */}
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold mb-4">Bureau Exécutif National</h1>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {executiveBoardData.map((member) => (
-            <Card key={member.id}>
-              <CardHeader className="flex flex-col items-center text-center">
-                <Avatar className="h-24 w-24 mb-4">
-                  <AvatarImage src={member.image || "/placeholder.svg"} alt={member.name} />
-                  <AvatarFallback>
-                    {member.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <CardTitle className="text-xl">{member.name}</CardTitle>
-                <p className="text-sm text-muted-foreground">{member.title}</p>
-              </CardHeader>
-              <CardContent>
-                <Separator className="my-4" />
-                <p className="text-sm text-muted-foreground">{member.bio}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Bureaux Exécutifs</CardTitle>
-          {/* <CardDescription>Organisation hiérarchique des bureaux exécutifs</CardDescription> */}
+          <CardDescription>Organisation hiérarchique des bureaux exécutifs</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

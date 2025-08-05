@@ -1,107 +1,64 @@
--- Création des tables pour les paramètres
-
--- Table des paramètres d'application
 CREATE TABLE IF NOT EXISTS app_settings (
     id SERIAL PRIMARY KEY,
-    nom_organisation VARCHAR(255) NOT NULL,
-    sigle VARCHAR(10),
-    adresse_siege TEXT,
-    telephone VARCHAR(20),
-    email VARCHAR(100),
-    site_web VARCHAR(100),
-    description TEXT,
-    logo_url VARCHAR(255),
-    couleur_primaire VARCHAR(7) DEFAULT '#dc2626',
-    couleur_secondaire VARCHAR(7) DEFAULT '#991b1b',
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    setting_key VARCHAR(255) UNIQUE NOT NULL,
+    setting_value TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des paramètres du pays hôte
-CREATE TABLE IF NOT EXISTS pays_settings (
+INSERT INTO app_settings (setting_key, setting_value) VALUES
+('app_name', 'Croix Rouge Congolaise - Système de Gestion')
+ON CONFLICT (setting_key) DO NOTHING;
+
+INSERT INTO app_settings (setting_key, setting_value) VALUES
+('contact_email', 'contact@croixrougecongo.org')
+ON CONFLICT (setting_key) DO NOTHING;
+
+INSERT INTO app_settings (setting_key, setting_value) VALUES
+('phone_number', '+242 06 123 4567')
+ON CONFLICT (setting_key) DO NOTHING;
+
+INSERT INTO app_settings (setting_key, setting_value) VALUES
+('address', '123 Rue de l''Indépendance, Brazzaville, Congo')
+ON CONFLICT (setting_key) DO NOTHING;
+
+-- Table for departments
+CREATE TABLE IF NOT EXISTS departments (
     id SERIAL PRIMARY KEY,
-    nom_pays VARCHAR(100) NOT NULL,
-    code_pays VARCHAR(2) NOT NULL,
-    capitale VARCHAR(100),
-    langue VARCHAR(50),
-    monnaie VARCHAR(50),
-    code_monnaie VARCHAR(3),
-    fuseau_horaire VARCHAR(10),
-    prefixe_telephone VARCHAR(10),
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    name VARCHAR(255) UNIQUE NOT NULL,
+    head_name VARCHAR(255),
+    contact_email VARCHAR(255),
+    phone_number VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table des départements
-CREATE TABLE IF NOT EXISTS departements (
-    id SERIAL PRIMARY KEY,
-    nom VARCHAR(100) NOT NULL UNIQUE,
-    code VARCHAR(10) NOT NULL UNIQUE,
-    chef_lieu VARCHAR(100),
-    population INTEGER,
-    superficie DECIMAL(10,2),
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Table des arrondissements
+-- Table for arrondissements
 CREATE TABLE IF NOT EXISTS arrondissements (
     id SERIAL PRIMARY KEY,
-    nom VARCHAR(100) NOT NULL,
-    code VARCHAR(10) NOT NULL,
-    departement_id INTEGER REFERENCES departements(id) ON DELETE CASCADE,
+    department_id INTEGER NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
     population INTEGER,
-    superficie DECIMAL(10,2),
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(nom, departement_id),
-    UNIQUE(code, departement_id)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(department_id, name)
 );
 
--- Insertion des données par défaut
-INSERT INTO app_settings (nom_organisation, sigle, adresse_siege, telephone, email, site_web, description) 
-VALUES (
-    'Croix Rouge de la République du Congo',
-    'CRC',
-    'Avenue Félix Éboué, Brazzaville',
-    '+242 123 456 789',
-    'contact@croixrouge-congo.org',
-    'www.croixrouge-congo.org',
-    'Organisation humanitaire dédiée à l''aide aux populations vulnérables'
-) ON CONFLICT (id) DO NOTHING;
+-- Seed some initial data for departments (if not already present)
+INSERT INTO departments (name, head_name, contact_email, phone_number) VALUES
+('Brazzaville', 'Jean Dupont', 'brazzaville@crc.org', '+242 06 111 2233'),
+('Pointe-Noire', 'Marie Curie', 'pointenoire@crc.org', '+242 06 444 5566'),
+('Pool', 'Pierre Martin', 'pool@crc.org', '+242 05 777 8899')
+ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO pays_settings (nom_pays, code_pays, capitale, langue, monnaie, code_monnaie, fuseau_horaire, prefixe_telephone)
-VALUES (
-    'République du Congo',
-    'CG',
-    'Brazzaville',
-    'Français',
-    'Franc CFA',
-    'XAF',
-    'UTC+1',
-    '+242'
-) ON CONFLICT (id) DO NOTHING;
-
--- Insertion des départements par défaut
-INSERT INTO departements (nom, code, chef_lieu, population, superficie) VALUES
-('Brazzaville', 'BZV', 'Brazzaville', 1838000, 100),
-('Kouilou', 'KOU', 'Pointe-Noire', 91000, 13650),
-('Niari', 'NIA', 'Dolisie', 95000, 25942),
-('Bouenza', 'BOU', 'Madingou', 309000, 12266),
-('Pool', 'POL', 'Kinkala', 236000, 33955),
-('Plateaux', 'PLA', 'Djambala', 174000, 38400)
-ON CONFLICT (nom) DO NOTHING;
-
--- Insertion des arrondissements par défaut
-INSERT INTO arrondissements (nom, code, departement_id, population) VALUES
-('Bacongo', 'BCG', (SELECT id FROM departements WHERE code = 'BZV'), 156000),
-('Poto-Poto', 'PTP', (SELECT id FROM departements WHERE code = 'BZV'), 134000),
-('Moungali', 'MGL', (SELECT id FROM departements WHERE code = 'BZV'), 98000),
-('Ouenzé', 'OUZ', (SELECT id FROM departements WHERE code = 'BZV'), 87000),
-('Talangaï', 'TLG', (SELECT id FROM departements WHERE code = 'BZV'), 76000),
-('Pointe-Noire', 'PTN', (SELECT id FROM departements WHERE code = 'KOU'), 234000),
-('Dolisie', 'DOL', (SELECT id FROM departements WHERE code = 'NIA'), 123000),
-('Nkayi', 'NKY', (SELECT id FROM departements WHERE code = 'BOU'), 89000),
-('Kinkala', 'KNK', (SELECT id FROM departements WHERE code = 'POL'), 67000),
-('Djambala', 'DJB', (SELECT id FROM departements WHERE code = 'PLA'), 45000)
-ON CONFLICT (nom, departement_id) DO NOTHING;
+-- Seed some initial data for arrondissements (if not already present)
+-- Note: You might need to adjust department_id based on actual IDs after department insertion
+INSERT INTO arrondissements (department_id, name, population) VALUES
+((SELECT id FROM departments WHERE name = 'Brazzaville'), 'Moungali', 120000),
+((SELECT id FROM departments WHERE name = 'Brazzaville'), 'Makélékélé', 150000),
+((SELECT id FROM departments WHERE name = 'Brazzaville'), 'Poto-Poto', 100000),
+((SELECT id FROM departments WHERE name = 'Pointe-Noire'), 'Lumumba', 90000),
+((SELECT id FROM departments WHERE name = 'Pointe-Noire'), 'Tié-Tié', 110000),
+((SELECT id FROM departments WHERE name = 'Pool'), 'Kinkala', 50000),
+((SELECT id FROM departments WHERE name = 'Pool'), 'Mindouli', 40000)
+ON CONFLICT (department_id, name) DO NOTHING;

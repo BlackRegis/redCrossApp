@@ -1,61 +1,55 @@
-import { getSqlClient } from "@/lib/database"
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
+import { sql } from "@vercel/postgres"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const sql = getSqlClient()
-  const { id } = params
-
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    const arrondissement = await sql`SELECT * FROM arrondissements WHERE id = ${id}`
-    if (arrondissement.length === 0) {
-      return NextResponse.json({ error: "Arrondissement non trouvé" }, { status: 404 })
+    const { id } = params
+    const { rows } = await sql`SELECT * FROM arrondissements WHERE id = ${id};`
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "Arrondissement not found" }, { status: 404 })
     }
-    return NextResponse.json(arrondissement[0])
+    return NextResponse.json(rows[0])
   } catch (error) {
-    console.error("Erreur lors de la récupération de l'arrondissement:", error)
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 })
+    console.error("Error fetching arrondissement by ID:", error)
+    return NextResponse.json({ error: "Failed to fetch arrondissement" }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const sql = getSqlClient()
-  const { id } = params
-  const body = await request.json()
-  const { nom, code, population, superficie, departement_id } = body
-
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    const updatedArrondissement = await sql`
+    const { id } = params
+    const { name, population, department_id } = await request.json()
+
+    const { rowCount } = await sql`
       UPDATE arrondissements
-      SET nom = ${nom}, code = ${code}, population = ${population}, superficie = ${superficie}, departement_id = ${departement_id}
-      WHERE id = ${id}
-      RETURNING *
+      SET
+        name = COALESCE(${name}, name),
+        population = COALESCE(${population}, population),
+        department_id = COALESCE(${department_id}, department_id),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id};
     `
-    if (updatedArrondissement.length === 0) {
-      return NextResponse.json({ error: "Arrondissement non trouvé" }, { status: 404 })
+
+    if (rowCount === 0) {
+      return NextResponse.json({ error: "Arrondissement not found or no changes made" }, { status: 404 })
     }
-    return NextResponse.json(updatedArrondissement[0])
+    return NextResponse.json({ message: "Arrondissement updated successfully" })
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de l'arrondissement:", error)
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 })
+    console.error("Error updating arrondissement:", error)
+    return NextResponse.json({ error: "Failed to update arrondissement" }, { status: 500 })
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const sql = getSqlClient()
-  const { id } = params
-
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    const deletedArrondissement = await sql`
-      DELETE FROM arrondissements
-      WHERE id = ${id}
-      RETURNING *
-    `
-    if (deletedArrondissement.length === 0) {
-      return NextResponse.json({ error: "Arrondissement non trouvé" }, { status: 404 })
+    const { id } = params
+    const { rowCount } = await sql`DELETE FROM arrondissements WHERE id = ${id};`
+    if (rowCount === 0) {
+      return NextResponse.json({ error: "Arrondissement not found" }, { status: 404 })
     }
-    return NextResponse.json({ message: "Arrondissement supprimé avec succès" })
+    return NextResponse.json({ message: "Arrondissement deleted successfully" })
   } catch (error) {
-    console.error("Erreur lors de la suppression de l'arrondissement:", error)
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 })
+    console.error("Error deleting arrondissement:", error)
+    return NextResponse.json({ error: "Failed to delete arrondissement" }, { status: 500 })
   }
 }

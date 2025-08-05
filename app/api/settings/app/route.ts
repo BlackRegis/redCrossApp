@@ -1,26 +1,40 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { saveAppSettings, getAppSettings } from "@/lib/database"
+import { NextResponse } from "next/server"
+import { sql } from "@vercel/postgres"
 
 export async function GET() {
   try {
-    const settings = await getAppSettings()
+    const { rows } = await sql`SELECT setting_key, setting_value FROM app_settings;`
+    const settings = rows.reduce((acc, row) => {
+      acc[row.setting_key] = row.setting_value
+      return acc
+    }, {})
     return NextResponse.json(settings)
   } catch (error) {
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
+    console.error("Error fetching app settings:", error)
+    return NextResponse.json({ error: "Failed to fetch app settings" }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function PUT(request: Request) {
   try {
-    const settings = await request.json()
-    const result = await saveAppSettings(settings)
+    const { setting_key, setting_value } = await request.json()
+    if (!setting_key || !setting_value) {
+      return NextResponse.json({ error: "Setting key and value are required" }, { status: 400 })
+    }
 
-    if (result.success) {
-      return NextResponse.json({ message: "Paramètres sauvegardés avec succès" })
+    const { rowCount } = await sql`
+      INSERT INTO app_settings (setting_key, setting_value)
+      VALUES (${setting_key}, ${setting_value})
+      ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = CURRENT_TIMESTAMP;
+    `
+
+    if (rowCount > 0) {
+      return NextResponse.json({ message: "Setting updated successfully" })
     } else {
-      return NextResponse.json({ error: "Erreur lors de la sauvegarde" }, { status: 500 })
+      return NextResponse.json({ error: "Failed to update setting" }, { status: 500 })
     }
   } catch (error) {
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
+    console.error("Error updating app setting:", error)
+    return NextResponse.json({ error: "Failed to update app setting" }, { status: 500 })
   }
 }

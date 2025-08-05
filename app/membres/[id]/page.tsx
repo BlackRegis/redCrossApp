@@ -1,436 +1,221 @@
 "use client"
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
+
 import { useParams } from "next/navigation"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { Edit, Trash2, Mail, Phone, MapPin, Calendar, Briefcase, HeartPulse } from "lucide-react"
 
-interface MembreDetail {
-  id: string
-  nom: string
-  prenom: string
-  email: string
-  telephone: string
-  adresse: string
-  dateNaissance: string
-  lieuNaissance: string
-  profession: string
-  departement: string
-  arrondissement: string
-  typeAdhesion: string
-  statut: "Actif" | "Inactif" | "Suspendu"
-  dateAdhesion: string
-  numeroCarte: string
-  photo?: string
-  sexe: "M" | "F"
-  situationMatrimoniale: string
-  nombreEnfants: number
-  niveauEtude: string
-  competences: string[]
-  langues: string[]
-  estMembreBureau: boolean
-  posteBureau?: string
-  niveauBureau?: string
-  dateNominationBureau?: string
-  mandatFinBureau?: string
-  formations: Formation[]
-  activites: ActiviteParticipation[]
-  distinctions: Distinction[]
-  historique: HistoriqueStatut[]
-}
-
-interface Formation {
-  id: string
-  titre: string
-  organisme: string
-  dateDebut: string
-  dateFin: string
-  certificat: boolean
-  domaine: string
-}
-
-interface ActiviteParticipation {
-  id: string
-  titre: string
-  type: string
-  date: string
-  role: string
-  statut: "Participé" | "Organisé" | "Animé"
-}
-
-interface Distinction {
-  id: string
-  titre: string
-  description: string
-  dateObtention: string
-  niveau: "Local" | "National" | "International"
-}
-
-interface HistoriqueStatut {
-  id: string
-  ancienStatut: string
-  nouveauStatut: string
-  dateChangement: string
-  motif: string
-  auteur: string
-}
-
-// Sample members data (centralized as requested)
-const membresData = [
+// Sample member data (centralized as requested)
+const membersData = [
   {
     id: "1",
-    nom: "Mukendi",
-    prenom: "Jean",
-    email: "jean.mukendi@email.com",
-    telephone: "+242 123 456 789",
-    adresse: "Avenue Félix Éboué, Bacongo, Brazzaville",
-    dateNaissance: "1985-03-20",
+    nom: "Doe",
+    prenom: "John",
+    dateNaissance: "1990-05-15",
     lieuNaissance: "Brazzaville",
-    profession: "Médecin",
+    nationalite: "Congolaise",
+    adresse: "123 Rue de la Paix, Moungali",
+    telephone: "+242 06 123 4567",
+    email: "john.doe@example.com",
+    profession: "Ingénieur",
+    groupeSanguin: "A+",
+    allergies: "Aucune",
+    antecedentsMedicaux: "Aucun",
+    personneContactUrgenceNom: "Jane Doe",
+    personneContactUrgenceTelephone: "+242 05 765 4321",
+    dateAdhesion: "2020-01-10",
+    typeMembre: "Actif",
     departement: "Brazzaville",
-    arrondissement: "Bacongo",
-    typeAdhesion: "Membre Actif",
+    arrondissement: "Moungali",
     statut: "Actif",
-    dateAdhesion: "2023-01-15",
-    numeroCarte: "CRC-BZV-001",
-    photo: "/placeholder.svg?height=200&width=200&text=Jean+M",
-    sexe: "M",
-    situationMatrimoniale: "Marié",
-    nombreEnfants: 2,
-    niveauEtude: "Doctorat en Médecine",
-    competences: ["Premiers secours", "Chirurgie", "Formation", "Gestion d'équipe"],
-    langues: ["Français", "Lingala", "Anglais"],
-    estMembreBureau: true,
-    posteBureau: "Président",
-    niveauBureau: "National",
-    dateNominationBureau: "2023-01-15",
-    mandatFinBureau: "2027-01-15",
-    formations: [
-      {
-        id: "1",
-        titre: "Formation Premiers Secours Avancés",
-        organisme: "Croix Rouge Internationale",
-        dateDebut: "2022-06-01",
-        dateFin: "2022-06-15",
-        certificat: true,
-        domaine: "Secours",
-      },
-      {
-        id: "2",
-        titre: "Gestion des Catastrophes",
-        organisme: "FICR",
-        dateDebut: "2022-09-10",
-        dateFin: "2022-09-20",
-        certificat: true,
-        domaine: "Gestion",
-      },
-    ],
-    activites: [
-      {
-        id: "1",
-        titre: "Formation Premiers Secours",
-        type: "Formation",
-        date: "2024-01-15",
-        role: "Formateur",
-        statut: "Animé",
-      },
-      {
-        id: "2",
-        titre: "Campagne Don de Sang",
-        type: "Don de sang",
-        date: "2024-01-10",
-        role: "Coordinateur",
-        statut: "Organisé",
-      },
-    ],
-    distinctions: [
-      {
-        id: "1",
-        titre: "Médaille du Mérite Humanitaire",
-        description: "Pour services exceptionnels rendus à la communauté",
-        dateObtention: "2023-12-10",
-        niveau: "National",
-      },
-    ],
-    historique: [
-      {
-        id: "1",
-        ancienStatut: "Volontaire",
-        nouveauStatut: "Membre Actif",
-        dateChangement: "2023-06-15",
-        motif: "Promotion suite à engagement exceptionnel",
-        auteur: "Marie Kabila",
-      },
-    ],
+    imageUrl: "/placeholder.svg?height=100&width=100&text=JD",
   },
   {
     id: "2",
-    nom: "Kabila",
-    prenom: "Marie",
-    email: "marie.kabila@email.com",
-    telephone: "+242 987 654 321",
-    adresse: "Rue Monseigneur Augouard, Poto-Poto, Brazzaville",
-    dateNaissance: "1990-07-15",
-    lieuNaissance: "Brazzaville",
-    profession: "Infirmière",
-    departement: "Brazzaville",
-    arrondissement: "Poto-Poto",
-    typeAdhesion: "Volontaire",
+    nom: "Smith",
+    prenom: "Alice",
+    dateNaissance: "1988-11-22",
+    lieuNaissance: "Pointe-Noire",
+    nationalite: "Congolaise",
+    adresse: "456 Avenue des Martyrs, Lumumba",
+    telephone: "+242 05 987 6543",
+    email: "alice.smith@example.com",
+    profession: "Médecin",
+    groupeSanguin: "O-",
+    allergies: "Pénicilline",
+    antecedentsMedicaux: "Asthme",
+    personneContactUrgenceNom: "Bob Smith",
+    personneContactUrgenceTelephone: "+242 06 111 2233",
+    dateAdhesion: "2019-03-01",
+    typeMembre: "Bénévole",
+    departement: "Pointe-Noire",
+    arrondissement: "Lumumba",
     statut: "Actif",
-    dateAdhesion: "2023-03-20",
-    numeroCarte: "CRC-BZV-002",
-    photo: "/placeholder.svg?height=200&width=200&text=Marie+K",
-    sexe: "F",
-    situationMatrimoniale: "Célibataire",
-    nombreEnfants: 0,
-    niveauEtude: "Diplôme d'État en Soins Infirmiers",
-    competences: ["Soins d'urgence", "Gestion de crise", "Sensibilisation", "Coordination"],
-    langues: ["Français", "Lingala"],
-    estMembreBureau: true,
-    posteBureau: "Secrétaire Général",
-    niveauBureau: "National",
-    dateNominationBureau: "2023-03-20",
-    mandatFinBureau: "2027-03-20",
-    formations: [
-      {
-        id: "3",
-        titre: "Formation en Soins d'Urgence",
-        organisme: "Hôpital Général de Brazzaville",
-        dateDebut: "2021-05-01",
-        dateFin: "2021-05-15",
-        certificat: true,
-        domaine: "Soins",
-      },
-    ],
-    activites: [
-      {
-        id: "3",
-        titre: "Distribution de Kits d'Hygiène",
-        type: "Secours",
-        date: "2023-11-20",
-        role: "Coordinatrice",
-        statut: "Organisé",
-      },
-    ],
-    distinctions: [],
-    historique: [],
+    imageUrl: "/placeholder.svg?height=100&width=100&text=AS",
   },
   {
     id: "3",
-    nom: "Dupont",
-    prenom: "Alice",
-    email: "alice.dupont@example.com",
-    telephone: "+242 06 123 4567",
-    adresse: "123 Rue de la Paix, Brazzaville",
-    dateNaissance: "",
-    lieuNaissance: "",
-    profession: "",
-    departement: "Brazzaville",
-    arrondissement: "Makélékélé",
-    typeAdhesion: "",
-    statut: "Actif",
-    dateAdhesion: "2020-01-15",
-    numeroCarte: "",
-    photo: "/placeholder.svg?height=100&width=100",
-    sexe: "",
-    situationMatrimoniale: "",
-    nombreEnfants: 0,
-    niveauEtude: "",
-    competences: [],
-    langues: [],
-    estMembreBureau: false,
-    posteBureau: "",
-    niveauBureau: "",
-    dateNominationBureau: "",
-    mandatFinBureau: "",
-    formations: [],
-    activites: [],
-    distinctions: [],
-    historique: [],
-  },
-  {
-    id: "4",
-    nom: "Martin",
-    prenom: "Bob",
-    email: "bob.martin@example.com",
-    telephone: "+242 05 987 6543",
-    adresse: "456 Avenue de l'Indépendance, Pointe-Noire",
-    dateNaissance: "",
-    lieuNaissance: "",
-    profession: "",
+    nom: "Brown",
+    prenom: "Robert",
+    dateNaissance: "1995-07-01",
+    lieuNaissance: "Dolisie",
+    nationalite: "Congolaise",
+    adresse: "789 Rue du Marché, Tié-Tié",
+    telephone: "+242 06 222 3344",
+    email: "robert.brown@example.com",
+    profession: "Étudiant",
+    groupeSanguin: "B+",
+    allergies: "Aucune",
+    antecedentsMedicaux: "Aucun",
+    personneContactUrgenceNom: "Sarah Brown",
+    personneContactUrgenceTelephone: "+242 05 444 5566",
+    dateAdhesion: "2021-09-15",
+    typeMembre: "Donateur",
     departement: "Pointe-Noire",
     arrondissement: "Tié-Tié",
-    typeAdhesion: "",
     statut: "Actif",
-    dateAdhesion: "2018-07-22",
-    numeroCarte: "",
-    photo: "/placeholder.svg?height=100&width=100",
-    sexe: "",
-    situationMatrimoniale: "",
-    nombreEnfants: 0,
-    niveauEtude: "",
-    competences: [],
-    langues: [],
-    estMembreBureau: false,
-    posteBureau: "",
-    niveauBureau: "",
-    dateNominationBureau: "",
-    mandatFinBureau: "",
-    formations: [],
-    activites: [],
-    distinctions: [],
-    historique: [],
-  },
-  {
-    id: "5",
-    nom: "Dubois",
-    prenom: "Claire",
-    email: "claire.dubois@example.com",
-    telephone: "+242 04 111 2233",
-    adresse: "789 Boulevard des Martyrs, Dolisie",
-    dateNaissance: "",
-    lieuNaissance: "",
-    profession: "",
-    departement: "Niari",
-    arrondissement: "Dolisie",
-    typeAdhesion: "",
-    statut: "Inactif",
-    dateAdhesion: "2021-11-01",
-    numeroCarte: "",
-    photo: "/placeholder.svg?height=100&width=100",
-    sexe: "",
-    situationMatrimoniale: "",
-    nombreEnfants: 0,
-    niveauEtude: "",
-    competences: [],
-    langues: [],
-    estMembreBureau: false,
-    posteBureau: "",
-    niveauBureau: "",
-    dateNominationBureau: "",
-    mandatFinBureau: "",
-    formations: [],
-    activites: [],
-    distinctions: [],
-    historique: [],
+    imageUrl: "/placeholder.svg?height=100&width=100&text=RB",
   },
 ]
 
 export default function MembreDetailPage() {
   const params = useParams()
-  const memberId = params.id as string
-  const [membre, setMembre] = useState<MembreDetail | null>(null)
-  const [activeTab, setActiveTab] = useState("profil")
+  const { id } = params
 
-  useEffect(() => {
-    // Simulation de récupération des données
-    const membreData = membresData.find((m) => m.id === memberId) || null
-    setMembre(membreData)
-  }, [memberId])
+  const member = membersData.find((m) => m.id === id)
 
-  if (!membre) {
-    return (
-      <div className="flex-1 p-4 md:p-8 flex items-center justify-center">
-        <Card className="w-full max-w-md text-center">
-          <CardHeader>
-            <CardTitle>Membre non trouvé</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Le membre avec l'ID {memberId} n'existe pas.</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  if (!member) {
+    return <div className="container mx-auto p-4 text-center text-red-500">Membre non trouvé.</div>
   }
 
-  const getStatutColor = (statut: string) => {
-    switch (statut) {
-      case "Actif":
-        return "bg-green-100 text-green-800"
-      case "Inactif":
-        return "bg-gray-100 text-gray-800"
-      case "Suspendu":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+  const handleEdit = () => {
+    console.log("Modifier le membre:", member.id)
+    // Implement navigation to edit page or open a modal
   }
 
-  const getActiviteStatutColor = (statut: string) => {
-    switch (statut) {
-      case "Participé":
-        return "bg-blue-100 text-blue-800"
-      case "Organisé":
-        return "bg-green-100 text-green-800"
-      case "Animé":
-        return "bg-purple-100 text-purple-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+  const handleDelete = () => {
+    console.log("Supprimer le membre:", member.id)
+    // Implement deletion logic, e.g., API call
+    if (confirm("Êtes-vous sûr de vouloir supprimer ce membre ?")) {
+      // Logic to remove from state or refetch data
+      alert(`Membre ${member.id} supprimé (simulation)`)
+      // Redirect to members list after deletion
+      // router.push('/membres');
     }
-  }
-
-  const calculateAge = (dateNaissance: string) => {
-    const today = new Date()
-    const birthDate = new Date(dateNaissance)
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const monthDiff = today.getMonth() - birthDate.getMonth()
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-    return age
   }
 
   return (
-    <div className="flex-1 p-4 md:p-8">
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader className="flex flex-col items-center text-center">
-          <Avatar className="h-24 w-24 mb-4">
-            <AvatarImage src={membre.photo || "/placeholder.svg"} alt={membre.prenom + " " + membre.nom} />
-            <AvatarFallback>{membre.prenom.charAt(0) + membre.nom.charAt(0)}</AvatarFallback>
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Détails du Membre</h1>
+        <div className="space-x-2">
+          <Button variant="outline" onClick={handleEdit}>
+            <Edit className="mr-2 h-4 w-4" />
+            Modifier
+          </Button>
+          <Button variant="destructive" onClick={handleDelete}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Supprimer
+          </Button>
+        </div>
+      </div>
+
+      <Card className="mb-6">
+        <CardContent className="flex flex-col md:flex-row items-center md:items-start gap-6 p-6">
+          <Avatar className="h-24 w-24">
+            <AvatarImage src={member.imageUrl || "/placeholder.svg"} alt={member.nom} />
+            <AvatarFallback>{member.prenom.charAt(0) + member.nom.charAt(0)}</AvatarFallback>
           </Avatar>
-          <CardTitle className="text-2xl">
-            {membre.prenom} {membre.nom}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">{membre.typeAdhesion}</p>
-          <Badge variant={membre.statut === "Actif" ? "default" : "secondary"} className="mt-2">
-            {membre.statut}
-          </Badge>
-        </CardHeader>
-        <CardContent>
-          <Separator className="my-4" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="font-medium">Email:</p>
-              <p className="text-muted-foreground">{membre.email}</p>
-            </div>
-            <div>
-              <p className="font-medium">Téléphone:</p>
-              <p className="text-muted-foreground">{membre.telephone}</p>
-            </div>
-            <div>
-              <p className="font-medium">Adresse:</p>
-              <p className="text-muted-foreground">{membre.adresse}</p>
-            </div>
-            <div>
-              <p className="font-medium">Département:</p>
-              <p className="text-muted-foreground">{membre.departement}</p>
-            </div>
-            <div>
-              <p className="font-medium">Arrondissement:</p>
-              <p className="text-muted-foreground">{membre.arrondissement}</p>
-            </div>
-            <div>
-              <p className="font-medium">Date d'adhésion:</p>
-              <p className="text-muted-foreground">{membre.dateAdhesion}</p>
-            </div>
-            <div>
-              <p className="font-medium">Dernière activité:</p>
-              <p className="text-muted-foreground">{membre.lastActivity}</p>
+          <div className="text-center md:text-left">
+            <h2 className="text-2xl font-bold">
+              {member.prenom} {member.nom}
+            </h2>
+            <p className="text-muted-foreground">
+              {member.typeMembre} - {member.statut}
+            </p>
+            <div className="flex items-center justify-center md:justify-start text-sm text-muted-foreground mt-2">
+              <MapPin className="h-4 w-4 mr-1" />
+              <span>
+                {member.adresse}, {member.arrondissement}, {member.departement}
+              </span>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations de Contact</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex items-center">
+              <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span>{member.email}</span>
+            </div>
+            <div className="flex items-center">
+              <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span>{member.telephone}</span>
+            </div>
+            <div className="flex items-center">
+              <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span>
+                Né(e) le {member.dateNaissance} à {member.lieuNaissance}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <Briefcase className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span>Profession: {member.profession}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Informations d'Adhésion</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <p>
+              <strong>Date d'Adhésion:</strong> {member.dateAdhesion}
+            </p>
+            <p>
+              <strong>Type de Membre:</strong> {member.typeMembre}
+            </p>
+            <p>
+              <strong>Département:</strong> {member.departement}
+            </p>
+            <p>
+              <strong>Arrondissement:</strong> {member.arrondissement}
+            </p>
+            <p>
+              <strong>Statut:</strong> {member.statut}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Informations Médicales & Urgence</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex items-center">
+              <HeartPulse className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span>Groupe Sanguin: {member.groupeSanguin}</span>
+            </div>
+            <p>
+              <strong>Allergies:</strong> {member.allergies || "Aucune"}
+            </p>
+            <p>
+              <strong>Antécédents Médicaux:</strong> {member.antecedentsMedicaux || "Aucun"}
+            </p>
+            <p>
+              <strong>Contact Urgence:</strong> {member.personneContactUrgenceNom} (
+              {member.personneContactUrgenceTelephone})
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

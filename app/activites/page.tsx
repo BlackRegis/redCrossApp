@@ -1,81 +1,85 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { PlusCircle, Search, CalendarIcon } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { cn } from "@/lib/utils"
+import { PlusCircle, Search, Edit, Trash2 } from "lucide-react"
+import Link from "next/link"
 
-// Sample activities data (centralized as requested)
+// Sample activity data (centralized as requested)
 const activitiesData = [
   {
-    id: "1",
-    name: "Campagne de vaccination contre la rougeole",
+    id: "act-1",
+    name: "Campagne de Don de Sang",
     date: "2024-03-15",
-    location: "Brazzaville",
+    location: "Hôpital Central",
     status: "Terminée",
-    type: "Santé",
+    participants: 120,
   },
   {
-    id: "2",
-    name: "Formation aux premiers secours",
-    date: "2024-04-01",
-    location: "Pointe-Noire",
-    status: "En cours",
-    type: "Formation",
-  },
-  {
-    id: "3",
-    name: "Distribution de kits d'hygiène",
+    id: "act-2",
+    name: "Formation Premiers Secours",
     date: "2024-04-20",
-    location: "Dolisie",
-    status: "Planifiée",
-    type: "Humanitaire",
+    location: "Centre Communautaire",
+    status: "À venir",
+    participants: 30,
   },
   {
-    id: "4",
-    name: "Sensibilisation au paludisme",
+    id: "act-3",
+    name: "Distribution de Kits d'Hygiène",
     date: "2024-05-10",
-    location: "Ouesso",
-    status: "Planifiée",
-    type: "Santé",
+    location: "Quartier Ndjili",
+    status: "À venir",
+    participants: 80,
   },
   {
-    id: "5",
-    name: "Collecte de sang",
-    date: "2024-05-25",
-    location: "Kinkala",
-    status: "Planifiée",
-    type: "Santé",
+    id: "act-4",
+    name: "Sensibilisation au Paludisme",
+    date: "2024-02-01",
+    location: "Marché Total",
+    status: "Terminée",
+    participants: 200,
+  },
+  {
+    id: "act-5",
+    name: "Collecte de Fonds Annuelle",
+    date: "2024-06-05",
+    location: "Hôtel de Ville",
+    status: "À venir",
+    participants: 50,
   },
 ]
 
 export default function ActivitesPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [date, setDate] = useState<Date | undefined>(undefined)
 
-  const filteredActivities = activitiesData.filter((activity) => {
-    const matchesSearch =
+  const filteredActivities = activitiesData.filter(
+    (activity) =>
       activity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       activity.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activity.type.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesDate = date ? format(new Date(activity.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd") : true
-    return matchesSearch && matchesDate
-  })
+      activity.status.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  const handleEdit = (id: string) => {
+    console.log("Modifier l'activité:", id)
+    // Implement navigation to edit page or open a modal
+  }
+
+  const handleDelete = (id: string) => {
+    console.log("Supprimer l'activité:", id)
+    // Implement deletion logic, e.g., API call
+    if (confirm("Êtes-vous sûr de vouloir supprimer cette activité ?")) {
+      // Logic to remove from state or refetch data
+      alert(`Activité ${id} supprimée (simulation)`)
+    }
+  }
 
   return (
-    <div className="flex-1 p-4 md:p-8">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Activités</h1>
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Gestion des Activités</h1>
         <Link href="/activites/nouvelle">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -84,88 +88,72 @@ export default function ActivitesPage() {
         </Link>
       </div>
 
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Rechercher des Activités</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Rechercher par nom, lieu ou statut..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Liste des Activités</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Rechercher une activité..."
-                className="w-full rounded-lg bg-background pl-8 md:w-[300px] lg:w-[450px]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn("w-[240px] justify-start text-left font-normal", !date && "text-muted-foreground")}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, "PPP", { locale: fr }) : <span>Choisir une date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus locale={fr} />
-              </PopoverContent>
-            </Popover>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchTerm("")
-                setDate(undefined)
-              }}
-            >
-              Réinitialiser
-            </Button>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Lieu</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Statut</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredActivities.length > 0 ? (
-                filteredActivities.map((activity) => (
-                  <TableRow key={activity.id}>
-                    <TableCell className="font-medium">{activity.name}</TableCell>
-                    <TableCell>{format(new Date(activity.date), "PPP", { locale: fr })}</TableCell>
-                    <TableCell>{activity.location}</TableCell>
-                    <TableCell>{activity.type}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          activity.status === "Terminée"
-                            ? "secondary"
-                            : activity.status === "En cours"
-                              ? "default"
-                              : "outline"
-                        }
-                      >
-                        {activity.status}
-                      </Badge>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom de l'Activité</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Lieu</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Participants</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredActivities.length > 0 ? (
+                  filteredActivities.map((activity) => (
+                    <TableRow key={activity.id}>
+                      <TableCell className="font-medium">{activity.name}</TableCell>
+                      <TableCell>{activity.date}</TableCell>
+                      <TableCell>{activity.location}</TableCell>
+                      <TableCell>{activity.status}</TableCell>
+                      <TableCell>{activity.participants}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(activity.id)} className="mr-2">
+                          <Edit className="h-4 w-4" />
+                          <span className="sr-only">Modifier</span>
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(activity.id)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <span className="sr-only">Supprimer</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">
+                      Aucune activité trouvée.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    Aucune activité trouvée.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

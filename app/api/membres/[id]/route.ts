@@ -1,114 +1,70 @@
-import { getSqlClient } from "@/lib/database"
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
+import { sql } from "@vercel/postgres"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const sql = getSqlClient()
-  const { id } = params
-
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    const membre = await sql`SELECT * FROM membres WHERE id = ${id}`
-    if (membre.length === 0) {
-      return NextResponse.json({ error: "Membre non trouvé" }, { status: 404 })
+    const { id } = params
+    const { rows } = await sql`SELECT * FROM members WHERE id = ${id};`
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "Member not found" }, { status: 404 })
     }
-    return NextResponse.json(membre[0])
+    return NextResponse.json(rows[0])
   } catch (error) {
-    console.error("Erreur lors de la récupération du membre:", error)
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 })
+    console.error("Error fetching member by ID:", error)
+    return NextResponse.json({ error: "Failed to fetch member" }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const sql = getSqlClient()
-  const { id } = params
-  const body = await request.json()
-  const {
-    nom,
-    prenom,
-    date_naissance,
-    lieu_naissance,
-    sexe,
-    nationalite,
-    adresse,
-    telephone,
-    email,
-    profession,
-    type_adhesion,
-    statut,
-    notes,
-    date_adhesion,
-    numero_carte,
-    photo,
-    situation_matrimoniale,
-    nombre_enfants,
-    niveau_etude,
-    competences,
-    langues,
-    est_membre_bureau,
-    poste_bureau,
-    niveau_bureau,
-    date_nomination_bureau,
-    mandat_fin_bureau,
-  } = body
-
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    const updatedMembre = await sql`
-      UPDATE membres
-      SET
-        nom = ${nom},
-        prenom = ${prenom},
-        date_naissance = ${date_naissance},
-        lieu_naissance = ${lieu_naissance},
-        sexe = ${sexe},
-        nationalite = ${nationalite},
-        adresse = ${adresse},
-        telephone = ${telephone},
-        email = ${email},
-        profession = ${profession},
-        type_adhesion = ${type_adhesion},
-        statut = ${statut},
-        notes = ${notes},
-        date_adhesion = ${date_adhesion},
-        numero_carte = ${numero_carte},
-        photo = ${photo},
-        situation_matrimoniale = ${situation_matrimoniale},
-        nombre_enfants = ${nombre_enfants},
-        niveau_etude = ${niveau_etude},
-        competences = ${competences},
-        langues = ${langues},
-        est_membre_bureau = ${est_membre_bureau},
-        poste_bureau = ${poste_bureau},
-        niveau_bureau = ${niveau_bureau},
-        date_nomination_bureau = ${date_nomination_bureau},
-        mandat_fin_bureau = ${mandat_fin_bureau}
-      WHERE id = ${id}
-      RETURNING *
+    const { id } = params
+    const memberData = await request.json()
+
+    const { rowCount } = await sql`
+      UPDATE members SET
+        first_name = COALESCE(${memberData.first_name}, first_name),
+        last_name = COALESCE(${memberData.last_name}, last_name),
+        date_of_birth = COALESCE(${memberData.date_of_birth}, date_of_birth),
+        place_of_birth = COALESCE(${memberData.place_of_birth}, place_of_birth),
+        nationality = COALESCE(${memberData.nationality}, nationality),
+        address = COALESCE(${memberData.address}, address),
+        phone = COALESCE(${memberData.phone}, phone),
+        email = COALESCE(${memberData.email}, email),
+        profession = COALESCE(${memberData.profession}, profession),
+        blood_group = COALESCE(${memberData.blood_group}, blood_group),
+        allergies = COALESCE(${memberData.allergies}, allergies),
+        medical_history = COALESCE(${memberData.medical_history}, medical_history),
+        emergency_contact_name = COALESCE(${memberData.emergency_contact_name}, emergency_contact_name),
+        emergency_contact_phone = COALESCE(${memberData.emergency_contact_phone}, emergency_contact_phone),
+        membership_date = COALESCE(${memberData.membership_date}, membership_date),
+        membership_type = COALESCE(${memberData.membership_type}, membership_type),
+        department = COALESCE(${memberData.department}, department),
+        arrondissement = COALESCE(${memberData.arrondissement}, arrondissement),
+        status = COALESCE(${memberData.status}, status),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id};
     `
-    if (updatedMembre.length === 0) {
-      return NextResponse.json({ error: "Membre non trouvé" }, { status: 404 })
+
+    if (rowCount === 0) {
+      return NextResponse.json({ error: "Member not found or no changes made" }, { status: 404 })
     }
-    return NextResponse.json(updatedMembre[0])
+    return NextResponse.json({ message: "Member updated successfully" })
   } catch (error) {
-    console.error("Erreur lors de la mise à jour du membre:", error)
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 })
+    console.error("Error updating member:", error)
+    return NextResponse.json({ error: "Failed to update member" }, { status: 500 })
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const sql = getSqlClient()
-  const { id } = params
-
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    const deletedMembre = await sql`
-      DELETE FROM membres
-      WHERE id = ${id}
-      RETURNING *
-    `
-    if (deletedMembre.length === 0) {
-      return NextResponse.json({ error: "Membre non trouvé" }, { status: 404 })
+    const { id } = params
+    const { rowCount } = await sql`DELETE FROM members WHERE id = ${id};`
+    if (rowCount === 0) {
+      return NextResponse.json({ error: "Member not found" }, { status: 404 })
     }
-    return NextResponse.json({ message: "Membre supprimé avec succès" })
+    return NextResponse.json({ message: "Member deleted successfully" })
   } catch (error) {
-    console.error("Erreur lors de la suppression du membre:", error)
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 })
+    console.error("Error deleting member:", error)
+    return NextResponse.json({ error: "Failed to delete member" }, { status: 500 })
   }
 }

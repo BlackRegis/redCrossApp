@@ -1,136 +1,102 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { PlusCircle, Search } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
+import { PlusCircle, Search, Eye, Edit, Trash2 } from "lucide-react"
+import Link from "next/link"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-// Sample members data (centralized as requested)
+// Sample member data (centralized as requested)
 const membersData = [
   {
     id: "1",
-    name: "Alice Dupont",
-    email: "alice.dupont@example.com",
-    phone: "+242 06 123 4567",
-    department: "Brazzaville",
-    status: "Actif",
+    nom: "Doe",
+    prenom: "John",
+    telephone: "+242 06 123 4567",
+    email: "john.doe@example.com",
+    departement: "Brazzaville",
+    arrondissement: "Moungali",
+    statut: "Actif",
+    imageUrl: "/placeholder.svg?height=40&width=40&text=JD",
   },
   {
     id: "2",
-    name: "Bob Martin",
-    email: "bob.martin@example.com",
-    phone: "+242 05 987 6543",
-    department: "Pointe-Noire",
-    status: "Actif",
+    nom: "Smith",
+    prenom: "Alice",
+    telephone: "+242 05 987 6543",
+    email: "alice.smith@example.com",
+    departement: "Pointe-Noire",
+    arrondissement: "Lumumba",
+    statut: "Actif",
+    imageUrl: "/placeholder.svg?height=40&width=40&text=AS",
   },
   {
     id: "3",
-    name: "Claire Dubois",
-    email: "claire.dubois@example.com",
-    phone: "+242 04 111 2233",
-    department: "Niari",
-    status: "Inactif",
+    nom: "Brown",
+    prenom: "Robert",
+    telephone: "+242 06 222 3344",
+    email: "robert.brown@example.com",
+    departement: "Pointe-Noire",
+    arrondissement: "Tié-Tié",
+    statut: "Actif",
+    imageUrl: "/placeholder.svg?height=40&width=40&text=RB",
   },
   {
     id: "4",
-    name: "David Nkounkou",
-    email: "david.nkounkou@example.com",
-    phone: "+242 06 222 3344",
-    department: "Pool",
-    status: "Actif",
+    nom: "Ngoma",
+    prenom: "Chantal",
+    telephone: "+242 05 111 2233",
+    email: "chantal.ngoma@example.com",
+    departement: "Brazzaville",
+    arrondissement: "Poto-Poto",
+    statut: "Inactif",
+    imageUrl: "/placeholder.svg?height=40&width=40&text=CN",
   },
   {
     id: "5",
-    name: "Émilie Ngoma",
-    email: "emilie.ngoma@example.com",
-    phone: "+242 05 333 4455",
-    department: "Kouilou",
-    status: "Actif",
-  },
-  {
-    id: "6",
-    name: "François M'Boulou",
-    email: "francois.mboulou@example.com",
-    phone: "+242 04 555 6677",
-    department: "Bouenza",
-    status: "Inactif",
-  },
-  {
-    id: "7",
-    name: "Grace Malonga",
-    email: "grace.malonga@example.com",
-    phone: "+242 06 777 8899",
-    department: "Lékoumou",
-    status: "Actif",
-  },
-  {
-    id: "8",
-    name: "Henriette Ondongo",
-    email: "henriette.ondongo@example.com",
-    phone: "+242 05 999 0011",
-    department: "Cuvette",
-    status: "Actif",
-  },
-  {
-    id: "9",
-    name: "Isabelle Kaba",
-    email: "isabelle.kaba@example.com",
-    phone: "+242 04 123 0987",
-    department: "Plateaux",
-    status: "Actif",
-  },
-  {
-    id: "10",
-    name: "Julien Massamba",
-    email: "julien.massamba@example.com",
-    phone: "+242 06 456 7890",
-    department: "Sangha",
-    status: "Inactif",
+    nom: "Mbemba",
+    prenom: "David",
+    telephone: "+242 06 555 6677",
+    email: "david.mbemba@example.com",
+    departement: "Pool",
+    arrondissement: "Kinkala",
+    statut: "Actif",
+    imageUrl: "/placeholder.svg?height=40&width=40&text=DM",
   },
 ]
 
-const ITEMS_PER_PAGE = 5
-
 export default function MembresPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
 
   const filteredMembers = membersData.filter(
     (member) =>
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.department.toLowerCase().includes(searchTerm.toLowerCase()),
+      member.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.departement.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.arrondissement.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
-  const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE)
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-  const currentMembers = filteredMembers.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-
-  const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1))
+  const handleEdit = (id: string) => {
+    console.log("Modifier le membre:", id)
+    // Implement navigation to edit page or open a modal
   }
 
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+  const handleDelete = (id: string) => {
+    console.log("Supprimer le membre:", id)
+    // Implement deletion logic, e.g., API call
+    if (confirm("Êtes-vous sûr de vouloir supprimer ce membre ?")) {
+      // Logic to remove from state or refetch data
+      alert(`Membre ${id} supprimé (simulation)`)
+    }
   }
 
   return (
-    <div className="flex-1 p-4 md:p-8">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Membres</h1>
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Gestion des Membres</h1>
         <Link href="/membres/nouveau">
           <Button>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -139,78 +105,93 @@ export default function MembresPage() {
         </Link>
       </div>
 
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Rechercher des Membres</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Rechercher par nom, prénom, département ou arrondissement..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Liste des Membres</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="relative mb-4">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Rechercher un membre..."
-              className="w-full rounded-lg bg-background pl-8 md:w-[300px] lg:w-[450px]"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Téléphone</TableHead>
-                <TableHead>Département</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentMembers.length > 0 ? (
-                currentMembers.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">{member.name}</TableCell>
-                    <TableCell>{member.email}</TableCell>
-                    <TableCell>{member.phone}</TableCell>
-                    <TableCell>{member.department}</TableCell>
-                    <TableCell>
-                      <Badge variant={member.status === "Actif" ? "default" : "secondary"}>{member.status}</Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link href={`/membres/${member.id}`}>
-                        <Button variant="outline" size="sm">
-                          Voir Détails
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Membre</TableHead>
+                  <TableHead>Téléphone</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Département</TableHead>
+                  <TableHead>Arrondissement</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredMembers.length > 0 ? (
+                  filteredMembers.map((member) => (
+                    <TableRow key={member.id}>
+                      <TableCell className="flex items-center">
+                        <Avatar className="h-9 w-9 mr-2">
+                          <AvatarImage
+                            src={member.imageUrl || "/placeholder.svg"}
+                            alt={`${member.prenom} ${member.nom}`}
+                          />
+                          <AvatarFallback>{member.prenom.charAt(0) + member.nom.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">
+                            {member.prenom} {member.nom}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{member.telephone}</TableCell>
+                      <TableCell>{member.email}</TableCell>
+                      <TableCell>{member.departement}</TableCell>
+                      <TableCell>{member.arrondissement}</TableCell>
+                      <TableCell>{member.statut}</TableCell>
+                      <TableCell className="text-right">
+                        <Link href={`/membres/${member.id}`}>
+                          <Button variant="ghost" size="sm" className="mr-2">
+                            <Eye className="h-4 w-4" />
+                            <span className="sr-only">Voir</span>
+                          </Button>
+                        </Link>
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(member.id)} className="mr-2">
+                          <Edit className="h-4 w-4" />
+                          <span className="sr-only">Modifier</span>
                         </Button>
-                      </Link>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(member.id)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <span className="sr-only">Supprimer</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center">
+                      Aucun membre trouvé.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center">
-                    Aucun membre trouvé.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          <Pagination className="mt-4">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious onClick={handlePreviousPage} disabled={currentPage === 1} />
-              </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => (
-                <PaginationItem key={i}>
-                  <Button variant={currentPage === i + 1 ? "default" : "outline"} onClick={() => setCurrentPage(i + 1)}>
-                    {i + 1}
-                  </Button>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext onClick={handleNextPage} disabled={currentPage === totalPages} />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

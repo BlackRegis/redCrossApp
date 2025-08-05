@@ -1,61 +1,56 @@
-import { getSqlClient } from "@/lib/database"
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
+import { sql } from "@vercel/postgres"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const sql = getSqlClient()
-  const { id } = params
-
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
-    const departement = await sql`SELECT * FROM departements WHERE id = ${id}`
-    if (departement.length === 0) {
-      return NextResponse.json({ error: "Département non trouvé" }, { status: 404 })
+    const { id } = params
+    const { rows } = await sql`SELECT * FROM departments WHERE id = ${id};`
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "Department not found" }, { status: 404 })
     }
-    return NextResponse.json(departement[0])
+    return NextResponse.json(rows[0])
   } catch (error) {
-    console.error("Erreur lors de la récupération du département:", error)
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 })
+    console.error("Error fetching department by ID:", error)
+    return NextResponse.json({ error: "Failed to fetch department" }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const sql = getSqlClient()
-  const { id } = params
-  const body = await request.json()
-  const { nom, code, population, superficie, chef_lieu } = body
-
+export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
-    const updatedDepartement = await sql`
-      UPDATE departements
-      SET nom = ${nom}, code = ${code}, population = ${population}, superficie = ${superficie}, chef_lieu = ${chef_lieu}
-      WHERE id = ${id}
-      RETURNING *
+    const { id } = params
+    const { name, head_name, contact_email, phone_number } = await request.json()
+
+    const { rowCount } = await sql`
+      UPDATE departments
+      SET
+        name = COALESCE(${name}, name),
+        head_name = COALESCE(${head_name}, head_name),
+        contact_email = COALESCE(${contact_email}, contact_email),
+        phone_number = COALESCE(${phone_number}, phone_number),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id};
     `
-    if (updatedDepartement.length === 0) {
-      return NextResponse.json({ error: "Département non trouvé" }, { status: 404 })
+
+    if (rowCount === 0) {
+      return NextResponse.json({ error: "Department not found or no changes made" }, { status: 404 })
     }
-    return NextResponse.json(updatedDepartement[0])
+    return NextResponse.json({ message: "Department updated successfully" })
   } catch (error) {
-    console.error("Erreur lors de la mise à jour du département:", error)
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 })
+    console.error("Error updating department:", error)
+    return NextResponse.json({ error: "Failed to update department" }, { status: 500 })
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const sql = getSqlClient()
-  const { id } = params
-
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
-    const deletedDepartement = await sql`
-      DELETE FROM departements
-      WHERE id = ${id}
-      RETURNING *
-    `
-    if (deletedDepartement.length === 0) {
-      return NextResponse.json({ error: "Département non trouvé" }, { status: 404 })
+    const { id } = params
+    const { rowCount } = await sql`DELETE FROM departments WHERE id = ${id};`
+    if (rowCount === 0) {
+      return NextResponse.json({ error: "Department not found" }, { status: 404 })
     }
-    return NextResponse.json({ message: "Département supprimé avec succès" })
+    return NextResponse.json({ message: "Department deleted successfully" })
   } catch (error) {
-    console.error("Erreur lors de la suppression du département:", error)
-    return NextResponse.json({ error: "Erreur interne du serveur" }, { status: 500 })
+    console.error("Error deleting department:", error)
+    return NextResponse.json({ error: "Failed to delete department" }, { status: 500 })
   }
 }
