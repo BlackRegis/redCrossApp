@@ -1,9 +1,7 @@
 "use client"
 
-import { CardDescription } from "@/components/ui/card"
-
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -18,6 +16,7 @@ import {
   Download,
   Eye,
   RefreshCw,
+  Plus,
   Filter,
   Printer,
   User,
@@ -26,8 +25,6 @@ import {
   MapPin,
   Phone,
   Mail,
-  PlusCircle,
-  XCircle,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -57,47 +54,47 @@ interface CarteMembre {
   adresse: string
 }
 
-// Sample card data (centralized as requested)
-const cardsData = [
+// Sample data for member cards
+const memberCards = [
   {
-    id: "card-001",
+    id: "card1",
     memberId: "1",
-    memberName: "John Doe",
-    type: "Membre Actif",
-    issueDate: "2023-01-15",
-    expiryDate: "2025-01-15",
-    status: "Valide",
-    imageUrl: "/placeholder.svg?height=150&width=250&text=Carte+001",
+    memberName: "Marc Kouadio",
+    cardNumber: "CRC-2020-001",
+    issueDate: "2020-01-10",
+    expiryDate: "2025-01-10",
+    status: "Active",
+    cardType: "Standard",
   },
   {
-    id: "card-002",
+    id: "card2",
     memberId: "2",
-    memberName: "Alice Smith",
-    type: "Bénévole",
-    issueDate: "2023-03-01",
-    expiryDate: "2025-03-01",
-    status: "Valide",
-    imageUrl: "/placeholder.svg?height=150&width=250&text=Carte+002",
-  },
-  {
-    id: "card-003",
-    memberId: "3",
-    memberName: "Robert Brown",
-    type: "Donateur",
-    issueDate: "2023-09-10",
-    expiryDate: "2024-09-10",
+    memberName: "Fatoumata Diallo",
+    cardNumber: "CRC-2019-002",
+    issueDate: "2019-03-20",
+    expiryDate: "2024-03-20",
     status: "Expirée",
-    imageUrl: "/placeholder.svg?height=150&width=250&text=Carte+003",
+    cardType: "Premium",
   },
   {
-    id: "card-004",
+    id: "card3",
+    memberId: "3",
+    memberName: "Christian Nzouzi",
+    cardNumber: "CRC-2022-003",
+    issueDate: "2022-09-01",
+    expiryDate: "2027-09-01",
+    status: "Active",
+    cardType: "Standard",
+  },
+  {
+    id: "card4",
     memberId: "4",
-    memberName: "Chantal Ngoma",
-    type: "Membre Actif",
-    issueDate: "2024-01-01",
-    expiryDate: "2026-01-01",
-    status: "Valide",
-    imageUrl: "/placeholder.svg?height=150&width=250&text=Carte+004",
+    memberName: "Brazza Congo",
+    cardNumber: "CRC-2023-004",
+    issueDate: "2023-05-01",
+    expiryDate: "2028-05-01",
+    status: "Active",
+    cardType: "Standard",
   },
 ]
 
@@ -348,14 +345,6 @@ export default function CartesPage() {
     return matchesSearch && matchesDepartement && matchesStatut && matchesType && matchesBureau && matchesTab
   })
 
-  const filteredCards = cardsData.filter(
-    (card) =>
-      card.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      card.memberName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      card.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      card.status.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
   // Pagination
   const totalPages = Math.ceil(filteredCartes.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
@@ -396,25 +385,6 @@ export default function CartesPage() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
     setSelectedCarte(null) // Clear selection when changing page
-  }
-
-  const handleView = (id: string) => {
-    console.log("Voir la carte:", id)
-    // Implement modal or navigation to card detail view
-  }
-
-  const handleDownload = (id: string) => {
-    console.log("Télécharger la carte:", id)
-    // Implement card download logic
-    alert(`Carte ${id} téléchargée (simulation)`)
-  }
-
-  const handleRevoke = (id: string) => {
-    console.log("Révoquer la carte:", id)
-    // Implement card revocation logic
-    if (confirm("Êtes-vous sûr de vouloir révoquer cette carte ?")) {
-      alert(`Carte ${id} révoquée (simulation)`)
-    }
   }
 
   const renderCartePreview = (carte: CarteMembre) => {
@@ -486,23 +456,94 @@ export default function CartesPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">Gestion des Cartes de Membre</h1>
+
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Aperçu de la Carte</CardTitle>
+          <CardDescription>Un exemple de carte de membre de la Croix Rouge Congolaise.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center">
+          <div className="relative w-[300px] h-[190px] bg-gradient-to-br from-red-700 to-red-900 rounded-xl shadow-lg p-4 text-white flex flex-col justify-between">
+            <div className="flex justify-between items-start">
+              <div className="text-lg font-bold">CROIX ROUGE CONGOLAISE</div>
+              <Image
+                src="/placeholder.svg?height=40&width=40&text=Logo"
+                alt="Logo Croix Rouge"
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-semibold">MEMBRE BÉNÉVOLE</p>
+              <p className="text-sm mt-1">JOHN DOE</p>
+            </div>
+            <div className="flex justify-between items-end text-xs">
+              <span>N°: CRC-XXXX-XXXX</span>
+              <span>Valide jusqu'à: MM/AA</span>
+            </div>
+            <Image
+              src="/public/images/sim-chip.png"
+              alt="SIM Chip"
+              width={30}
+              height={20}
+              className="absolute bottom-4 left-4"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Liste des Cartes Émises</CardTitle>
+          <CardDescription>Historique et statut de toutes les cartes de membre.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nom du Membre</TableHead>
+                <TableHead>Numéro de Carte</TableHead>
+                <TableHead>Date d'Émission</TableHead>
+                <TableHead>Date d'Expiration</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Type de Carte</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {memberCards.map((card) => (
+                <TableRow key={card.id}>
+                  <TableCell className="font-medium">{card.memberName}</TableCell>
+                  <TableCell>{card.cardNumber}</TableCell>
+                  <TableCell>{card.issueDate}</TableCell>
+                  <TableCell>{card.expiryDate}</TableCell>
+                  <TableCell>
+                    <Badge variant={card.status === "Active" ? "default" : "outline"}>{card.status}</Badge>
+                  </TableCell>
+                  <TableCell>{card.cardType}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Gestion des Cartes</h1>
           <p className="text-gray-600 mt-1">Gérez les cartes de membre de la Croix Rouge</p>
         </div>
-        <Link href="/cartes/nouvelle">
-          <Button className="bg-red-600 hover:bg-red-700">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Nouvelle Carte
-          </Button>
-        </Link>
+        <Button className="bg-red-600 hover:bg-red-700">
+          <Plus className="h-4 w-4 mr-2" />
+          Nouvelle Carte
+        </Button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mt-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Cartes</CardTitle>
@@ -564,7 +605,7 @@ export default function CartesPage() {
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="mt-6">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -660,7 +701,7 @@ export default function CartesPage() {
       </Card>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
@@ -891,66 +932,6 @@ export default function CartesPage() {
             </Card>
           )}
         </div>
-      </div>
-
-      {/* Cards Data Table */}
-      <div className="mt-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Liste des Cartes de Membre</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>ID Carte</TableHead>
-                    <TableHead>Membre</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Date d'Émission</TableHead>
-                    <TableHead>Date d'Expiration</TableHead>
-                    <TableHead>Statut</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCards.length > 0 ? (
-                    filteredCards.map((card) => (
-                      <TableRow key={card.id}>
-                        <TableCell className="font-medium">{card.id}</TableCell>
-                        <TableCell>{card.memberName}</TableCell>
-                        <TableCell>{card.type}</TableCell>
-                        <TableCell>{card.issueDate}</TableCell>
-                        <TableCell>{card.expiryDate}</TableCell>
-                        <TableCell>{card.status}</TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={() => handleView(card.id)} className="mr-2">
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">Voir</span>
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDownload(card.id)} className="mr-2">
-                            <Download className="h-4 w-4" />
-                            <span className="sr-only">Télécharger</span>
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleRevoke(card.id)}>
-                            <XCircle className="h-4 w-4 text-red-500" />
-                            <span className="sr-only">Révoquer</span>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center">
-                        Aucune carte trouvée.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

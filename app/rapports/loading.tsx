@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton"
 
-export default function CartesLoading() {
+export default function RapportsLoading() {
   return (
     <div className="flex flex-col space-y-3 p-4">
       <Skeleton className="h-[125px] w-full rounded-xl" />

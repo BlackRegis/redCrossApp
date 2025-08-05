@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server"
 import { sql } from "@vercel/postgres"
+import { NextResponse } from "next/server"
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
@@ -8,9 +8,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
     if (rows.length === 0) {
       return NextResponse.json({ error: "Department not found" }, { status: 404 })
     }
-    return NextResponse.json(rows[0])
+    return NextResponse.json(rows[0], { status: 200 })
   } catch (error) {
-    console.error("Error fetching department by ID:", error)
+    console.error(`Error fetching department with ID ${params.id}:`, error)
     return NextResponse.json({ error: "Failed to fetch department" }, { status: 500 })
   }
 }
@@ -18,25 +18,22 @@ export async function GET(request: Request, { params }: { params: { id: string }
 export async function PUT(request: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    const { name, head_name, contact_email, phone_number } = await request.json()
-
-    const { rowCount } = await sql`
-      UPDATE departments
-      SET
-        name = COALESCE(${name}, name),
-        head_name = COALESCE(${head_name}, head_name),
-        contact_email = COALESCE(${contact_email}, contact_email),
-        phone_number = COALESCE(${phone_number}, phone_number),
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${id};
-    `
-
-    if (rowCount === 0) {
-      return NextResponse.json({ error: "Department not found or no changes made" }, { status: 404 })
+    const { name, head_of_department, contact_email } = await request.json()
+    if (!name) {
+      return NextResponse.json({ error: "Department name is required" }, { status: 400 })
     }
-    return NextResponse.json({ message: "Department updated successfully" })
+    const { rows } = await sql`
+      UPDATE departments
+      SET name = ${name}, head_of_department = ${head_of_department || null}, contact_email = ${contact_email || null}, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+      RETURNING *;
+    `
+    if (rows.length === 0) {
+      return NextResponse.json({ error: "Department not found" }, { status: 404 })
+    }
+    return NextResponse.json(rows[0], { status: 200 })
   } catch (error) {
-    console.error("Error updating department:", error)
+    console.error(`Error updating department with ID ${params.id}:`, error)
     return NextResponse.json({ error: "Failed to update department" }, { status: 500 })
   }
 }
@@ -48,9 +45,9 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     if (rowCount === 0) {
       return NextResponse.json({ error: "Department not found" }, { status: 404 })
     }
-    return NextResponse.json({ message: "Department deleted successfully" })
+    return NextResponse.json({ message: "Department deleted successfully" }, { status: 200 })
   } catch (error) {
-    console.error("Error deleting department:", error)
+    console.error(`Error deleting department with ID ${params.id}:`, error)
     return NextResponse.json({ error: "Failed to delete department" }, { status: 500 })
   }
 }

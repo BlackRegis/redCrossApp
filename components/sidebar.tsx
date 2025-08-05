@@ -72,7 +72,7 @@ const menuItems = [
   },
 ]
 
-// Sample user data
+// Sample user data for the profile button
 const currentUser = {
   name: "John Doe",
   avatar: "/placeholder.svg?height=40&width=40&text=JD",

@@ -1,9 +1,7 @@
 "use client"
 
-import { CardDescription } from "@/components/ui/card"
-
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -165,43 +163,39 @@ const bureauxData: BureauExecutif[] = [
   },
 ]
 
-// Sample executive board data (centralized as requested)
-const executiveBoardMembers = [
+// Sample data for executive members
+const executiveMembers = [
   {
-    id: "exec-1",
-    name: "Dr. Jean-Luc Mambou",
+    id: "exec1",
+    name: "Dr. Émile Ngoma",
     title: "Président National",
-    bio: "Leader expérimenté avec une vision forte pour l'humanitaire.",
-    email: "jeanluc.mambou@crc.org",
+    email: "emile.ngoma@example.com",
     phone: "+242 06 123 4567",
-    imageUrl: "/placeholder.svg?height=100&width=100&text=JLM",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=EN",
   },
   {
-    id: "exec-2",
-    name: "Mme. Sophie Nkouka",
+    id: "exec2",
+    name: "Mme. Chantal Mboumba",
     title: "Secrétaire Générale",
-    bio: "Organisatrice méticuleuse et pilier de l'administration.",
-    email: "sophie.nkouka@crc.org",
+    email: "chantal.mboumba@example.com",
     phone: "+242 06 765 4321",
-    imageUrl: "/placeholder.svg?height=100&width=100&text=SN",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=CM",
   },
   {
-    id: "exec-3",
-    name: "M. David Mbemba",
+    id: "exec3",
+    name: "M. David Nkounkou",
     title: "Trésorier",
-    bio: "Expert financier assurant la bonne gestion des ressources.",
-    email: "david.mbemba@crc.org",
+    email: "david.nkounkou@example.com",
     phone: "+242 05 987 6543",
-    imageUrl: "/placeholder.svg?height=100&width=100&text=DM",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=DN",
   },
   {
-    id: "exec-4",
-    name: "Dr. Chantal Ngoma",
+    id: "exec4",
+    name: "Dr. Sylvie Kaba",
     title: "Directrice des Programmes",
-    bio: "Passionnée par l'impact sur le terrain et le développement de projets.",
-    email: "chantal.ngoma@crc.org",
+    email: "sylvie.kaba@example.com",
     phone: "+242 05 111 2233",
-    imageUrl: "/placeholder.svg?height=100&width=100&text=CN",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=SK",
   },
 ]
 
@@ -323,36 +317,33 @@ export default function BureauExecutifPage() {
         </Button>
       </div>
 
-      {/* Executive Board Members */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-        {executiveBoardMembers.map((member) => (
-          <Card key={member.id}>
-            <CardHeader className="flex flex-col items-center text-center">
-              <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={member.imageUrl || "/placeholder.svg"} alt={member.name} />
-                <AvatarFallback>
-                  {member.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
-              <CardTitle className="text-xl">{member.name}</CardTitle>
-              <p className="text-muted-foreground">{member.title}</p>
-            </CardHeader>
-            <CardContent className="text-sm text-center">
-              <p className="mb-4">{member.bio}</p>
-              <div className="flex items-center justify-center text-muted-foreground mb-2">
-                <Mail className="h-4 w-4 mr-2" />
-                <span>{member.email}</span>
-              </div>
-              <div className="flex items-center justify-center text-muted-foreground">
-                <Phone className="h-4 w-4 mr-2" />
-                <span>{member.phone}</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Executive Members */}
+      <div className="container mx-auto py-8">
+        <h1 className="text-3xl font-bold mb-6">Bureau Exécutif National</h1>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {executiveMembers.map((member) => (
+            <Card key={member.id}>
+              <CardHeader className="flex flex-col items-center text-center">
+                <Avatar className="h-24 w-24 mb-4">
+                  <AvatarImage src={member.imageUrl || "/placeholder.svg"} alt={member.name} />
+                  <AvatarFallback>
+                    {member.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")}
+                  </AvatarFallback>
+                </Avatar>
+                <CardTitle className="text-xl">{member.name}</CardTitle>
+                <CardDescription className="text-muted-foreground">{member.title}</CardDescription>
+              </CardHeader>
+              <CardContent className="text-center text-sm">
+                <p className="mb-1">Email: {member.email}</p>
+                <p>Téléphone: {member.phone}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       {/* Stats */}

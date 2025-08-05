@@ -1,183 +1,241 @@
 import { sql } from "@vercel/postgres"
 
-export async function fetchAppSettings() {
+// Fonctions pour les paramètres d'application
+export async function saveAppSettings(settings: any) {
   try {
-    const { rows } = await sql`SELECT setting_key, setting_value FROM app_settings;`
-    const settings = rows.reduce((acc, row) => {
-      acc[row.setting_key] = row.setting_value
-      return acc
-    }, {})
-    return settings
-  } catch (error) {
-    console.error("Database Error: Failed to fetch app settings.", error)
-    throw new Error("Failed to fetch app settings.")
-  }
-}
-
-export async function updateAppSetting(key: string, value: string) {
-  try {
-    const { rowCount } = await sql`
-      INSERT INTO app_settings (setting_key, setting_value)
-      VALUES (${key}, ${value})
-      ON CONFLICT (setting_key) DO UPDATE SET setting_value = EXCLUDED.setting_value, updated_at = CURRENT_TIMESTAMP;
-    `
-    return rowCount > 0
-  } catch (error) {
-    console.error("Database Error: Failed to update app setting.", error)
-    throw new Error("Failed to update app setting.")
-  }
-}
-
-export async function fetchDepartments() {
-  try {
-    const { rows } = await sql`SELECT * FROM departments ORDER BY name ASC;`
-    return rows
-  } catch (error) {
-    console.error("Database Error: Failed to fetch departments.", error)
-    throw new Error("Failed to fetch departments.")
-  }
-}
-
-export async function addDepartment(name: string) {
-  try {
-    const { rows } = await sql`
-      INSERT INTO departments (name)
-      VALUES (${name})
-      RETURNING *;
-    `
-    return rows[0]
-  } catch (error) {
-    console.error("Database Error: Failed to add department.", error)
-    throw new Error("Failed to add department.")
-  }
-}
-
-export async function deleteDepartment(id: number) {
-  try {
-    const { rowCount } = await sql`DELETE FROM departments WHERE id = ${id};`
-    return rowCount > 0
-  } catch (error) {
-    console.error("Database Error: Failed to delete department.", error)
-    throw new Error("Failed to delete department.")
-  }
-}
-
-export async function fetchArrondissements() {
-  try {
-    const { rows } = await sql`SELECT * FROM arrondissements ORDER BY name ASC;`
-    return rows
-  } catch (error) {
-    console.error("Database Error: Failed to fetch arrondissements.", error)
-    throw new Error("Failed to fetch arrondissements.")
-  }
-}
-
-export async function addArrondissement(department_id: number, name: string, population: number | null) {
-  try {
-    const { rows } = await sql`
-      INSERT INTO arrondissements (department_id, name, population)
-      VALUES (${department_id}, ${name}, ${population})
-      RETURNING *;
-    `
-    return rows[0]
-  } catch (error) {
-    console.error("Database Error: Failed to add arrondissement.", error)
-    throw new Error("Failed to add arrondissement.")
-  }
-}
-
-export async function deleteArrondissement(id: number) {
-  try {
-    const { rowCount } = await sql`DELETE FROM arrondissements WHERE id = ${id};`
-    return rowCount > 0
-  } catch (error) {
-    console.error("Database Error: Failed to delete arrondissement.", error)
-    throw new Error("Failed to delete arrondissement.")
-  }
-}
-
-export async function fetchMembers() {
-  try {
-    const { rows } = await sql`SELECT * FROM members ORDER BY last_name ASC;`
-    return rows
-  } catch (error) {
-    console.error("Database Error: Failed to fetch members.", error)
-    throw new Error("Failed to fetch members.")
-  }
-}
-
-export async function fetchMemberById(id: string) {
-  try {
-    const { rows } = await sql`SELECT * FROM members WHERE id = ${id};`
-    return rows[0]
-  } catch (error) {
-    console.error("Database Error: Failed to fetch member by ID.", error)
-    throw new Error("Failed to fetch member by ID.")
-  }
-}
-
-export async function addMember(memberData: any) {
-  try {
-    const { rows } = await sql`
-      INSERT INTO members (
-        first_name, last_name, date_of_birth, place_of_birth, nationality, address,
-        phone, email, profession, blood_group, allergies, medical_history,
-        emergency_contact_name, emergency_contact_phone,
-        membership_date, membership_type, department, arrondissement, status
+    await sql`
+      INSERT INTO app_settings (
+        nom_organisation, sigle, adresse_siege, telephone, email, site_web, 
+        description, couleur_primaire, couleur_secondaire, updated_at
       ) VALUES (
-        ${memberData.first_name}, ${memberData.last_name}, ${memberData.date_of_birth}, ${memberData.place_of_birth}, ${memberData.nationality}, ${memberData.address},
-        ${memberData.phone}, ${memberData.email}, ${memberData.profession}, ${memberData.blood_group}, ${memberData.allergies}, ${memberData.medical_history},
-        ${memberData.emergency_contact_name}, ${memberData.emergency_contact_phone},
-        ${memberData.membership_date}, ${memberData.membership_type}, ${memberData.department}, ${memberData.arrondissement}, ${memberData.status}
+        ${settings.nomOrganisation}, ${settings.sigle}, ${settings.adresseSiege}, 
+        ${settings.telephone}, ${settings.email}, ${settings.siteWeb}, 
+        ${settings.description}, ${settings.couleurPrimaire}, ${settings.couleurSecondaire}, 
+        NOW()
       )
-      RETURNING *;
+      ON CONFLICT (id) DO UPDATE SET
+        nom_organisation = ${settings.nomOrganisation},
+        sigle = ${settings.sigle},
+        adresse_siege = ${settings.adresseSiege},
+        telephone = ${settings.telephone},
+        email = ${settings.email},
+        site_web = ${settings.siteWeb},
+        description = ${settings.description},
+        couleur_primaire = ${settings.couleurPrimaire},
+        couleur_secondaire = ${settings.couleurSecondaire},
+        updated_at = NOW()
     `
-    return rows[0]
+    return { success: true }
   } catch (error) {
-    console.error("Database Error: Failed to add member.", error)
-    throw new Error("Failed to add member.")
+    console.error("Erreur lors de la sauvegarde des paramètres:", error)
+    return { success: false, error }
   }
 }
 
-export async function updateMember(id: string, memberData: any) {
+export async function getAppSettings() {
   try {
-    const { rowCount } = await sql`
-      UPDATE members SET
-        first_name = ${memberData.first_name},
-        last_name = ${memberData.last_name},
-        date_of_birth = ${memberData.date_of_birth},
-        place_of_birth = ${memberData.place_of_birth},
-        nationality = ${memberData.nationality},
-        address = ${memberData.address},
-        phone = ${memberData.phone},
-        email = ${memberData.email},
-        profession = ${memberData.profession},
-        blood_group = ${memberData.blood_group},
-        allergies = ${memberData.allergies},
-        medical_history = ${memberData.medical_history},
-        emergency_contact_name = ${memberData.emergency_contact_name},
-        emergency_contact_phone = ${memberData.emergency_contact_phone},
-        membership_date = ${memberData.membership_date},
-        membership_type = ${memberData.membership_type},
-        department = ${memberData.department},
-        arrondissement = ${memberData.arrondissement},
-        status = ${memberData.status},
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${id};
-    `
-    return rowCount > 0
+    const result = await sql`SELECT * FROM app_settings LIMIT 1`
+    return result.rows[0] || null
   } catch (error) {
-    console.error("Database Error: Failed to update member.", error)
-    throw new Error("Failed to update member.")
+    console.error("Erreur lors de la récupération des paramètres:", error)
+    return null
   }
 }
 
-export async function deleteMember(id: string) {
+// Fonctions pour les paramètres du pays
+export async function savePaysSettings(settings: any) {
   try {
-    const { rowCount } = await sql`DELETE FROM members WHERE id = ${id};`
-    return rowCount > 0
+    await sql`
+      INSERT INTO pays_settings (
+        nom_pays, code_pays, capitale, langue, monnaie, code_monnaie, 
+        fuseau_horaire, prefixe_telephone, updated_at
+      ) VALUES (
+        ${settings.nomPays}, ${settings.codePays}, ${settings.capitale}, 
+        ${settings.langue}, ${settings.monnaie}, ${settings.codeMonnaie}, 
+        ${settings.fuseauHoraire}, ${settings.prefixeTelephone}, NOW()
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        nom_pays = ${settings.nomPays},
+        code_pays = ${settings.codePays},
+        capitale = ${settings.capitale},
+        langue = ${settings.langue},
+        monnaie = ${settings.monnaie},
+        code_monnaie = ${settings.codeMonnaie},
+        fuseau_horaire = ${settings.fuseauHoraire},
+        prefixe_telephone = ${settings.prefixeTelephone},
+        updated_at = NOW()
+    `
+    return { success: true }
   } catch (error) {
-    console.error("Database Error: Failed to delete member.", error)
-    throw new Error("Failed to delete member.")
+    console.error("Erreur lors de la sauvegarde des paramètres du pays:", error)
+    return { success: false, error }
   }
 }
+
+// Fonctions pour les départements
+export async function createDepartement(departement: any) {
+  try {
+    const result = await sql`
+      INSERT INTO departements (nom, code, chef_lieu, population, superficie, created_at)
+      VALUES (${departement.nom}, ${departement.code}, ${departement.chef_lieu}, 
+              ${departement.population}, ${departement.superficie}, NOW())
+      RETURNING *
+    `
+    return { success: true, data: result.rows[0] }
+  } catch (error) {
+    console.error("Erreur lors de la création du département:", error)
+    return { success: false, error }
+  }
+}
+
+export async function getDepartements() {
+  try {
+    const result = await sql`
+      SELECT d.*, 
+             COUNT(a.id) as nb_arrondissements
+      FROM departements d
+      LEFT JOIN arrondissements a ON d.id = a.departement_id
+      GROUP BY d.id
+      ORDER BY d.nom
+    `
+    return result.rows
+  } catch (error) {
+    console.error("Erreur lors de la récupération des départements:", error)
+    return []
+  }
+}
+
+export async function deleteDepartement(id: string) {
+  try {
+    // Supprimer d'abord les arrondissements
+    await sql`DELETE FROM arrondissements WHERE departement_id = ${id}`
+    // Puis le département
+    await sql`DELETE FROM departements WHERE id = ${id}`
+    return { success: true }
+  } catch (error) {
+    console.error("Erreur lors de la suppression du département:", error)
+    return { success: false, error }
+  }
+}
+
+// Fonctions pour les arrondissements
+export async function createArrondissement(arrondissement: any) {
+  try {
+    const result = await sql`
+      INSERT INTO arrondissements (nom, code, departement_id, population, superficie, created_at)
+      VALUES (${arrondissement.nom}, ${arrondissement.code}, ${arrondissement.departement_id}, 
+              ${arrondissement.population}, ${arrondissement.superficie}, NOW())
+      RETURNING *
+    `
+    return { success: true, data: result.rows[0] }
+  } catch (error) {
+    console.error("Erreur lors de la création de l'arrondissement:", error)
+    return { success: false, error }
+  }
+}
+
+export async function getArrondissements(departementId?: string) {
+  try {
+    const query = departementId
+      ? sql`SELECT * FROM arrondissements WHERE departement_id = ${departementId} ORDER BY nom`
+      : sql`SELECT a.*, d.nom as departement_nom FROM arrondissements a 
+            JOIN departements d ON a.departement_id = d.id ORDER BY d.nom, a.nom`
+
+    const result = await query
+    return result.rows
+  } catch (error) {
+    console.error("Erreur lors de la récupération des arrondissements:", error)
+    return []
+  }
+}
+
+export async function deleteArrondissement(id: string) {
+  try {
+    await sql`DELETE FROM arrondissements WHERE id = ${id}`
+    return { success: true }
+  } catch (error) {
+    console.error("Erreur lors de la suppression de l'arrondissement:", error)
+    return { success: false, error }
+  }
+}
+
+// Fonctions pour modifier les départements
+export async function updateDepartement(id: string, departement: any) {
+  try {
+    const result = await sql`
+      UPDATE departements 
+      SET nom = ${departement.nom}, 
+          code = ${departement.code}, 
+          chef_lieu = ${departement.chef_lieu}, 
+          population = ${departement.population}, 
+          superficie = ${departement.superficie}, 
+          updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `
+    return { success: true, data: result.rows[0] }
+  } catch (error) {
+    console.error("Erreur lors de la modification du département:", error)
+    return { success: false, error }
+  }
+}
+
+// Fonctions pour modifier les arrondissements
+export async function updateArrondissement(id: string, arrondissement: any) {
+  try {
+    const result = await sql`
+      UPDATE arrondissements 
+      SET nom = ${arrondissement.nom}, 
+          code = ${arrondissement.code}, 
+          population = ${arrondissement.population}, 
+          superficie = ${arrondissement.superficie}, 
+          updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `
+    return { success: true, data: result.rows[0] }
+  } catch (error) {
+    console.error("Erreur lors de la modification de l'arrondissement:", error)
+    return { success: false, error }
+  }
+}
+
+// Fonction pour récupérer les détails d'un membre
+export async function getMembreDetails(id: string) {
+  try {
+    const membre = await sql`
+      SELECT m.*, d.nom as departement_nom, a.nom as arrondissement_nom
+      FROM membres m
+      LEFT JOIN departements d ON m.departement_id = d.id
+      LEFT JOIN arrondissements a ON m.arrondissement_id = a.id
+      WHERE m.id = ${id}
+    `
+
+    if (membre.rows.length === 0) return null
+
+    // Récupérer les formations du membre
+    const formations = await sql`
+      SELECT * FROM formations WHERE membre_id = ${id} ORDER BY date_debut DESC
+    `
+
+    // Récupérer les activités du membre
+    const activites = await sql`
+      SELECT ap.*, a.titre, a.type, a.date_debut as date
+      FROM activite_participants ap
+      JOIN activites a ON ap.activite_id = a.id
+      WHERE ap.membre_id = ${id}
+      ORDER BY a.date_debut DESC
+    `
+
+    return {
+      ...membre.rows[0],
+      formations: formations.rows,
+      activites: activites.rows,
+    }
+  } catch (error) {
+    console.error("Erreur lors de la récupération des détails du membre:", error)
+    return null
+  }
+}
+
+export { sql }

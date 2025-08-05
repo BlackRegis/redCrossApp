@@ -1,13 +1,14 @@
 "use client"
 
-import React from "react"
-
-import { Pagination } from "@/components/ui/pagination"
-
 import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tree, TreeItem, TreeGroup } from "@/components/ui/tree"
-import { ChevronRight, ChevronDown, Users, MapPin, Building } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Pagination } from "@/components/ui/pagination"
+import { Building2, MapPin, Users, Plus, Edit, ChevronDown, ChevronRight, Search } from "lucide-react"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface OrganisationNode {
   id: string
@@ -170,58 +171,29 @@ const organisationData: OrganisationNode = {
 const DEPARTMENTS_PER_PAGE = 4
 const ARRONDISSEMENTS_PER_PAGE = 6
 
-const organizationDataNew = {
-  name: "Croix Rouge Congolaise",
-  type: "Organisation Humanitaire",
-  headquarters: "Brazzaville, Congo",
-  departments: [
-    {
-      id: "dep-1",
-      name: "Département de Brazzaville",
-      head: "Jean Dupont",
-      arrondissements: [
-        { id: "arr-1-1", name: "Moungali", members: 120 },
-        { id: "arr-1-2", name: "Makélékélé", members: 150 },
-        { id: "arr-1-3", name: "Poto-Poto", members: 100 },
-      ],
-    },
-    {
-      id: "dep-2",
-      name: "Département de Pointe-Noire",
-      head: "Marie Curie",
-      arrondissements: [
-        { id: "arr-2-1", name: "Lumumba", members: 90 },
-        { id: "arr-2-2", name: "Tié-Tié", members: 110 },
-      ],
-    },
-    {
-      id: "dep-3",
-      name: "Département du Pool",
-      head: "Pierre Martin",
-      arrondissements: [
-        { id: "arr-3-1", name: "Kinkala", members: 50 },
-        { id: "arr-3-2", name: "Mindouli", members: 40 },
-      ],
-    },
-  ],
-}
+// Sample data for departments and arrondissements
+const departments = [
+  { id: "dept1", name: "Brazzaville", head: "Jean Dupont", contact: "jean.dupont@example.com" },
+  { id: "dept2", name: "Pointe-Noire", head: "Marie Curie", contact: "marie.curie@example.com" },
+  { id: "dept3", name: "Niari", head: "Pierre Martin", contact: "pierre.martin@example.com" },
+  { id: "dept4", name: "Pool", head: "Sophie Dubois", contact: "sophie.dubois@example.com" },
+]
+
+const arrondissements = [
+  { id: "arr1", name: "Makélékélé", departmentId: "dept1", population: 300000 },
+  { id: "arr2", name: "Bacongo", departmentId: "dept1", population: 250000 },
+  { id: "arr3", name: "Poto-Poto", departmentId: "dept1", population: 200000 },
+  { id: "arr4", name: "Moungali", departmentId: "dept1", population: 180000 },
+  { id: "arr5", name: "Lumumba", departmentId: "dept2", population: 400000 },
+  { id: "arr6", name: "Tié-Tié", departmentId: "dept2", population: 350000 },
+]
 
 export default function OrganisationPage() {
-  const [expandedDepartments, setExpandedDepartments] = useState<string[]>([])
-  const [expandedArrondissements, setExpandedArrondissements] = useState<string[]>([])
   const [selectedNode, setSelectedNode] = useState<OrganisationNode | null>(null)
   const [openNodes, setOpenNodes] = useState<string[]>(["congo", "brazzaville"])
   const [searchTerm, setSearchTerm] = useState("")
   const [currentDeptPage, setCurrentDeptPage] = useState(1)
   const [arrondissementPages, setArrondissementPages] = useState<{ [key: string]: number }>({})
-
-  const toggleDepartment = (id: string) => {
-    setExpandedDepartments((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
-  }
-
-  const toggleArrondissement = (id: string) => {
-    setExpandedArrondissements((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
-  }
 
   const toggleNode = (nodeId: string) => {
     setOpenNodes((prev) => (prev.includes(nodeId) ? prev.filter((id) => id !== nodeId) : [...prev, nodeId]))
@@ -230,13 +202,13 @@ export default function OrganisationPage() {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "nation":
-        return <Building className="h-4 w-4 text-blue-600" />
+        return <Building2 className="h-4 w-4 text-blue-600" />
       case "departement":
         return <MapPin className="h-4 w-4 text-green-600" />
       case "arrondissement":
         return <Users className="h-4 w-4 text-orange-600" />
       default:
-        return <Building className="h-4 w-4" />
+        return <Building2 className="h-4 w-4" />
     }
   }
 
@@ -294,33 +266,73 @@ export default function OrganisationPage() {
 
     return (
       <div key={node.id} className="space-y-2">
-        <TreeItem
-          level={level}
-          isExpanded={isOpen}
-          onToggle={() => hasChildren && toggleNode(node.id)}
-          icon={isOpen ? <ChevronDown /> : <ChevronRight />}
-        >
-          {getTypeIcon(node.type)}
-          {node.nom} (Responsable: {node.responsable})
-        </TreeItem>
-        {hasChildren && node.type === "departement" && (
-          <TreeGroup isExpanded={isOpen}>
-            <div className="space-y-2">
-              {getPaginatedArrondissements(node).map((child) => renderNode(child, level + 1))}
-            </div>
-
-            {/* Pagination des arrondissements */}
-            {node.children && node.children.length > ARRONDISSEMENTS_PER_PAGE && (
-              <div className="flex justify-center">
-                <Pagination
-                  currentPage={arrondissementPages[node.id] || 1}
-                  totalPages={getArrondissementTotalPages(node)}
-                  onPageChange={(page) => handleArrondissementPageChange(node.id, page)}
-                />
+        <Collapsible open={isOpen} onOpenChange={() => hasChildren && toggleNode(node.id)}>
+          <Card
+            className={`cursor-pointer transition-colors hover:bg-gray-50 ${
+              selectedNode?.id === node.id ? "ring-2 ring-red-500" : ""
+            }`}
+            onClick={() => setSelectedNode(node)}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  {hasChildren && (
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-0 h-auto"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleNode(node.id)
+                        }}
+                      >
+                        {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                      </Button>
+                    </CollapsibleTrigger>
+                  )}
+                  {!hasChildren && <div className="w-4" />}
+                  {getTypeIcon(node.type)}
+                  <div>
+                    <h3 className="font-semibold">{node.nom}</h3>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Badge className={getTypeColor(node.type)}>
+                        {node.type.charAt(0).toUpperCase() + node.type.slice(1)}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">{node.nombreMembres} membres</span>
+                    </div>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm">
+                  <Edit className="h-4 w-4" />
+                </Button>
               </div>
-            )}
-          </TreeGroup>
-        )}
+              {node.responsable && (
+                <p className="text-sm text-muted-foreground mt-2">Responsable: {node.responsable}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {hasChildren && node.type === "departement" && (
+            <CollapsibleContent className="ml-6 space-y-4 border-l-2 border-gray-200 pl-4">
+              {/* Arrondissements paginés */}
+              <div className="space-y-2">
+                {getPaginatedArrondissements(node).map((child) => renderNode(child, level + 1))}
+              </div>
+
+              {/* Pagination des arrondissements */}
+              {node.children && node.children.length > ARRONDISSEMENTS_PER_PAGE && (
+                <div className="flex justify-center">
+                  <Pagination
+                    currentPage={arrondissementPages[node.id] || 1}
+                    totalPages={getArrondissementTotalPages(node)}
+                    onPageChange={(page) => handleArrondissementPageChange(node.id, page)}
+                  />
+                </div>
+              )}
+            </CollapsibleContent>
+          )}
+        </Collapsible>
       </div>
     )
   }
@@ -332,78 +344,253 @@ export default function OrganisationPage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-6">Structure de l'Organisation</h1>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Informations Générales</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>
-            <strong>Nom:</strong> {organizationDataNew.name}
-          </p>
-          <p>
-            <strong>Type:</strong> {organizationDataNew.type}
-          </p>
-          <p>
-            <strong>Siège Social:</strong> {organizationDataNew.headquarters}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Hiérarchie Organisationnelle</CardTitle>
+                  <CardDescription>
+                    Structure complète de l'organisation (cliquez pour développer/réduire)
+                  </CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button className="bg-red-600 hover:bg-red-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ajouter
+                  </Button>
+                </div>
+              </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Statistiques Globales</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Total Départements:</span>
-            <span className="font-semibold">{organisationData.children?.length || 0}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Total Arrondissements:</span>
-            <span className="font-semibold">
-              {organisationData.children?.reduce((total, dept) => total + (dept.children?.length || 0), 0) || 0}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Total Membres:</span>
-            <span className="font-semibold">{organisationData.nombreMembres}</span>
-          </div>
-        </CardContent>
-      </Card>
+              {/* Search and Filter */}
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Rechercher un département ou responsable..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8"
+                  />
+                </div>
+                {searchTerm && (
+                  <Button variant="outline" onClick={clearSearch} size="sm">
+                    Effacer
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Niveau National (toujours affiché) */}
+                {renderNode(organisationData)}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Départements et Arrondissements</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tree>
-            {organisationData.children?.map((department) => (
-              <React.Fragment key={department.id}>
-                <TreeItem
-                  level={0}
-                  isExpanded={expandedDepartments.includes(department.id)}
-                  onToggle={() => toggleDepartment(department.id)}
-                  icon={expandedDepartments.includes(department.id) ? <ChevronDown /> : <ChevronRight />}
-                >
-                  {getTypeIcon(department.type)}
-                  {department.nom} (Responsable: {department.responsable})
-                </TreeItem>
-                <TreeGroup isExpanded={expandedDepartments.includes(department.id)}>
-                  {department.children?.map((arrondissement) => (
-                    <TreeItem key={arrondissement.id} level={1}>
-                      {getTypeIcon(arrondissement.type)}
-                      {arrondissement.nom} (Membres: {arrondissement.nombreMembres})
-                    </TreeItem>
+                {/* Départements paginés */}
+                <div className="ml-6 space-y-4 border-l-2 border-gray-200 pl-4">
+                  <div className="space-y-4">{paginatedDepartments.map((dept) => renderNode(dept, 1))}</div>
+
+                  {/* Pagination des départements */}
+                  {totalDeptPages > 1 && (
+                    <div className="flex justify-center pt-4">
+                      <Pagination
+                        currentPage={currentDeptPage}
+                        totalPages={totalDeptPages}
+                        onPageChange={handleDeptPageChange}
+                      />
+                    </div>
+                  )}
+
+                  {filteredDepartments.length === 0 && searchTerm && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>Aucun département trouvé pour "{searchTerm}"</p>
+                      <Button variant="outline" onClick={clearSearch} className="mt-2 bg-transparent">
+                        Effacer la recherche
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          {selectedNode ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {getTypeIcon(selectedNode.type)}
+                  Détails
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedNode.nom}</h3>
+                  <Badge className={getTypeColor(selectedNode.type)}>
+                    {selectedNode.type.charAt(0).toUpperCase() + selectedNode.type.slice(1)}
+                  </Badge>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Membres:</span>
+                    <span className="font-semibold">{selectedNode.nombreMembres}</span>
+                  </div>
+                  {selectedNode.responsable && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Responsable:</span>
+                      <span className="font-semibold">{selectedNode.responsable}</span>
+                    </div>
+                  )}
+                  {selectedNode.children && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Subdivisions:</span>
+                      <span className="font-semibold">{selectedNode.children.length}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 space-y-2">
+                  <Button className="w-full bg-transparent" variant="outline">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Modifier
+                  </Button>
+                  <Button className="w-full bg-transparent" variant="outline">
+                    <Users className="h-4 w-4 mr-2" />
+                    Voir les Membres
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Sélectionner un élément</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Cliquez sur un élément de la hiérarchie pour voir ses détails.</p>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Navigation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Page actuelle:</span>
+                <span className="font-semibold">
+                  {currentDeptPage} / {totalDeptPages}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Départements affichés:</span>
+                <span className="font-semibold">{paginatedDepartments.length}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total départements:</span>
+                <span className="font-semibold">{filteredDepartments.length}</span>
+              </div>
+              {searchTerm && (
+                <div className="pt-2 border-t">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Recherche:</span>
+                    <span className="font-semibold text-sm">"{searchTerm}"</span>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Statistiques Globales</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total Départements:</span>
+                <span className="font-semibold">{organisationData.children?.length || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total Arrondissements:</span>
+                <span className="font-semibold">
+                  {organisationData.children?.reduce((total, dept) => total + (dept.children?.length || 0), 0) || 0}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total Membres:</span>
+                <span className="font-semibold">{organisationData.nombreMembres}</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Départements</CardTitle>
+              <CardDescription>Liste des départements de la Croix Rouge Congolaise.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Responsable</TableHead>
+                    <TableHead>Contact</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {departments.map((dept) => (
+                    <TableRow key={dept.id}>
+                      <TableCell className="font-medium">{dept.name}</TableCell>
+                      <TableCell>{dept.head}</TableCell>
+                      <TableCell>{dept.contact}</TableCell>
+                    </TableRow>
                   ))}
-                </TreeGroup>
-              </React.Fragment>
-            ))}
-          </Tree>
-        </CardContent>
-      </Card>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Arrondissements</CardTitle>
+              <CardDescription>Liste des arrondissements par département.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Département</TableHead>
+                    <TableHead>Population Estimée</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {arrondissements.map((arr) => {
+                    const departmentName = departments.find((dept) => dept.id === arr.departmentId)?.name || "N/A"
+                    return (
+                      <TableRow key={arr.id}>
+                        <TableCell className="font-medium">{arr.name}</TableCell>
+                        <TableCell>{departmentName}</TableCell>
+                        <TableCell>{arr.population.toLocaleString()}</TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

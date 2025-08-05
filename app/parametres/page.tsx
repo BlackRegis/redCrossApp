@@ -1,377 +1,259 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Edit, Trash2, PlusCircle } from "lucide-react"
 
 interface AppSettings {
   app_name: string
   contact_email: string
   phone_number: string
-  address: string
 }
 
 interface Department {
-  id: number
+  id: string
   name: string
-  head_name: string | null
-  contact_email: string | null
-  phone_number: string | null
+  head_of_department: string
+  contact_email: string
 }
 
 interface Arrondissement {
-  id: number
-  department_id: number
+  id: string
   name: string
-  population: number | null
+  department_id: string
+  population: number
 }
 
 export default function ParametresPage() {
-  const { toast } = useToast()
   const [appSettings, setAppSettings] = useState<AppSettings>({
     app_name: "",
     contact_email: "",
     phone_number: "",
-    address: "",
   })
   const [departments, setDepartments] = useState<Department[]>([])
   const [arrondissements, setArrondissements] = useState<Arrondissement[]>([])
-  const [newDepartmentName, setNewDepartmentName] = useState("")
-  const [newArrondissementName, setNewArrondissementName] = useState("")
-  const [newArrondissementPopulation, setNewArrondissementPopulation] = useState<number | string>("")
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null)
 
+  // Fetch app settings
   useEffect(() => {
+    const fetchAppSettings = async () => {
+      try {
+        const res = await fetch("/api/settings/app")
+        if (res.ok) {
+          const data = await res.json()
+          setAppSettings(data)
+        } else {
+          console.error("Failed to fetch app settings")
+        }
+      } catch (error) {
+        console.error("Error fetching app settings:", error)
+      }
+    }
     fetchAppSettings()
+  }, [])
+
+  // Fetch departments
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await fetch("/api/departements")
+        if (res.ok) {
+          const data = await res.json()
+          setDepartments(data)
+        } else {
+          console.error("Failed to fetch departments")
+        }
+      } catch (error) {
+        console.error("Error fetching departments:", error)
+      }
+    }
     fetchDepartments()
+  }, [])
+
+  // Fetch arrondissements (assuming an API route for them)
+  useEffect(() => {
+    const fetchArrondissements = async () => {
+      try {
+        const res = await fetch("/api/arrondissements") // You'd need to create this API route
+        if (res.ok) {
+          const data = await res.json()
+          setArrondissements(data)
+        } else {
+          console.error("Failed to fetch arrondissements")
+        }
+      } catch (error) {
+        console.error("Error fetching arrondissements:", error)
+      }
+    }
     fetchArrondissements()
   }, [])
 
-  const fetchAppSettings = async () => {
-    try {
-      const res = await fetch("/api/settings/app")
-      if (!res.ok) throw new Error("Failed to fetch app settings")
-      const data = await res.json()
-      setAppSettings(data)
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Échec du chargement des paramètres de l'application.",
-        variant: "destructive",
-      })
-    }
+  const handleAppSettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target
+    setAppSettings((prev) => ({ ...prev, [id]: value }))
   }
 
-  const updateAppSetting = async (key: keyof AppSettings, value: string) => {
+  const handleSaveAppSettings = async () => {
     try {
       const res = await fetch("/api/settings/app", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ setting_key: key, setting_value: value }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(appSettings),
       })
-      if (!res.ok) throw new Error("Failed to update setting")
-      toast({
-        title: "Succès",
-        description: "Paramètre mis à jour.",
-      })
-      fetchAppSettings() // Re-fetch to ensure consistency
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Échec de la mise à jour du paramètre.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const fetchDepartments = async () => {
-    try {
-      const res = await fetch("/api/departements")
-      if (!res.ok) throw new Error("Failed to fetch departments")
-      const data = await res.json()
-      setDepartments(data)
-      if (data.length > 0 && selectedDepartmentId === null) {
-        setSelectedDepartmentId(data[0].id)
+      if (res.ok) {
+        alert("Paramètres de l'application mis à jour avec succès!")
+      } else {
+        alert("Échec de la mise à jour des paramètres de l'application.")
       }
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Échec du chargement des départements.",
-        variant: "destructive",
-      })
+    } catch (error) {
+      console.error("Error saving app settings:", error)
+      alert("Erreur lors de la sauvegarde des paramètres de l'application.")
     }
   }
 
-  const addDepartment = async () => {
-    if (!newDepartmentName.trim()) {
-      toast({
-        title: "Erreur",
-        description: "Le nom du département ne peut pas être vide.",
-        variant: "destructive",
-      })
-      return
-    }
-    try {
-      const res = await fetch("/api/departements", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newDepartmentName }),
-      })
-      if (!res.ok) throw new Error("Failed to add department")
-      toast({
-        title: "Succès",
-        description: "Département ajouté.",
-      })
-      setNewDepartmentName("")
-      fetchDepartments()
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Échec de l'ajout du département.",
-        variant: "destructive",
-      })
-    }
-  }
+  // Dummy functions for department/arrondissement management (to be implemented with actual API calls)
+  const handleAddDepartment = () => alert("Ajouter un département (fonctionnalité à implémenter)")
+  const handleEditDepartment = (id: string) => alert(`Modifier le département ${id} (fonctionnalité à implémenter)`)
+  const handleDeleteDepartment = (id: string) => alert(`Supprimer le département ${id} (fonctionnalité à implémenter)`)
 
-  const deleteDepartment = async (id: number) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce département et tous ses arrondissements ?")) return
-    try {
-      const res = await fetch(`/api/departements/${id}`, {
-        method: "DELETE",
-      })
-      if (!res.ok) throw new Error("Failed to delete department")
-      toast({
-        title: "Succès",
-        description: "Département supprimé.",
-      })
-      fetchDepartments()
-      fetchArrondissements() // Also refresh arrondissements as they might be affected
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Échec de la suppression du département.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const fetchArrondissements = async () => {
-    try {
-      const res = await fetch("/api/arrondissements")
-      if (!res.ok) throw new Error("Failed to fetch arrondissements")
-      const data = await res.json()
-      setArrondissements(data)
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Échec du chargement des arrondissements.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const addArrondissement = async () => {
-    if (!newArrondissementName.trim() || selectedDepartmentId === null) {
-      toast({
-        title: "Erreur",
-        description: "Nom de l'arrondissement et département sont requis.",
-        variant: "destructive",
-      })
-      return
-    }
-    try {
-      const res = await fetch("/api/arrondissements", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          department_id: selectedDepartmentId,
-          name: newArrondissementName,
-          population: newArrondissementPopulation ? Number(newArrondissementPopulation) : null,
-        }),
-      })
-      if (!res.ok) throw new Error("Failed to add arrondissement")
-      toast({
-        title: "Succès",
-        description: "Arrondissement ajouté.",
-      })
-      setNewArrondissementName("")
-      setNewArrondissementPopulation("")
-      fetchArrondissements()
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Échec de l'ajout de l'arrondissement.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const deleteArrondissement = async (id: number) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cet arrondissement ?")) return
-    try {
-      const res = await fetch(`/api/arrondissements/${id}`, {
-        method: "DELETE",
-      })
-      if (!res.ok) throw new Error("Failed to delete arrondissement")
-      toast({
-        title: "Succès",
-        description: "Arrondissement supprimé.",
-      })
-      fetchArrondissements()
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message || "Échec de la suppression de l'arrondissement.",
-        variant: "destructive",
-      })
-    }
-  }
+  const handleAddArrondissement = () => alert("Ajouter un arrondissement (fonctionnalité à implémenter)")
+  const handleEditArrondissement = (id: string) =>
+    alert(`Modifier l'arrondissement ${id} (fonctionnalité à implémenter)`)
+  const handleDeleteArrondissement = (id: string) =>
+    alert(`Supprimer l'arrondissement ${id} (fonctionnalité à implémenter)`)
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Paramètres de l'Application</h1>
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">Paramètres du Système</h1>
 
       <Tabs defaultValue="general" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">Général</TabsTrigger>
-          <TabsTrigger value="departments">Départements</TabsTrigger>
+          <TabsTrigger value="departements">Départements</TabsTrigger>
           <TabsTrigger value="arrondissements">Arrondissements</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
           <Card>
             <CardHeader>
-              <CardTitle>Paramètres Généraux</CardTitle>
+              <CardTitle>Paramètres Généraux de l'Application</CardTitle>
+              <CardDescription>Configurez les informations de base de votre application.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="app_name">Nom de l'Application</Label>
-                <Input
-                  id="app_name"
-                  value={appSettings.app_name}
-                  onChange={(e) => setAppSettings({ ...appSettings, app_name: e.target.value })}
-                  onBlur={(e) => updateAppSetting("app_name", e.target.value)}
-                />
+                <Input id="app_name" value={appSettings.app_name} onChange={handleAppSettingsChange} />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="contact_email">Email de Contact</Label>
                 <Input
                   id="contact_email"
                   type="email"
                   value={appSettings.contact_email}
-                  onChange={(e) => setAppSettings({ ...appSettings, contact_email: e.target.value })}
-                  onBlur={(e) => updateAppSetting("contact_email", e.target.value)}
+                  onChange={handleAppSettingsChange}
                 />
               </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="phone_number">Numéro de Téléphone</Label>
                 <Input
                   id="phone_number"
                   type="tel"
                   value={appSettings.phone_number}
-                  onChange={(e) => setAppSettings({ ...appSettings, phone_number: e.target.value })}
-                  onBlur={(e) => updateAppSetting("phone_number", e.target.value)}
+                  onChange={handleAppSettingsChange}
                 />
               </div>
-              <div>
-                <Label htmlFor="address">Adresse</Label>
-                <Input
-                  id="address"
-                  value={appSettings.address}
-                  onChange={(e) => setAppSettings({ ...appSettings, address: e.target.value })}
-                  onBlur={(e) => updateAppSetting("address", e.target.value)}
-                />
-              </div>
+              <Button onClick={handleSaveAppSettings}>Enregistrer les modifications</Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="departments">
+        <TabsContent value="departements">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Gestion des Départements</CardTitle>
+              <Button size="sm" onClick={handleAddDepartment}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Ajouter Département
+              </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex space-x-2">
-                <Input
-                  placeholder="Nouveau département"
-                  value={newDepartmentName}
-                  onChange={(e) => setNewDepartmentName(e.target.value)}
-                />
-                <Button onClick={addDepartment}>Ajouter</Button>
-              </div>
-              <ul className="space-y-2">
-                {departments.map((dept) => (
-                  <li key={dept.id} className="flex justify-between items-center p-2 border rounded-md">
-                    <span>{dept.name}</span>
-                    <Button variant="destructive" size="sm" onClick={() => deleteDepartment(dept.id)}>
-                      Supprimer
-                    </Button>
-                  </li>
-                ))}
-              </ul>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Responsable</TableHead>
+                    <TableHead>Email de Contact</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {departments.map((dept) => (
+                    <TableRow key={dept.id}>
+                      <TableCell className="font-medium">{dept.name}</TableCell>
+                      <TableCell>{dept.head_of_department}</TableCell>
+                      <TableCell>{dept.contact_email}</TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditDepartment(dept.id)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteDepartment(dept.id)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>
 
         <TabsContent value="arrondissements">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle>Gestion des Arrondissements</CardTitle>
+              <Button size="sm" onClick={handleAddArrondissement}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Ajouter Arrondissement
+              </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="select-department">Sélectionner un Département</Label>
-                <select
-                  id="select-department"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={selectedDepartmentId || ""}
-                  onChange={(e) => setSelectedDepartmentId(Number(e.target.value))}
-                >
-                  <option value="">Sélectionner...</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {selectedDepartmentId && (
-                <div className="space-y-4">
-                  <div className="flex space-x-2">
-                    <Input
-                      placeholder="Nom de l'arrondissement"
-                      value={newArrondissementName}
-                      onChange={(e) => setNewArrondissementName(e.target.value)}
-                    />
-                    <Input
-                      placeholder="Population (optionnel)"
-                      type="number"
-                      value={newArrondissementPopulation}
-                      onChange={(e) => setNewArrondissementPopulation(e.target.value)}
-                    />
-                    <Button onClick={addArrondissement}>Ajouter</Button>
-                  </div>
-                  <ul className="space-y-2">
-                    {arrondissements
-                      .filter((arr) => arr.department_id === selectedDepartmentId)
-                      .map((arr) => (
-                        <li key={arr.id} className="flex justify-between items-center p-2 border rounded-md">
-                          <span>
-                            {arr.name} {arr.population ? `(Pop: ${arr.population})` : ""}
-                          </span>
-                          <Button variant="destructive" size="sm" onClick={() => deleteArrondissement(arr.id)}>
-                            Supprimer
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nom</TableHead>
+                    <TableHead>Département</TableHead>
+                    <TableHead>Population</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {arrondissements.map((arr) => {
+                    const departmentName = departments.find((d) => d.id === arr.department_id)?.name || "Inconnu"
+                    return (
+                      <TableRow key={arr.id}>
+                        <TableCell className="font-medium">{arr.name}</TableCell>
+                        <TableCell>{departmentName}</TableCell>
+                        <TableCell>{arr.population.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" onClick={() => handleEditArrondissement(arr.id)}>
+                            <Edit className="h-4 w-4" />
                           </Button>
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              )}
+                          <Button variant="ghost" size="sm" onClick={() => handleDeleteArrondissement(arr.id)}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
         </TabsContent>

@@ -1,64 +1,65 @@
-CREATE TABLE IF NOT EXISTS app_settings (
+-- Create settings table
+CREATE TABLE IF NOT EXISTS settings (
     id SERIAL PRIMARY KEY,
     setting_key VARCHAR(255) UNIQUE NOT NULL,
-    setting_value TEXT NOT NULL,
+    setting_value TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO app_settings (setting_key, setting_value) VALUES
+-- Insert initial settings (example)
+INSERT INTO settings (setting_key, setting_value) VALUES
 ('app_name', 'Croix Rouge Congolaise - Système de Gestion')
 ON CONFLICT (setting_key) DO NOTHING;
 
-INSERT INTO app_settings (setting_key, setting_value) VALUES
-('contact_email', 'contact@croixrougecongo.org')
+INSERT INTO settings (setting_key, setting_value) VALUES
+('contact_email', 'contact@croixrouge-cg.org')
 ON CONFLICT (setting_key) DO NOTHING;
 
-INSERT INTO app_settings (setting_key, setting_value) VALUES
+INSERT INTO settings (setting_key, setting_value) VALUES
 ('phone_number', '+242 06 123 4567')
 ON CONFLICT (setting_key) DO NOTHING;
 
-INSERT INTO app_settings (setting_key, setting_value) VALUES
-('address', '123 Rue de l''Indépendance, Brazzaville, Congo')
-ON CONFLICT (setting_key) DO NOTHING;
-
--- Table for departments
+-- Create departments table
 CREATE TABLE IF NOT EXISTS departments (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
-    head_name VARCHAR(255),
+    head_of_department VARCHAR(255),
     contact_email VARCHAR(255),
-    phone_number VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table for arrondissements
+-- Insert initial departments (example)
+INSERT INTO departments (name, head_of_department, contact_email) VALUES
+('Brazzaville', 'Jean Dupont', 'jean.dupont@example.com')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO departments (name, head_of_department, contact_email) VALUES
+('Pointe-Noire', 'Marie Curie', 'marie.curie@example.com')
+ON CONFLICT (name) DO NOTHING;
+
+-- Create arrondissements table
 CREATE TABLE IF NOT EXISTS arrondissements (
     id SERIAL PRIMARY KEY,
-    department_id INTEGER NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
+    department_id INTEGER NOT NULL,
     population INTEGER,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(department_id, name)
+    UNIQUE (name, department_id),
+    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
 );
 
--- Seed some initial data for departments (if not already present)
-INSERT INTO departments (name, head_name, contact_email, phone_number) VALUES
-('Brazzaville', 'Jean Dupont', 'brazzaville@crc.org', '+242 06 111 2233'),
-('Pointe-Noire', 'Marie Curie', 'pointenoire@crc.org', '+242 06 444 5566'),
-('Pool', 'Pierre Martin', 'pool@crc.org', '+242 05 777 8899')
-ON CONFLICT (name) DO NOTHING;
+-- Insert initial arrondissements (example)
+INSERT INTO arrondissements (name, department_id, population) VALUES
+('Makélékélé', (SELECT id FROM departments WHERE name = 'Brazzaville'), 300000)
+ON CONFLICT (name, department_id) DO NOTHING;
 
--- Seed some initial data for arrondissements (if not already present)
--- Note: You might need to adjust department_id based on actual IDs after department insertion
-INSERT INTO arrondissements (department_id, name, population) VALUES
-((SELECT id FROM departments WHERE name = 'Brazzaville'), 'Moungali', 120000),
-((SELECT id FROM departments WHERE name = 'Brazzaville'), 'Makélékélé', 150000),
-((SELECT id FROM departments WHERE name = 'Brazzaville'), 'Poto-Poto', 100000),
-((SELECT id FROM departments WHERE name = 'Pointe-Noire'), 'Lumumba', 90000),
-((SELECT id FROM departments WHERE name = 'Pointe-Noire'), 'Tié-Tié', 110000),
-((SELECT id FROM departments WHERE name = 'Pool'), 'Kinkala', 50000),
-((SELECT id FROM departments WHERE name = 'Pool'), 'Mindouli', 40000)
-ON CONFLICT (department_id, name) DO NOTHING;
+INSERT INTO arrondissements (name, department_id, population) VALUES
+('Bacongo', (SELECT id FROM departments WHERE name = 'Brazzaville'), 250000)
+ON CONFLICT (name, department_id) DO NOTHING;
+
+INSERT INTO arrondissements (name, department_id, population) VALUES
+('Lumumba', (SELECT id FROM departments WHERE name = 'Pointe-Noire'), 400000)
+ON CONFLICT (name, department_id) DO NOTHING;

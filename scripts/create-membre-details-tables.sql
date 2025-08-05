@@ -1,96 +1,94 @@
+-- Create members table
 CREATE TABLE IF NOT EXISTS members (
     id SERIAL PRIMARY KEY,
-    first_name VARCHAR(255) NOT NULL,
-    last_name VARCHAR(255) NOT NULL,
-    date_of_birth DATE,
-    place_of_birth VARCHAR(255),
-    nationality VARCHAR(255),
-    address TEXT,
-    phone VARCHAR(50),
+    nom VARCHAR(255) NOT NULL,
+    prenom VARCHAR(255) NOT NULL,
+    date_naissance DATE,
+    sexe VARCHAR(50),
+    adresse TEXT,
+    telephone VARCHAR(50),
     email VARCHAR(255) UNIQUE,
     profession VARCHAR(255),
-    blood_group VARCHAR(10),
-    allergies TEXT,
-    medical_history TEXT,
-    emergency_contact_name VARCHAR(255),
-    emergency_contact_phone VARCHAR(50),
-    membership_date DATE,
-    membership_type VARCHAR(50), -- e.g., 'Actif', 'Bénévole', 'Donateur'
-    department VARCHAR(255),
+    departement VARCHAR(255),
     arrondissement VARCHAR(255),
-    status VARCHAR(50), -- e.g., 'Actif', 'Inactif', 'Suspendu'
+    date_adhesion DATE DEFAULT CURRENT_DATE,
+    statut VARCHAR(50) DEFAULT 'Actif', -- e.g., Actif, Inactif, Suspendu
+    notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Add indexes for frequently searched columns
-CREATE INDEX IF NOT EXISTS idx_members_last_name ON members (last_name);
-CREATE INDEX IF NOT EXISTS idx_members_department ON members (department);
-CREATE INDEX IF NOT EXISTS idx_members_arrondissement ON members (arrondissement);
-CREATE INDEX IF NOT EXISTS idx_members_status ON members (status);
+-- Create activities table
+CREATE TABLE IF NOT EXISTS activities (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    activity_date DATE NOT NULL,
+    location VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'Planifiée', -- e.g., Planifiée, Terminée, Annulée
+    participants_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
 
--- Table for member cards
+-- Create executive_members table
+CREATE TABLE IF NOT EXISTS executive_members (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE,
+    phone VARCHAR(50),
+    bio TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create member_cards table
 CREATE TABLE IF NOT EXISTS member_cards (
     id SERIAL PRIMARY KEY,
-    member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+    member_id INTEGER NOT NULL,
     card_number VARCHAR(255) UNIQUE NOT NULL,
-    card_type VARCHAR(50) NOT NULL, -- e.g., 'Standard', 'Premium'
-    issue_date DATE NOT NULL,
-    expiry_date DATE NOT NULL,
-    status VARCHAR(50) NOT NULL, -- e.g., 'Active', 'Expired', 'Revoked'
+    issue_date DATE DEFAULT CURRENT_DATE,
+    expiry_date DATE,
+    status VARCHAR(50) DEFAULT 'Active', -- e.g., Active, Expirée, Perdue
+    card_type VARCHAR(50), -- e.g., Standard, Premium
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
--- Add index for member_id in member_cards
-CREATE INDEX IF NOT EXISTS idx_member_cards_member_id ON member_cards (member_id);
-
--- Seed some initial data for members (if not already present)
-INSERT INTO members (
-    first_name, last_name, date_of_birth, place_of_birth, nationality, address,
-    phone, email, profession, blood_group, allergies, medical_history,
-    emergency_contact_name, emergency_contact_phone,
-    membership_date, membership_type, department, arrondissement, status
-) VALUES
-('John', 'Doe', '1990-05-15', 'Brazzaville', 'Congolaise', '123 Rue de la Paix, Moungali',
- '+242 06 123 4567', 'john.doe@example.com', 'Ingénieur', 'A+', 'Aucune', 'Aucun',
- 'Jane Doe', '+242 05 765 4321',
- '2020-01-10', 'Actif', 'Brazzaville', 'Moungali', 'Actif')
+-- Insert initial members (example)
+INSERT INTO members (nom, prenom, date_naissance, sexe, adresse, telephone, email, profession, departement, arrondissement, date_adhesion, statut, notes) VALUES
+('Kouadio', 'Marc', '1990-05-15', 'Homme', '123 Rue de la Paix, Brazzaville', '+242 06 111 2233', 'marc.kouadio@example.com', 'Ingénieur', 'Brazzaville', 'Makélékélé', '2020-01-10', 'Actif', 'Membre très engagé dans les activités de sensibilisation.')
 ON CONFLICT (email) DO NOTHING;
 
-INSERT INTO members (
-    first_name, last_name, date_of_birth, place_of_birth, nationality, address,
-    phone, email, profession, blood_group, allergies, medical_history,
-    emergency_contact_name, emergency_contact_phone,
-    membership_date, membership_type, department, arrondissement, status
-) VALUES
-('Alice', 'Smith', '1988-11-22', 'Pointe-Noire', 'Congolaise', '456 Avenue des Martyrs, Lumumba',
- '+242 05 987 6543', 'alice.smith@example.com', 'Médecin', 'O-', 'Pénicilline', 'Asthme',
- 'Bob Smith', '+242 06 111 2233',
- '2019-03-01', 'Bénévole', 'Pointe-Noire', 'Lumumba', 'Actif')
+INSERT INTO members (nom, prenom, date_naissance, sexe, adresse, telephone, email, profession, departement, arrondissement, date_adhesion, statut, notes) VALUES
+('Diallo', 'Fatoumata', '1988-11-22', 'Femme', '456 Avenue de l''Espoir, Pointe-Noire', '+242 05 444 5566', 'fatoumata.diallo@example.com', 'Infirmière', 'Pointe-Noire', 'Lumumba', '2019-03-20', 'Actif', 'Spécialisée en premiers secours, formatrice bénévole.')
 ON CONFLICT (email) DO NOTHING;
 
-INSERT INTO members (
-    first_name, last_name, date_of_birth, place_of_birth, nationality, address,
-    phone, email, profession, blood_group, allergies, medical_history,
-    emergency_contact_name, emergency_contact_phone,
-    membership_date, membership_type, department, arrondissement, status
-) VALUES
-('Robert', 'Brown', '1995-07-01', 'Dolisie', 'Congolaise', '789 Rue du Marché, Tié-Tié',
- '+242 06 222 3344', 'robert.brown@example.com', 'Étudiant', 'B+', 'Aucune', 'Aucun',
- 'Sarah Brown', '+242 05 444 5566',
- '2021-09-15', 'Donateur', 'Pointe-Noire', 'Tié-Tié', 'Actif')
+-- Insert initial activities (example)
+INSERT INTO activities (name, description, activity_date, location, status, participants_count) VALUES
+('Campagne de Don de Sang', 'Collecte de sang pour les hôpitaux locaux.', '2024-07-15', 'Hôpital Central', 'Terminée', 120)
+ON CONFLICT DO NOTHING;
+
+INSERT INTO activities (name, description, activity_date, location, status, participants_count) VALUES
+('Formation Premiers Secours', 'Formation certifiante aux gestes de premiers secours.', '2024-08-01', 'Centre Communautaire', 'Planifiée', 30)
+ON CONFLICT DO NOTHING;
+
+-- Insert initial executive members (example)
+INSERT INTO executive_members (name, title, email, phone, bio) VALUES
+('Dr. Émile Ngoma', 'Président National', 'emile.ngoma@example.com', '+242 06 123 4567', 'Leader expérimenté de la Croix Rouge Congolaise.')
 ON CONFLICT (email) DO NOTHING;
 
--- Seed some initial data for member cards (if not already present)
-INSERT INTO member_cards (member_id, card_number, card_type, issue_date, expiry_date, status) VALUES
-((SELECT id FROM members WHERE email = 'john.doe@example.com'), 'CRC-M-001', 'Standard', '2023-01-15', '2025-01-15', 'Active')
+INSERT INTO executive_members (name, title, email, phone, bio) VALUES
+('Mme. Chantal Mboumba', 'Secrétaire Générale', 'chantal.mboumba@example.com', '+242 06 765 4321', 'Responsable de l''administration et de la coordination.')
+ON CONFLICT (email) DO NOTHING;
+
+-- Insert initial member cards (example)
+INSERT INTO member_cards (member_id, card_number, issue_date, expiry_date, status, card_type) VALUES
+((SELECT id FROM members WHERE email = 'marc.kouadio@example.com'), 'CRC-2020-001', '2020-01-10', '2025-01-10', 'Active', 'Standard')
 ON CONFLICT (card_number) DO NOTHING;
 
-INSERT INTO member_cards (member_id, card_number, card_type, issue_date, expiry_date, status) VALUES
-((SELECT id FROM members WHERE email = 'alice.smith@example.com'), 'CRC-B-002', 'Premium', '2023-03-01', '2025-03-01', 'Active')
-ON CONFLICT (card_number) DO NOTHING;
-
-INSERT INTO member_cards (member_id, card_number, card_type, issue_date, expiry_date, status) VALUES
-((SELECT id FROM members WHERE email = 'robert.brown@example.com'), 'CRC-D-003', 'Standard', '2023-09-10', '2024-09-10', 'Expired')
+INSERT INTO member_cards (member_id, card_number, issue_date, expiry_date, status, card_type) VALUES
+((SELECT id FROM members WHERE email = 'fatoumata.diallo@example.com'), 'CRC-2019-002', '2019-03-20', '2024-03-20', 'Expirée', 'Premium')
 ON CONFLICT (card_number) DO NOTHING;
