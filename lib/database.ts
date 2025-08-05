@@ -1,11 +1,35 @@
-import { neon } from "@neondatabase/serverless"
+import { neon, Pool } from "@neondatabase/serverless"
 
-const sql = neon(process.env.DATABASE_URL!)
+let sql: ReturnType<typeof neon> | null = null
+let pool: Pool | null = null
+
+export function getSqlClient() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is not set")
+  }
+
+  if (!sql) {
+    sql = neon(process.env.DATABASE_URL)
+  }
+  return sql
+}
+
+export function getPoolClient() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is not set")
+  }
+
+  if (!pool) {
+    pool = new Pool({ connectionString: process.env.DATABASE_URL })
+  }
+  return pool
+}
 
 // Fonctions pour les paramètres d'application
 export async function saveAppSettings(settings: any) {
   try {
-    await sql`
+    const client = getSqlClient()
+    await client.sql`
       INSERT INTO app_settings (
         nom_organisation, sigle, adresse_siege, telephone, email, site_web, 
         description, couleur_primaire, couleur_secondaire, updated_at
@@ -36,7 +60,8 @@ export async function saveAppSettings(settings: any) {
 
 export async function getAppSettings() {
   try {
-    const result = await sql`SELECT * FROM app_settings LIMIT 1`
+    const client = getSqlClient()
+    const result = await client.sql`SELECT * FROM app_settings LIMIT 1`
     return result[0] || null
   } catch (error) {
     console.error("Erreur lors de la récupération des paramètres:", error)
@@ -47,7 +72,8 @@ export async function getAppSettings() {
 // Fonctions pour les paramètres du pays
 export async function savePaysSettings(settings: any) {
   try {
-    await sql`
+    const client = getSqlClient()
+    await client.sql`
       INSERT INTO pays_settings (
         nom_pays, code_pays, capitale, langue, monnaie, code_monnaie, 
         fuseau_horaire, prefixe_telephone, updated_at
@@ -77,7 +103,8 @@ export async function savePaysSettings(settings: any) {
 // Fonctions pour les départements
 export async function createDepartement(departement: any) {
   try {
-    const result = await sql`
+    const client = getSqlClient()
+    const result = await client.sql`
       INSERT INTO departements (nom, code, chef_lieu, population, superficie, created_at)
       VALUES (${departement.nom}, ${departement.code}, ${departement.chef_lieu}, 
               ${departement.population}, ${departement.superficie}, NOW())
@@ -92,7 +119,8 @@ export async function createDepartement(departement: any) {
 
 export async function getDepartements() {
   try {
-    const result = await sql`
+    const client = getSqlClient()
+    const result = await client.sql`
       SELECT d.*, 
              COUNT(a.id) as nb_arrondissements
       FROM departements d
@@ -109,10 +137,11 @@ export async function getDepartements() {
 
 export async function deleteDepartement(id: string) {
   try {
+    const client = getSqlClient()
     // Supprimer d'abord les arrondissements
-    await sql`DELETE FROM arrondissements WHERE departement_id = ${id}`
+    await client.sql`DELETE FROM arrondissements WHERE departement_id = ${id}`
     // Puis le département
-    await sql`DELETE FROM departements WHERE id = ${id}`
+    await client.sql`DELETE FROM departements WHERE id = ${id}`
     return { success: true }
   } catch (error) {
     console.error("Erreur lors de la suppression du département:", error)
@@ -123,7 +152,8 @@ export async function deleteDepartement(id: string) {
 // Fonctions pour les arrondissements
 export async function createArrondissement(arrondissement: any) {
   try {
-    const result = await sql`
+    const client = getSqlClient()
+    const result = await client.sql`
       INSERT INTO arrondissements (nom, code, departement_id, population, superficie, created_at)
       VALUES (${arrondissement.nom}, ${arrondissement.code}, ${arrondissement.departement_id}, 
               ${arrondissement.population}, ${arrondissement.superficie}, NOW())
@@ -138,9 +168,10 @@ export async function createArrondissement(arrondissement: any) {
 
 export async function getArrondissements(departementId?: string) {
   try {
+    const client = getSqlClient()
     const query = departementId
-      ? sql`SELECT * FROM arrondissements WHERE departement_id = ${departementId} ORDER BY nom`
-      : sql`SELECT a.*, d.nom as departement_nom FROM arrondissements a 
+      ? client.sql`SELECT * FROM arrondissements WHERE departement_id = ${departementId} ORDER BY nom`
+      : client.sql`SELECT a.*, d.nom as departement_nom FROM arrondissements a 
             JOIN departements d ON a.departement_id = d.id ORDER BY d.nom, a.nom`
 
     const result = await query
@@ -153,7 +184,8 @@ export async function getArrondissements(departementId?: string) {
 
 export async function deleteArrondissement(id: string) {
   try {
-    await sql`DELETE FROM arrondissements WHERE id = ${id}`
+    const client = getSqlClient()
+    await client.sql`DELETE FROM arrondissements WHERE id = ${id}`
     return { success: true }
   } catch (error) {
     console.error("Erreur lors de la suppression de l'arrondissement:", error)
@@ -164,7 +196,8 @@ export async function deleteArrondissement(id: string) {
 // Fonctions pour modifier les départements
 export async function updateDepartement(id: string, departement: any) {
   try {
-    const result = await sql`
+    const client = getSqlClient()
+    const result = await client.sql`
       UPDATE departements 
       SET nom = ${departement.nom}, 
           code = ${departement.code}, 
@@ -185,7 +218,8 @@ export async function updateDepartement(id: string, departement: any) {
 // Fonctions pour modifier les arrondissements
 export async function updateArrondissement(id: string, arrondissement: any) {
   try {
-    const result = await sql`
+    const client = getSqlClient()
+    const result = await client.sql`
       UPDATE arrondissements 
       SET nom = ${arrondissement.nom}, 
           code = ${arrondissement.code}, 
@@ -205,7 +239,8 @@ export async function updateArrondissement(id: string, arrondissement: any) {
 // Fonction pour récupérer les détails d'un membre
 export async function getMembreDetails(id: string) {
   try {
-    const membre = await sql`
+    const client = getSqlClient()
+    const membre = await client.sql`
       SELECT m.*, d.nom as departement_nom, a.nom as arrondissement_nom
       FROM membres m
       LEFT JOIN departements d ON m.departement_id = d.id
@@ -216,12 +251,12 @@ export async function getMembreDetails(id: string) {
     if (membre.length === 0) return null
 
     // Récupérer les formations du membre
-    const formations = await sql`
+    const formations = await client.sql`
       SELECT * FROM formations WHERE membre_id = ${id} ORDER BY date_debut DESC
     `
 
     // Récupérer les activités du membre
-    const activites = await sql`
+    const activites = await client.sql`
       SELECT ap.*, a.titre, a.type, a.date_debut as date
       FROM activite_participants ap
       JOIN activites a ON ap.activite_id = a.id

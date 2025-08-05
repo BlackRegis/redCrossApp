@@ -4,8 +4,11 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Plus, Filter, Download } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Pagination } from "@/components/ui/pagination"
+import { Search, Plus, Edit, Trash2, Eye, Filter, Download } from "lucide-react"
 import Link from "next/link"
 
 interface Membre {
@@ -406,4 +409,115 @@ export default function MembresPage() {
                   <SelectItem value="all">Tous les statuts</SelectItem>
                   <SelectItem value="Actif">Actif</SelectItem>
                   <SelectItem value="Inactif">Inactif</SelectItem>
-                  <SelectItem value="Suspendu">Suspendu\
+                  <SelectItem value="Suspendu">Suspendu</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Âge</label>
+              <Select value={filterAge} onValueChange={setFilterAge}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tous" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les âges</SelectItem>
+                  <SelectItem value="18-25">18-25 ans</SelectItem>
+                  <SelectItem value="26-35">26-35 ans</SelectItem>
+                  <SelectItem value="36-45">36-45 ans</SelectItem>
+                  <SelectItem value="46+">46 ans et plus</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Sexe</label>
+              <Select value={filterSexe} onValueChange={setFilterSexe}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tous" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous</SelectItem>
+                  <SelectItem value="M">Masculin</SelectItem>
+                  <SelectItem value="F">Féminin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Members Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Liste des Membres ({filteredMembres.length})</CardTitle>
+          <CardDescription>Gérez les informations détaillées de chaque membre.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nom Complet</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Localisation</TableHead>
+                  <TableHead>Profession</TableHead>
+                  <TableHead>Adhésion</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedMembres.map((membre) => (
+                  <TableRow key={membre.id}>
+                    <TableCell className="font-medium">
+                      {membre.prenom} {membre.nom}
+                    </TableCell>
+                    <TableCell>
+                      <div>{membre.email}</div>
+                      <div className="text-sm text-muted-foreground">{membre.telephone}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div>{membre.departement}</div>
+                      <div className="text-sm text-muted-foreground">{membre.arrondissement}</div>
+                    </TableCell>
+                    <TableCell>{membre.profession}</TableCell>
+                    <TableCell>
+                      <div>{membre.typeAdhesion}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(membre.dateAdhesion).toLocaleDateString("fr-FR")}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getStatutColor(membre.statut)}>{membre.statut}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Link href={`/membres/${membre.id}`}>
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button variant="ghost" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination */}
+          <div className="mt-6">
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
