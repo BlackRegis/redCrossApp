@@ -1,17 +1,17 @@
-import { NextResponse } from "next/server"
-import { fetchArrondissements } from "@/lib/database"
+import { type NextRequest, NextResponse } from "next/server"
+import { updateArrondissement } from "@/lib/database"
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const departementId = Number.parseInt(params.id)
-  if (isNaN(departementId)) {
-    return NextResponse.json({ message: "Invalid Departement ID" }, { status: 400 })
-  }
-
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const arrondissements = await fetchArrondissements(departementId)
-    return NextResponse.json(arrondissements)
+    const arrondissement = await request.json()
+    const result = await updateArrondissement(params.id, arrondissement)
+
+    if (result.success) {
+      return NextResponse.json(result.data)
+    } else {
+      return NextResponse.json({ error: "Erreur lors de la modification" }, { status: 500 })
+    }
   } catch (error) {
-    console.error(`API Error: Failed to fetch arrondissements for departement ${departementId}.`, error)
-    return NextResponse.json({ message: "Failed to fetch arrondissements" }, { status: 500 })
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }

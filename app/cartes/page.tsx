@@ -1,31 +1,33 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useQuery } from "@tanstack/react-query"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Pagination } from "@/components/ui/pagination"
-import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import toast from "react-hot-toast"
-
-interface Membre {
-  id: number
-  nom: string
-  prenom: string
-  numero_carte: string | null
-  date_delivrance_carte: string | null
-  date_expiration_carte: string | null
-  photo_url: string | null
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Pagination } from "@/components/ui/pagination"
+import {
+  Search,
+  CreditCard,
+  Download,
+  Eye,
+  RefreshCw,
+  Plus,
+  Filter,
+  Printer,
+  User,
+  Crown,
+  Calendar,
+  MapPin,
+  Phone,
+  Mail,
+} from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
 
 interface CarteMembre {
   id: string
@@ -267,52 +269,42 @@ const cartesData: CarteMembre[] = [
 const ITEMS_PER_PAGE = 10
 
 export default function CartesPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("query") || "")
-  const currentPage = Number.parseInt(searchParams.get("page") || "1")
+  const [cartes, setCartes] = useState<CarteMembre[]>(cartesData)
+  const [searchTerm, setSearchTerm] = useState("")
   const [selectedCarte, setSelectedCarte] = useState<CarteMembre | null>(null)
   const [activeTab, setActiveTab] = useState("toutes")
   const [filterDepartement, setFilterDepartement] = useState("all")
   const [filterStatut, setFilterStatut] = useState("all")
   const [filterType, setFilterType] = useState("all")
   const [filterBureau, setFilterBureau] = useState("all")
-  const [currentPageState, setCurrentPageState] = useState(currentPage)
-
-  const { data, isLoading, error } = useQuery<{ data: CarteMembre[]; totalPages: number; currentPage: number }>({
-    queryKey: ["membresCartes", searchQuery, currentPageState],
-    queryFn: async () => {
-      // Assuming a modified API endpoint or a way to filter members with card info
-      const res = await fetch(`/api/membres?query=${searchQuery}&page=${currentPageState}&hasCard=true`)
-      if (!res.ok) {
-        throw new Error("Failed to fetch members with cards")
-      }
-      return res.json()
-    },
-  })
+  const [currentPage, setCurrentPage] = useState(1)
 
   const departements = ["Brazzaville", "Kouilou", "Niari", "Bouenza", "Pool", "Plateaux"]
 
-  const filteredCartes = data?.data || []
+  const filteredCartes = cartes.filter((carte) => {
+    const matchesSearch =
+      carte.numeroCarte.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      carte.nomComplet.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      carte.profession.toLowerCase().includes(searchTerm.toLowerCase())
 
-  const totalPages = data?.totalPages || 0
+    const matchesDepartement = filterDepartement === "all" || carte.departement === filterDepartement
+    const matchesStatut = filterStatut === "all" || carte.statut === filterStatut
+    const matchesType = filterType === "all" || carte.typeAdhesion === filterType
+    const matchesBureau =
+      filterBureau === "all" || (filterBureau === "oui" ? carte.estMembreBureau : !carte.estMembreBureau)
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    router.push(`/cartes?query=${searchQuery}&page=1`)
-  }
+    let matchesTab = true
+    if (activeTab === "actives") matchesTab = carte.statut === "Active"
+    if (activeTab === "expirees") matchesTab = carte.statut === "Expirée"
+    if (activeTab === "bureau") matchesTab = carte.estMembreBureau
 
-  const handlePageChange = (page: number) => {
-    router.push(`/cartes?query=${searchQuery}&page=${page}`)
-    setSelectedCarte(null) // Clear selection when changing page
-    setCurrentPageState(page)
-  }
+    return matchesSearch && matchesDepartement && matchesStatut && matchesType && matchesBureau && matchesTab
+  })
 
-  const handleDownloadCard = (membre: CarteMembre) => {
-    // Placeholder for card generation/download logic
-    toast.info(`Téléchargement de la carte pour ${membre.prenom} ${membre.nom}... (Fonctionnalité à implémenter)`)
-    console.log("Download card for:", membre)
-  }
+  // Pagination
+  const totalPages = Math.ceil(filteredCartes.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const paginatedCartes = filteredCartes.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 
   const getStatutColor = (statut: string) => {
     switch (statut) {
@@ -342,8 +334,13 @@ export default function CartesPage() {
     setFilterStatut("all")
     setFilterType("all")
     setFilterBureau("all")
-    setSearchQuery("")
-    setCurrentPageState(1)
+    setSearchTerm("")
+    setCurrentPage(1)
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    setSelectedCarte(null) // Clear selection when changing page
   }
 
   const renderCartePreview = (carte: CarteMembre) => {
@@ -365,7 +362,7 @@ export default function CartesPage() {
             <p className="text-sm opacity-90">RÉPUBLIQUE DU CONGO</p>
             {isMembreBureau && (
               <div className="flex items-center mt-1">
-                <Image src="/images/crown.svg" alt="Crown" width={16} height={16} className="mr-1" />
+                <Crown className="h-3 w-3 mr-1" />
                 <span className="text-xs font-medium">{carte.posteBureau}</span>
               </div>
             )}
@@ -414,9 +411,6 @@ export default function CartesPage() {
     )
   }
 
-  if (isLoading) return <p className="p-4 md:p-6">Chargement des cartes...</p>
-  if (error) return <p className="p-4 md:p-6">Erreur: {error.message}</p>
-
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -426,7 +420,7 @@ export default function CartesPage() {
           <p className="text-gray-600 mt-1">Gérez les cartes de membre de la Croix Rouge</p>
         </div>
         <Button className="bg-red-600 hover:bg-red-700">
-          <Image src="/images/plus.svg" alt="Plus" width={16} height={16} className="mr-2" />
+          <Plus className="h-4 w-4 mr-2" />
           Nouvelle Carte
         </Button>
       </div>
@@ -436,24 +430,18 @@ export default function CartesPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Cartes</CardTitle>
-            <Image
-              src="/images/credit-card.svg"
-              alt="Credit Card"
-              width={16}
-              height={16}
-              className="text-muted-foreground"
-            />
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filteredCartes.length}</div>
-            <p className="text-xs text-muted-foreground">sur {cartesData.length} total</p>
+            <p className="text-xs text-muted-foreground">sur {cartes.length} total</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Cartes Actives</CardTitle>
-            <Image src="/images/credit-card.svg" alt="Credit Card" width={16} height={16} className="text-green-600" />
+            <CreditCard className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -465,7 +453,7 @@ export default function CartesPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Expirées</CardTitle>
-            <Image src="/images/credit-card.svg" alt="Credit Card" width={16} height={16} className="text-red-600" />
+            <CreditCard className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
@@ -477,7 +465,7 @@ export default function CartesPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Bureau Exécutif</CardTitle>
-            <Image src="/images/crown.svg" alt="Crown" width={16} height={16} className="text-yellow-600" />
+            <Crown className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
@@ -489,7 +477,7 @@ export default function CartesPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Expirent Bientôt</CardTitle>
-            <Image src="/images/calendar.svg" alt="Calendar" width={16} height={16} className="text-orange-600" />
+            <Calendar className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
@@ -505,7 +493,7 @@ export default function CartesPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <Image src="/images/filter.svg" alt="Filter" width={16} height={16} className="h-5 w-5 text-gray-400" />
+                <Filter className="h-5 w-5" />
                 Filtres et Recherche
               </CardTitle>
               <CardDescription>Filtrez la liste des cartes selon vos critères</CardDescription>
@@ -520,17 +508,11 @@ export default function CartesPage() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Recherche</label>
               <div className="relative">
-                <Image
-                  src="/images/search.svg"
-                  alt="Search"
-                  width={16}
-                  height={16}
-                  className="absolute left-2 top-2.5 h-4 w-4 text-gray-400"
-                />
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="N° carte, nom, profession..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-8"
                 />
               </div>
@@ -608,7 +590,7 @@ export default function CartesPage() {
             <CardHeader>
               <CardTitle>Liste des Cartes ({filteredCartes.length})</CardTitle>
               <CardDescription>
-                Page {currentPageState} sur {totalPages}
+                Page {currentPage} sur {totalPages}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -634,113 +616,81 @@ export default function CartesPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredCartes.length > 0 ? (
-                          filteredCartes.map((carte) => (
-                            <TableRow
-                              key={carte.id}
-                              className={`cursor-pointer hover:bg-gray-50 ${
-                                selectedCarte?.id === carte.id ? "bg-blue-50" : ""
-                              }`}
-                              onClick={() => setSelectedCarte(carte)}
-                            >
-                              <TableCell>
-                                <div className="flex items-center space-x-3">
-                                  <Avatar className="h-10 w-10">
-                                    <AvatarImage src={carte.photo || "/placeholder.svg"} />
-                                    <AvatarFallback>
-                                      {carte.prenom.charAt(0)}
-                                      {carte.nom.charAt(0)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                    <div className="font-medium flex items-center gap-2">
-                                      {carte.nomComplet}
-                                      {carte.estMembreBureau && (
-                                        <Image
-                                          src="/images/crown.svg"
-                                          alt="Crown"
-                                          width={16}
-                                          height={16}
-                                          className="h-3 w-3 text-yellow-600"
-                                        />
-                                      )}
-                                    </div>
-                                    <div className="text-sm text-muted-foreground">
-                                      {carte.typeAdhesion} • {carte.profession}
-                                    </div>
-                                    {carte.estMembreBureau && (
-                                      <div className="text-xs text-yellow-600 font-medium">
-                                        {carte.posteBureau} - {carte.niveauBureau}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="font-mono text-sm">{carte.numeroCarte}</TableCell>
-                              <TableCell>
+                        {paginatedCartes.map((carte) => (
+                          <TableRow
+                            key={carte.id}
+                            className={`cursor-pointer hover:bg-gray-50 ${
+                              selectedCarte?.id === carte.id ? "bg-blue-50" : ""
+                            }`}
+                            onClick={() => setSelectedCarte(carte)}
+                          >
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                <Avatar className="h-10 w-10">
+                                  <AvatarImage src={carte.photo || "/placeholder.svg"} />
+                                  <AvatarFallback>
+                                    {carte.prenom.charAt(0)}
+                                    {carte.nom.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
                                 <div>
-                                  <div className="font-medium">{carte.departement}</div>
-                                  <div className="text-sm text-muted-foreground">{carte.arrondissement}</div>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div>
-                                  <div className="text-sm">
-                                    Expire: {new Date(carte.dateExpiration).toLocaleDateString("fr-FR")}
+                                  <div className="font-medium flex items-center gap-2">
+                                    {carte.nomComplet}
+                                    {carte.estMembreBureau && <Crown className="h-3 w-3 text-yellow-600" />}
                                   </div>
-                                  {isExpiringSoon(carte.dateExpiration) && (
-                                    <div className="text-xs text-orange-600 font-medium">Expire bientôt!</div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {carte.typeAdhesion} • {carte.profession}
+                                  </div>
+                                  {carte.estMembreBureau && (
+                                    <div className="text-xs text-yellow-600 font-medium">
+                                      {carte.posteBureau} - {carte.niveauBureau}
+                                    </div>
                                   )}
                                 </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge className={getStatutColor(carte.statut)}>{carte.statut}</Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center space-x-2">
-                                  <Button variant="ghost" size="sm" title="Voir les détails">
-                                    <Image src="/images/eye.svg" alt="Eye" width={16} height={16} className="h-4 w-4" />
-                                  </Button>
-                                  <Button variant="ghost" size="sm" title="Imprimer">
-                                    <Image
-                                      src="/images/printer.svg"
-                                      alt="Printer"
-                                      width={16}
-                                      height={16}
-                                      className="h-4 w-4"
-                                    />
-                                  </Button>
-                                  <Button variant="ghost" size="sm" title="Renouveler">
-                                    <Image
-                                      src="/images/refresh.svg"
-                                      alt="Refresh"
-                                      width={16}
-                                      height={16}
-                                      className="h-4 w-4"
-                                    />
-                                  </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">{carte.numeroCarte}</TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{carte.departement}</div>
+                                <div className="text-sm text-muted-foreground">{carte.arrondissement}</div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div>
+                                <div className="text-sm">
+                                  Expire: {new Date(carte.dateExpiration).toLocaleDateString("fr-FR")}
                                 </div>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center">
-                              Aucune carte de membre trouvée.
+                                {isExpiringSoon(carte.dateExpiration) && (
+                                  <div className="text-xs text-orange-600 font-medium">Expire bientôt!</div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getStatutColor(carte.statut)}>{carte.statut}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Button variant="ghost" size="sm" title="Voir les détails">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" title="Imprimer">
+                                  <Printer className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="sm" title="Renouveler">
+                                  <RefreshCw className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
-                        )}
+                        ))}
                       </TableBody>
                     </Table>
                   </div>
 
                   {/* Pagination */}
                   <div className="mt-6">
-                    <Pagination
-                      currentPage={currentPageState}
-                      totalPages={totalPages}
-                      onPageChange={handlePageChange}
-                    />
+                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
                   </div>
                 </TabsContent>
               </Tabs>
@@ -769,13 +719,7 @@ export default function CartesPage() {
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <Image
-                        src="/images/user.svg"
-                        alt="User"
-                        width={16}
-                        height={16}
-                        className="h-4 w-4 text-muted-foreground"
-                      />
+                      <User className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <div className="font-medium">{selectedCarte.nomComplet}</div>
                         <div className="text-sm text-muted-foreground">
@@ -786,35 +730,17 @@ export default function CartesPage() {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Image
-                        src="/images/mail.svg"
-                        alt="Mail"
-                        width={16}
-                        height={16}
-                        className="h-4 w-4 text-muted-foreground"
-                      />
+                      <Mail className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{selectedCarte.email}</span>
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Image
-                        src="/images/phone.svg"
-                        alt="Phone"
-                        width={16}
-                        height={16}
-                        className="h-4 w-4 text-muted-foreground"
-                      />
+                      <Phone className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{selectedCarte.telephone}</span>
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Image
-                        src="/images/map-pin.svg"
-                        alt="Map Pin"
-                        width={16}
-                        height={16}
-                        className="h-4 w-4 text-muted-foreground"
-                      />
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
                       <div className="text-sm">
                         <div>{selectedCarte.adresse}</div>
                         <div className="text-muted-foreground">
@@ -825,13 +751,7 @@ export default function CartesPage() {
 
                     {selectedCarte.estMembreBureau && (
                       <div className="flex items-center space-x-2">
-                        <Image
-                          src="/images/crown.svg"
-                          alt="Crown"
-                          width={16}
-                          height={16}
-                          className="h-4 w-4 text-yellow-600"
-                        />
+                        <Crown className="h-4 w-4 text-yellow-600" />
                         <div className="text-sm">
                           <div className="font-medium text-yellow-700">{selectedCarte.posteBureau}</div>
                           <div className="text-muted-foreground">Niveau {selectedCarte.niveauBureau}</div>
@@ -860,26 +780,23 @@ export default function CartesPage() {
                   </div>
 
                   <div className="pt-4 space-y-2">
-                    <Button className="w-full bg-transparent" variant="outline">
-                      <Image src="/images/user.svg" alt="User" width={16} height={16} className="h-4 w-4 mr-2" />
-                      Voir le Profil Complet
-                    </Button>
-                    <Button
-                      className="w-full bg-red-600 hover:bg-red-700"
-                      onClick={() => handleDownloadCard(selectedCarte)}
-                    >
-                      <Image
-                        src="/images/download.svg"
-                        alt="Download"
-                        width={16}
-                        height={16}
-                        className="h-4 w-4 mr-2"
-                      />
-                      Télécharger PDF
+                    <Link href={`/membres/${selectedCarte.id}`}>
+                      <Button className="w-full bg-transparent" variant="outline">
+                        <User className="h-4 w-4 mr-2" />
+                        Voir le Profil Complet
+                      </Button>
+                    </Link>
+                    <Button className="w-full bg-red-600 hover:bg-red-700">
+                      <Printer className="h-4 w-4 mr-2" />
+                      Imprimer la Carte
                     </Button>
                     <Button className="w-full bg-transparent" variant="outline">
-                      <Image src="/images/refresh.svg" alt="Refresh" width={16} height={16} className="h-4 w-4 mr-2" />
+                      <RefreshCw className="h-4 w-4 mr-2" />
                       Renouveler
+                    </Button>
+                    <Button className="w-full bg-transparent" variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      Télécharger PDF
                     </Button>
                   </div>
                 </CardContent>

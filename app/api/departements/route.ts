@@ -1,13 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createDepartement, fetchDepartements, deleteDepartement } from "@/lib/database"
+import { createDepartement, getDepartements, deleteDepartement } from "@/lib/database"
 
 export async function GET() {
   try {
-    const departements = await fetchDepartements()
+    const departements = await getDepartements()
     return NextResponse.json(departements)
   } catch (error) {
-    console.error("API Error: Failed to fetch departements.", error)
-    return NextResponse.json({ message: "Failed to fetch departements" }, { status: 500 })
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 })
   }
 }
 

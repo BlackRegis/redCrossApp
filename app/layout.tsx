@@ -1,50 +1,39 @@
 import type React from "react"
 import type { Metadata } from "next/types"
-import { Inter } from "next/font/google"
-import { cookies } from "next/headers"
 
+import { siteConfig } from "@/config/site"
+import { fontSans } from "@/lib/fonts"
+import { cn } from "@/lib/utils"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/sonner"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { CustomSidebar } from "@/components/sidebar"
-import { QueryClientProviderWrapper } from "@/components/query-client-provider-wrapper"
-import { fetchRedCrossColors } from "@/lib/database"
-
+import { SidebarProvider } from "@/components/ui/sidebar"
+import Sidebar from "@/components/sidebar"
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"] })
-
 export const metadata: Metadata = {
-  title: "Croix-Rouge Congolaise",
-  description: "Application de gestion des membres et activités de la Croix-Rouge Congolaise",
+  title: {
+    default: siteConfig.name,
+    template: `%s - ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  icons: [{ rel: "icon", url: "/favicon.ico" }],
     generator: 'v0.dev'
 }
 
-export default async function RootLayout({
-  children,
-}: Readonly<{
+interface RootLayoutProps {
   children: React.ReactNode
-}>) {
-  const cookieStore = cookies()
-  const defaultOpen = cookieStore.get("sidebar:state")?.value === "true"
+}
 
-  // Fetch Red Cross colors on the server
-  const redCrossColors = await fetchRedCrossColors()
-  const redColor = redCrossColors.find((color: any) => color.name === "Red")?.hex_code || "#FF0000" // Default to red if not found
-
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="fr" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <QueryClientProviderWrapper>
-            <SidebarProvider defaultOpen={defaultOpen}>
-              <CustomSidebar redCrossColor={redColor} />
-              <SidebarInset>
-                <main className="flex flex-1 flex-col">{children}</main>
-              </SidebarInset>
-            </SidebarProvider>
-          </QueryClientProviderWrapper>
-          <Toaster />
+    <html lang="fr">
+      <body className={cn("min-h-screen bg-background font-sans antialiased", fontSans.variable)}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <SidebarProvider>
+            <div className="md:pl-[280px]">
+              <Sidebar />
+              <main className="flex flex-col min-h-screen">{children}</main>
+            </div>
+          </SidebarProvider>
         </ThemeProvider>
       </body>
     </html>

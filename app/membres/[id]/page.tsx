@@ -1,469 +1,751 @@
 "use client"
 
-import type React from "react"
+import { TableCell } from "@/components/ui/table"
+
+import { TableBody } from "@/components/ui/table"
+
+import { TableHead } from "@/components/ui/table"
+
+import { TableRow } from "@/components/ui/table"
+
+import { TableHeader } from "@/components/ui/table"
+
+import { Table } from "@/components/ui/table"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  ArrowLeft,
+  Edit,
+  Mail,
+  Phone,
+  MapPin,
+  User,
+  Briefcase,
+  CreditCard,
+  Activity,
+  Crown,
+  Award,
+  Clock,
+  Users,
+  FileText,
+} from "lucide-react"
+import Link from "next/link"
+import { useParams } from "next/navigation"
 
-interface Membre {
-  id: number
+interface MembreDetail {
+  id: string
   nom: string
   prenom: string
-  date_naissance: string | null
-  lieu_naissance: string | null
-  sexe: string | null
-  nationalite: string | null
-  adresse: string | null
-  telephone: string | null
-  email: string | null
-  profession: string | null
-  date_adhesion: string
-  statut: string
-  departement_id: number | null
-  arrondissement_id: number | null
-  photo_url: string | null
-  numero_carte: string | null
-  date_delivrance_carte: string | null
-  date_expiration_carte: string | null
+  email: string
+  telephone: string
+  adresse: string
+  dateNaissance: string
+  lieuNaissance: string
+  profession: string
+  departement: string
+  arrondissement: string
+  typeAdhesion: string
+  statut: "Actif" | "Inactif" | "Suspendu"
+  dateAdhesion: string
+  numeroCarte: string
+  photo?: string
+  sexe: "M" | "F"
+  situationMatrimoniale: string
+  nombreEnfants: number
+  niveauEtude: string
+  competences: string[]
+  langues: string[]
+  estMembreBureau: boolean
+  posteBureau?: string
+  niveauBureau?: string
+  dateNominationBureau?: string
+  mandatFinBureau?: string
+  formations: Formation[]
+  activites: ActiviteParticipation[]
+  distinctions: Distinction[]
+  historique: HistoriqueStatut[]
 }
 
-interface Departement {
-  id: number
-  nom: string
+interface Formation {
+  id: string
+  titre: string
+  organisme: string
+  dateDebut: string
+  dateFin: string
+  certificat: boolean
+  domaine: string
 }
 
-interface Arrondissement {
-  id: number
-  nom: string
-  departement_id: number
+interface ActiviteParticipation {
+  id: string
+  titre: string
+  type: string
+  date: string
+  role: string
+  statut: "Participé" | "Organisé" | "Animé"
 }
 
-export default function MembreDetailsPage({ params }: { params: { id: string } }) {
-  const router = useRouter()
-  const queryClient = useQueryClient()
-  const membreId = Number.parseInt(params.id)
+interface Distinction {
+  id: string
+  titre: string
+  description: string
+  dateObtention: string
+  niveau: "Local" | "National" | "International"
+}
 
-  const {
-    data: membre,
-    isLoading,
-    error,
-  } = useQuery<Membre>({
-    queryKey: ["membre", membreId],
-    queryFn: async () => {
-      const res = await fetch(`/api/membres/${membreId}`)
-      if (!res.ok) {
-        throw new Error("Failed to fetch membre")
-      }
-      return res.json()
-    },
-    enabled: !!membreId,
-  })
+interface HistoriqueStatut {
+  id: string
+  ancienStatut: string
+  nouveauStatut: string
+  dateChangement: string
+  motif: string
+  auteur: string
+}
 
-  const [formData, setFormData] = useState<Omit<Membre, "id" | "departement_nom" | "arrondissement_nom">>({
-    nom: "",
-    prenom: "",
-    date_naissance: null,
-    lieu_naissance: "",
-    sexe: "",
-    nationalite: "",
-    adresse: "",
-    telephone: "",
-    email: "",
-    profession: "",
-    date_adhesion: "",
-    statut: "",
-    departement_id: null,
-    arrondissement_id: null,
-    photo_url: "",
-    numero_carte: "",
-    date_delivrance_carte: null,
-    date_expiration_carte: null,
-  })
+const membresData: MembreDetail[] = [
+  {
+    id: "1",
+    nom: "Mukendi",
+    prenom: "Jean",
+    email: "jean.mukendi@email.com",
+    telephone: "+242 123 456 789",
+    adresse: "Avenue Félix Éboué, Bacongo, Brazzaville",
+    dateNaissance: "1985-03-20",
+    lieuNaissance: "Brazzaville",
+    profession: "Médecin",
+    departement: "Brazzaville",
+    arrondissement: "Bacongo",
+    typeAdhesion: "Membre Actif",
+    statut: "Actif",
+    dateAdhesion: "2023-01-15",
+    numeroCarte: "CRC-BZV-001",
+    photo: "/placeholder.svg?height=200&width=200&text=Jean+M",
+    sexe: "M",
+    situationMatrimoniale: "Marié",
+    nombreEnfants: 2,
+    niveauEtude: "Doctorat en Médecine",
+    competences: ["Premiers secours", "Chirurgie", "Formation", "Gestion d'équipe"],
+    langues: ["Français", "Lingala", "Anglais"],
+    estMembreBureau: true,
+    posteBureau: "Président",
+    niveauBureau: "National",
+    dateNominationBureau: "2023-01-15",
+    mandatFinBureau: "2027-01-15",
+    formations: [
+      {
+        id: "1",
+        titre: "Formation Premiers Secours Avancés",
+        organisme: "Croix Rouge Internationale",
+        dateDebut: "2022-06-01",
+        dateFin: "2022-06-15",
+        certificat: true,
+        domaine: "Secours",
+      },
+      {
+        id: "2",
+        titre: "Gestion des Catastrophes",
+        organisme: "FICR",
+        dateDebut: "2022-09-10",
+        dateFin: "2022-09-20",
+        certificat: true,
+        domaine: "Gestion",
+      },
+    ],
+    activites: [
+      {
+        id: "1",
+        titre: "Formation Premiers Secours",
+        type: "Formation",
+        date: "2024-01-15",
+        role: "Formateur",
+        statut: "Animé",
+      },
+      {
+        id: "2",
+        titre: "Campagne Don de Sang",
+        type: "Don de sang",
+        date: "2024-01-10",
+        role: "Coordinateur",
+        statut: "Organisé",
+      },
+    ],
+    distinctions: [
+      {
+        id: "1",
+        titre: "Médaille du Mérite Humanitaire",
+        description: "Pour services exceptionnels rendus à la communauté",
+        dateObtention: "2023-12-10",
+        niveau: "National",
+      },
+    ],
+    historique: [
+      {
+        id: "1",
+        ancienStatut: "Volontaire",
+        nouveauStatut: "Membre Actif",
+        dateChangement: "2023-06-15",
+        motif: "Promotion suite à engagement exceptionnel",
+        auteur: "Marie Kabila",
+      },
+    ],
+  },
+  {
+    id: "2",
+    nom: "Kabila",
+    prenom: "Marie",
+    email: "marie.kabila@email.com",
+    telephone: "+242 987 654 321",
+    adresse: "Rue Monseigneur Augouard, Poto-Poto, Brazzaville",
+    dateNaissance: "1990-07-15",
+    lieuNaissance: "Brazzaville",
+    profession: "Infirmière",
+    departement: "Brazzaville",
+    arrondissement: "Poto-Poto",
+    typeAdhesion: "Volontaire",
+    statut: "Actif",
+    dateAdhesion: "2023-03-20",
+    numeroCarte: "CRC-BZV-002",
+    photo: "/placeholder.svg?height=200&width=200&text=Marie+K",
+    sexe: "F",
+    situationMatrimoniale: "Célibataire",
+    nombreEnfants: 0,
+    niveauEtude: "Diplôme d'État en Soins Infirmiers",
+    competences: ["Soins d'urgence", "Gestion de crise", "Sensibilisation", "Coordination"],
+    langues: ["Français", "Lingala"],
+    estMembreBureau: true,
+    posteBureau: "Secrétaire Général",
+    niveauBureau: "National",
+    dateNominationBureau: "2023-03-20",
+    mandatFinBureau: "2027-03-20",
+    formations: [
+      {
+        id: "3",
+        titre: "Formation en Soins d'Urgence",
+        organisme: "Hôpital Général de Brazzaville",
+        dateDebut: "2021-05-01",
+        dateFin: "2021-05-15",
+        certificat: true,
+        domaine: "Soins",
+      },
+    ],
+    activites: [
+      {
+        id: "3",
+        titre: "Distribution de Kits d'Hygiène",
+        type: "Secours",
+        date: "2023-11-20",
+        role: "Coordinatrice",
+        statut: "Organisé",
+      },
+    ],
+    distinctions: [],
+    historique: [],
+  },
+]
+
+export default function MembreDetailPage() {
+  const params = useParams()
+  const [membre, setMembre] = useState<MembreDetail | null>(null)
+  const [activeTab, setActiveTab] = useState("profil")
 
   useEffect(() => {
-    if (membre) {
-      setFormData({
-        nom: membre.nom,
-        prenom: membre.prenom,
-        date_naissance: membre.date_naissance,
-        lieu_naissance: membre.lieu_naissance,
-        sexe: membre.sexe,
-        nationalite: membre.nationalite,
-        adresse: membre.adresse,
-        telephone: membre.telephone,
-        email: membre.email,
-        profession: membre.profession,
-        date_adhesion: membre.date_adhesion,
-        statut: membre.statut,
-        departement_id: membre.departement_id,
-        arrondissement_id: membre.arrondissement_id,
-        photo_url: membre.photo_url,
-        numero_carte: membre.numero_carte,
-        date_delivrance_carte: membre.date_delivrance_carte,
-        date_expiration_carte: membre.date_expiration_carte,
-      })
-    }
-  }, [membre])
+    // Simulation de récupération des données
+    const membreData = membresData.find((m) => m.id === params.id) || null
+    setMembre(membreData)
+  }, [params.id])
 
-  const { data: departements, isLoading: isLoadingDepartements } = useQuery<Departement[]>({
-    queryKey: ["departements"],
-    queryFn: async () => {
-      const res = await fetch("/api/departements")
-      if (!res.ok) {
-        throw new Error("Failed to fetch departements")
-      }
-      return res.json()
-    },
-  })
-
-  const { data: arrondissements, isLoading: isLoadingArrondissements } = useQuery<Arrondissement[]>({
-    queryKey: ["arrondissements", formData.departement_id],
-    queryFn: async () => {
-      if (!formData.departement_id) return []
-      const res = await fetch(`/api/arrondissements/${formData.departement_id}`)
-      if (!res.ok) {
-        throw new Error("Failed to fetch arrondissements")
-      }
-      return res.json()
-    },
-    enabled: !!formData.departement_id,
-  })
-
-  const updateMembreMutation = useMutation({
-    mutationFn: async (updatedMembreData: any) => {
-      const res = await fetch(`/api/membres/${membreId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedMembreData),
-      })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Failed to update membre")
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["membre", membreId] })
-      queryClient.invalidateQueries({ queryKey: ["membres"] }) // Invalidate list as well
-      toast.success("Membre mis à jour avec succès!")
-    },
-    onError: (error) => {
-      toast.error(`Erreur lors de la mise à jour du membre: ${error.message}`)
-    },
-  })
-
-  const deleteMembreMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/membres/${membreId}`, {
-        method: "DELETE",
-      })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Failed to delete membre")
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["membres"] })
-      toast.success("Membre supprimé avec succès!")
-      router.push("/membres") // Redirect to members list
-    },
-    onError: (error) => {
-      toast.error(`Erreur lors de la suppression du membre: ${error.message}`)
-    },
-  })
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value } = e.target
-    setFormData((prev) => ({ ...prev, [id]: value }))
+  if (!membre) {
+    return <div>Chargement...</div>
   }
 
-  const handleSelectChange = (id: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [id]: value }))
-    if (id === "departement_id") {
-      setFormData((prev) => ({ ...prev, arrondissement_id: null })) // Reset arrondissement when departement changes
+  const getStatutColor = (statut: string) => {
+    switch (statut) {
+      case "Actif":
+        return "bg-green-100 text-green-800"
+      case "Inactif":
+        return "bg-gray-100 text-gray-800"
+      case "Suspendu":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
     }
   }
 
-  const handleDateChange = (id: string, date: Date | undefined) => {
-    setFormData((prev) => ({ ...prev, [id]: date ? format(date, "yyyy-MM-dd") : null }))
+  const getActiviteStatutColor = (statut: string) => {
+    switch (statut) {
+      case "Participé":
+        return "bg-blue-100 text-blue-800"
+      case "Organisé":
+        return "bg-green-100 text-green-800"
+      case "Animé":
+        return "bg-purple-100 text-purple-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    updateMembreMutation.mutate({
-      ...formData,
-      departement_id: formData.departement_id ? Number.parseInt(String(formData.departement_id)) : null,
-      arrondissement_id: formData.arrondissement_id ? Number.parseInt(String(formData.arrondissement_id)) : null,
-    })
+  const calculateAge = (dateNaissance: string) => {
+    const today = new Date()
+    const birthDate = new Date(dateNaissance)
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const monthDiff = today.getMonth() - birthDate.getMonth()
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+    return age
   }
-
-  if (isLoading) return <p className="p-4 md:p-6">Chargement du membre...</p>
-  if (error) return <p className="p-4 md:p-6">Erreur: {error.message}</p>
-  if (!membre) return <p className="p-4 md:p-6">Membre non trouvé.</p>
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Link href="/membres">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-16 w-16">
+              <AvatarImage src={membre.photo || "/placeholder.svg"} />
+              <AvatarFallback className="text-lg">
+                {membre.prenom.charAt(0)}
+                {membre.nom.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                {membre.prenom} {membre.nom}
+                {membre.estMembreBureau && <Crown className="h-6 w-6 text-yellow-600" />}
+              </h1>
+              <div className="flex items-center space-x-2 mt-1">
+                <Badge className={getStatutColor(membre.statut)}>{membre.statut}</Badge>
+                <Badge variant="outline">{membre.typeAdhesion}</Badge>
+                <Badge variant="outline">{membre.numeroCarte}</Badge>
+              </div>
+              <p className="text-gray-600 mt-1">{membre.profession}</p>
+            </div>
+          </div>
+        </div>
+        <Button className="bg-red-600 hover:bg-red-700">
+          <Edit className="h-4 w-4 mr-2" />
+          Modifier
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Ancienneté</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {Math.floor(
+                (new Date().getTime() - new Date(membre.dateAdhesion).getTime()) / (1000 * 60 * 60 * 24 * 365),
+              )}{" "}
+              ans
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Depuis {new Date(membre.dateAdhesion).toLocaleDateString("fr-FR")}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Formations</CardTitle>
+            <Award className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{membre.formations.length}</div>
+            <p className="text-xs text-muted-foreground">Certifications obtenues</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Activités</CardTitle>
+            <Activity className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{membre.activites.length}</div>
+            <p className="text-xs text-muted-foreground">Participations</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Distinctions</CardTitle>
+            <Award className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">{membre.distinctions.length}</div>
+            <p className="text-xs text-muted-foreground">Récompenses</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            Détails du Membre: {membre.prenom} {membre.nom}
-          </CardTitle>
-          <CardDescription>Mettez à jour les informations de ce membre.</CardDescription>
+          <CardTitle>Profil Détaillé</CardTitle>
+          <CardDescription>Informations complètes du membre/volontaire</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="nom">Nom</Label>
-              <Input id="nom" value={formData.nom} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="prenom">Prénom</Label>
-              <Input id="prenom" value={formData.prenom} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="date_naissance">Date de Naissance</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.date_naissance && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.date_naissance ? (
-                      format(new Date(formData.date_naissance), "PPP")
-                    ) : (
-                      <span>Choisir une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.date_naissance ? new Date(formData.date_naissance) : undefined}
-                    onSelect={(date) => handleDateChange("date_naissance", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lieu_naissance">Lieu de Naissance</Label>
-              <Input id="lieu_naissance" value={formData.lieu_naissance || ""} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sexe">Sexe</Label>
-              <Select value={formData.sexe || ""} onValueChange={(value) => handleSelectChange("sexe", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le sexe" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="M">Masculin</SelectItem>
-                  <SelectItem value="F">Féminin</SelectItem>
-                  <SelectItem value="Autre">Autre</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nationalite">Nationalité</Label>
-              <Input id="nationalite" value={formData.nationalite || ""} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="adresse">Adresse</Label>
-              <Input id="adresse" value={formData.adresse || ""} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="telephone">Téléphone</Label>
-              <Input id="telephone" value={formData.telephone || ""} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={formData.email || ""} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="profession">Profession</Label>
-              <Input id="profession" value={formData.profession || ""} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="date_adhesion">Date d'Adhésion</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.date_adhesion && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.date_adhesion ? (
-                      format(new Date(formData.date_adhesion), "PPP")
-                    ) : (
-                      <span>Choisir une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={new Date(formData.date_adhesion)}
-                    onSelect={(date) => handleDateChange("date_adhesion", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="statut">Statut</Label>
-              <Select value={formData.statut} onValueChange={(value) => handleSelectChange("statut", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le statut" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Actif">Actif</SelectItem>
-                  <SelectItem value="Inactif">Inactif</SelectItem>
-                  <SelectItem value="Suspendu">Suspendu</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="departement_id">Département</Label>
-              <Select
-                value={String(formData.departement_id || "")}
-                onValueChange={(value) => handleSelectChange("departement_id", value)}
-                disabled={isLoadingDepartements}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un département" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departements?.map((dept) => (
-                    <SelectItem key={dept.id} value={String(dept.id)}>
-                      {dept.nom}
-                    </SelectItem>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-6">
+              <TabsTrigger value="profil">
+                <User className="h-4 w-4 mr-2" />
+                Profil
+              </TabsTrigger>
+              <TabsTrigger value="formations">
+                <Award className="h-4 w-4 mr-2" />
+                Formations
+              </TabsTrigger>
+              <TabsTrigger value="activites">
+                <Activity className="h-4 w-4 mr-2" />
+                Activités
+              </TabsTrigger>
+              <TabsTrigger value="bureau">
+                <Crown className="h-4 w-4 mr-2" />
+                Bureau
+              </TabsTrigger>
+              <TabsTrigger value="distinctions">
+                <Award className="h-4 w-4 mr-2" />
+                Distinctions
+              </TabsTrigger>
+              <TabsTrigger value="historique">
+                <FileText className="h-4 w-4 mr-2" />
+                Historique
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Onglet Profil */}
+            <TabsContent value="profil" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Informations Personnelles
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Nom complet</label>
+                        <p className="font-medium">
+                          {membre.prenom} {membre.nom}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Sexe</label>
+                        <p className="font-medium">{membre.sexe === "M" ? "Masculin" : "Féminin"}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Date de naissance</label>
+                        <p className="font-medium">
+                          {new Date(membre.dateNaissance).toLocaleDateString("fr-FR")} (
+                          {calculateAge(membre.dateNaissance)} ans)
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Lieu de naissance</label>
+                        <p className="font-medium">{membre.lieuNaissance}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Situation matrimoniale</label>
+                        <p className="font-medium">{membre.situationMatrimoniale}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Nombre d'enfants</label>
+                        <p className="font-medium">{membre.nombreEnfants}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Niveau d'étude</label>
+                      <p className="font-medium">{membre.niveauEtude}</p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Profession</label>
+                      <p className="font-medium">{membre.profession}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5" />
+                      Contact & Localisation
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span>{membre.email}</span>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span>{membre.telephone}</span>
+                    </div>
+
+                    <div className="flex items-start space-x-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
+                      <div>
+                        <p>{membre.adresse}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {membre.arrondissement}, {membre.departement}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Carte de membre</span>
+                      </div>
+                      <p className="font-mono text-sm">{membre.numeroCarte}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Adhésion: {new Date(membre.dateAdhesion).toLocaleDateString("fr-FR")}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Briefcase className="h-5 w-5" />
+                      Compétences & Langues
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Compétences</label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {membre.competences.map((competence, index) => (
+                          <Badge key={index} variant="outline">
+                            {competence}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Langues parlées</label>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {membre.langues.map((langue, index) => (
+                          <Badge key={index} className="bg-blue-100 text-blue-800">
+                            {langue}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Onglet Formations */}
+            <TabsContent value="formations">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Formation</TableHead>
+                      <TableHead>Organisme</TableHead>
+                      <TableHead>Période</TableHead>
+                      <TableHead>Domaine</TableHead>
+                      <TableHead>Certificat</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {membre.formations.map((formation) => (
+                      <TableRow key={formation.id}>
+                        <TableCell className="font-medium">{formation.titre}</TableCell>
+                        <TableCell>{formation.organisme}</TableCell>
+                        <TableCell>
+                          {new Date(formation.dateDebut).toLocaleDateString("fr-FR")} -{" "}
+                          {new Date(formation.dateFin).toLocaleDateString("fr-FR")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{formation.domaine}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {formation.certificat ? (
+                            <Badge className="bg-green-100 text-green-800">Obtenu</Badge>
+                          ) : (
+                            <Badge className="bg-gray-100 text-gray-800">Non</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+
+            {/* Onglet Activités */}
+            <TabsContent value="activites">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Activité</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Rôle</TableHead>
+                      <TableHead>Statut</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {membre.activites.map((activite) => (
+                      <TableRow key={activite.id}>
+                        <TableCell className="font-medium">{activite.titre}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{activite.type}</Badge>
+                        </TableCell>
+                        <TableCell>{new Date(activite.date).toLocaleDateString("fr-FR")}</TableCell>
+                        <TableCell>{activite.role}</TableCell>
+                        <TableCell>
+                          <Badge className={getActiviteStatutColor(activite.statut)}>{activite.statut}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+
+            {/* Onglet Bureau */}
+            <TabsContent value="bureau">
+              {membre.estMembreBureau ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Crown className="h-5 w-5 text-yellow-600" />
+                      Fonction au Bureau Exécutif
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Poste</label>
+                        <p className="font-medium text-lg">{membre.posteBureau}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Niveau</label>
+                        <p className="font-medium">{membre.niveauBureau}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Date de nomination</label>
+                        <p className="font-medium">
+                          {membre.dateNominationBureau &&
+                            new Date(membre.dateNominationBureau).toLocaleDateString("fr-FR")}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Fin de mandat</label>
+                        <p className="font-medium">
+                          {membre.mandatFinBureau && new Date(membre.mandatFinBureau).toLocaleDateString("fr-FR")}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">Ce membre ne fait pas partie du bureau exécutif</p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            {/* Onglet Distinctions */}
+            <TabsContent value="distinctions">
+              {membre.distinctions.length > 0 ? (
+                <div className="space-y-4">
+                  {membre.distinctions.map((distinction) => (
+                    <Card key={distinction.id}>
+                      <CardContent className="p-6">
+                        <div className="flex items-start space-x-4">
+                          <Award className="h-8 w-8 text-yellow-600 mt-1" />
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg">{distinction.titre}</h3>
+                            <p className="text-muted-foreground mt-1">{distinction.description}</p>
+                            <div className="flex items-center space-x-4 mt-2">
+                              <Badge className="bg-yellow-100 text-yellow-800">{distinction.niveau}</Badge>
+                              <span className="text-sm text-muted-foreground">
+                                {new Date(distinction.dateObtention).toLocaleDateString("fr-FR")}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="arrondissement_id">Arrondissement</Label>
-              <Select
-                value={String(formData.arrondissement_id || "")}
-                onValueChange={(value) => handleSelectChange("arrondissement_id", value)}
-                disabled={!formData.departement_id || isLoadingArrondissements}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un arrondissement" />
-                </SelectTrigger>
-                <SelectContent>
-                  {arrondissements?.map((arr) => (
-                    <SelectItem key={arr.id} value={String(arr.id)}>
-                      {arr.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="photo_url">URL Photo</Label>
-              <Input id="photo_url" value={formData.photo_url || ""} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="numero_carte">Numéro de Carte</Label>
-              <Input id="numero_carte" value={formData.numero_carte || ""} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="date_delivrance_carte">Date de Délivrance Carte</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.date_delivrance_carte && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.date_delivrance_carte ? (
-                      format(new Date(formData.date_delivrance_carte), "PPP")
-                    ) : (
-                      <span>Choisir une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.date_delivrance_carte ? new Date(formData.date_delivrance_carte) : undefined}
-                    onSelect={(date) => handleDateChange("date_delivrance_carte", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="date_expiration_carte">Date d'Expiration Carte</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.date_expiration_carte && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.date_expiration_carte ? (
-                      format(new Date(formData.date_expiration_carte), "PPP")
-                    ) : (
-                      <span>Choisir une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.date_expiration_carte ? new Date(formData.date_expiration_carte) : undefined}
-                    onSelect={(date) => handleDateChange("date_expiration_carte", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="col-span-full flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => router.back()}>
-                Annuler
-              </Button>
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => deleteMembreMutation.mutate()}
-                disabled={deleteMembreMutation.isPending}
-              >
-                {deleteMembreMutation.isPending ? "Suppression..." : "Supprimer Membre"}
-              </Button>
-              <Button type="submit" disabled={updateMembreMutation.isPending}>
-                {updateMembreMutation.isPending ? "Mise à jour..." : "Mettre à jour"}
-              </Button>
-            </div>
-          </form>
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="text-center py-8">
+                    <Award className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground">Aucune distinction pour le moment</p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            {/* Onglet Historique */}
+            <TabsContent value="historique">
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Changement</TableHead>
+                      <TableHead>Motif</TableHead>
+                      <TableHead>Auteur</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {membre.historique.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell>{new Date(entry.dateChangement).toLocaleDateString("fr-FR")}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant="outline">{entry.ancienStatut}</Badge>
+                            <span>→</span>
+                            <Badge className="bg-green-100 text-green-800">{entry.nouveauStatut}</Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>{entry.motif}</TableCell>
+                        <TableCell>{entry.auteur}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

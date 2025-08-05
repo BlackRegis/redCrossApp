@@ -1,16 +1,18 @@
+"use client"
+
 import { Skeleton } from "@/components/ui/skeleton"
 
-export default function CartesLoading() {
+export default function Loading() {
   return (
-    <div className="flex flex-col space-y-3 p-4 md:p-6">
-      <Skeleton className="h-[40px] w-[200px] rounded-md" />
+    <div className="space-y-4">
+      <Skeleton className="h-12 w-[200px]" />
       <div className="space-y-2">
-        <Skeleton className="h-[40px] w-full rounded-md" />
-        <Skeleton className="h-[40px] w-full rounded-md" />
-        <Skeleton className="h-[40px] w-full rounded-md" />
-        <Skeleton className="h-[40px] w-full rounded-md" />
-        <Skeleton className="h-[40px] w-full rounded-md" />
+        <Skeleton className="h-4 w-[250px]" />
+        <Skeleton className="h-4 w-[200px]" />
       </div>
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
     </div>
   )
 }

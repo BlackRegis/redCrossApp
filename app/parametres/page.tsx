@@ -1,10 +1,6 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -47,53 +43,7 @@ interface Arrondissement {
   superficie?: number
 }
 
-interface AppSettings {
-  app_name?: string
-  contact_email?: string
-  phone_number?: string
-}
-
 export default function ParametresPage() {
-  const queryClient = useQueryClient()
-  const [settings, setSettings] = useState<AppSettings>({})
-
-  const { isLoading, error } = useQuery<AppSettings>({
-    queryKey: ["appSettings"],
-    queryFn: async () => {
-      const res = await fetch("/api/settings/app")
-      if (!res.ok) {
-        throw new Error("Failed to fetch app settings")
-      }
-      const data = await res.json()
-      setSettings(data) // Initialize state with fetched data
-      return data
-    },
-  })
-
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (updatedSettings: AppSettings) => {
-      const res = await fetch("/api/settings/app", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedSettings),
-      })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Failed to update settings")
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appSettings"] })
-      toast.success("Paramètres mis à jour avec succès!")
-    },
-    onError: (error) => {
-      toast.error(`Erreur lors de la mise à jour des paramètres: ${error.message}`)
-    },
-  })
-
   const [activeTab, setActiveTab] = useState("application")
   const [appSettings, setAppSettings] = useState({
     nomOrganisation: "Croix Rouge de la République du Congo",
@@ -180,16 +130,6 @@ export default function ParametresPage() {
     population: "",
     superficie: "",
   })
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
-    setSettings((prev) => ({ ...prev, [id]: value }))
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    updateSettingsMutation.mutate(settings)
-  }
 
   const handleSaveAppSettings = async () => {
     try {
@@ -342,7 +282,7 @@ export default function ParametresPage() {
     }
   }
 
-  const handleEditArrondissement = (arr: Arrondissement, deptId: string) => {
+  const handleEditArrondissement = async (arr: Arrondissement, deptId: string) => {
     setEditingArr({ arr, deptId })
     setEditArrData({
       nom: arr.nom,
@@ -433,7 +373,7 @@ export default function ParametresPage() {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Base de Données</CardTitle>
             <Database className="h-4 w-4 text-purple-600" />
           </CardHeader>

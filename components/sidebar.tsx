@@ -1,202 +1,126 @@
 "use client"
 
-import { Label } from "@/components/ui/label"
-import * as React from "react"
-import Link from "next/link"
+import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
-import { Home, Search, Users, Cross, ChevronDown, ChevronUp } from "lucide-react"
-
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInput,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-  SidebarSeparator,
-  useSidebar,
-} from "@/components/ui/sidebar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { LayoutDashboard, Settings, User, Activity, CreditCard, Building2, LogOut } from "lucide-react"
+import { useSidebar } from "@/components/ui/sidebar"
+import { useMobile } from "@/hooks/use-mobile"
+import Link from "next/link"
 
-interface CustomSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  redCrossColor: string // Prop for the Red Cross color
+interface NavItem {
+  title: string
+  href: string
+  icon: any
 }
 
-const navItems = [
+const navItems: NavItem[] = [
   {
-    title: "Home",
+    title: "Tableau de bord",
     href: "/",
-    icon: Home,
-    submenu: null,
+    icon: LayoutDashboard,
   },
   {
-    title: "Users",
-    href: "/users",
-    icon: Users,
-    submenu: [
-      {
-        title: "List Users",
-        href: "/users/list",
-      },
-      {
-        title: "Add User",
-        href: "/users/add",
-      },
-    ],
+    title: "Organisation",
+    href: "/organisation",
+    icon: Building2,
   },
-  // Add more navigation items as needed
+  {
+    title: "Membres",
+    href: "/membres",
+    icon: User,
+  },
+  {
+    title: "Activités",
+    href: "/activites",
+    icon: Activity,
+  },
+  {
+    title: "Cartes",
+    href: "/cartes",
+    icon: CreditCard,
+  },
+  {
+    title: "Paramètres",
+    href: "/parametres",
+    icon: Settings,
+  },
 ]
 
-export function CustomSidebar({ redCrossColor, ...props }: CustomSidebarProps) {
+interface UserProfile {
+  name: string
+  email: string
+  imageUrl: string
+}
+
+const userProfile: UserProfile = {
+  name: "John Doe",
+  email: "john.doe@example.com",
+  imageUrl: "/placeholder.svg?height=40&width=40",
+}
+
+export default function Sidebar() {
   const pathname = usePathname()
-  const { state } = useSidebar()
+  const { collapsed } = useSidebar()
+  const isMobile = useMobile()
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return null
+  }
 
   return (
-    <Sidebar {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild className="group/sidebar-logo">
-              <Link href="/">
-                <Cross
-                  className="h-6 w-6 transition-all duration-200 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8"
-                  style={{ color: redCrossColor }}
-                />
-                <span className="text-lg font-semibold">Croix-Rouge</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-        <SidebarGroup className="py-0">
-          <SidebarGroupContent className="relative">
-            <Label htmlFor="search" className="sr-only">
-              Rechercher
-            </Label>
-            <SidebarInput id="search" placeholder="Rechercher..." className="pl-8" />
-            <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 select-none opacity-50" />
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <React.Fragment key={item.title}>
-                  {item.submenu ? (
-                    <Collapsible
-                      defaultOpen={item.submenu.some((sub) => pathname === sub.href)}
-                      className="group/collapsible"
-                    >
-                      <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton>
-                            <item.icon />
-                            <span>{item.title}</span>
-                            <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                          </SidebarMenuButton>
-                        </CollapsibleTrigger>
-                      </SidebarMenuItem>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.submenu.map((subItem) => (
-                            <SidebarMenuSubItem key={subItem.title}>
-                              <SidebarMenuSubButton asChild isActive={pathname === subItem.href}>
-                                <Link href={subItem.href}>
-                                  <span>{subItem.title}</span>
-                                </Link>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ) : (
-                    <SidebarMenuItem>
-                      <SidebarMenuButton asChild isActive={pathname === item.href}>
-                        <Link href={item.href}>
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  )}
-                </React.Fragment>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarSeparator />
-
-        <SidebarGroup>
-          <Collapsible defaultOpen className="group/collapsible">
-            <SidebarGroupLabel asChild>
-              <CollapsibleTrigger>
-                Aide
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
-              </CollapsibleTrigger>
-            </SidebarGroupLabel>
-            <CollapsibleContent>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="#">
-                        <span>Documentation</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <Link href="#">
-                        <span>Support</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton>
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src="/placeholder.svg?height=100&width=100" alt="User Avatar" />
-                    <AvatarFallback>JD</AvatarFallback>
-                  </Avatar>
-                  <span>John Doe</span>
-                  <ChevronUp className="ml-auto" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
-                <DropdownMenuItem>
-                  <span>Mon Profil</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <span>Déconnexion</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
+    <aside
+      className={cn(
+        "fixed left-0 top-0 z-50 flex flex-col h-screen bg-secondary border-r border-r-secondary/10 w-[280px] md:w-[280px] transition-transform -translate-x-full md:translate-x-0",
+        collapsed ? "-translate-x-full" : "",
+        isMobile ? "fixed" : "sticky",
+      )}
+    >
+      <div className="flex-1 px-3 py-2">
+        <Link href="/" className="grid h-14 place-items-center">
+          <h1 className="font-semibold text-lg">Croix-Rouge</h1>
+        </Link>
+        <div className="space-y-1">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "group flex w-full items-center rounded-md border border-transparent py-2 px-3 text-sm font-medium transition-colors hover:bg-secondary/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+                pathname === item.href ? "bg-secondary/50 text-primary" : "text-secondary-foreground",
+              )}
+            >
+              <item.icon className="mr-2 h-4 w-4" />
+              {item.title}
+            </Link>
+          ))}
+        </div>
+      </div>
+      <div className="p-4">
+        <div className="border rounded-lg p-3">
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={userProfile.imageUrl || "/placeholder.svg"} alt={userProfile.name} />
+              <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <p className="text-sm font-medium leading-none">{userProfile.name}</p>
+              <p className="text-sm text-muted-foreground">{userProfile.email}</p>
+            </div>
+          </div>
+          <Button variant="ghost" className="w-full mt-3 justify-start">
+            <LogOut className="mr-2 h-4 w-4" />
+            Déconnexion
+          </Button>
+        </div>
+      </div>
+    </aside>
   )
 }

@@ -1,677 +1,372 @@
 "use client"
 
-import { SelectItem } from "@/components/ui/select"
+import { TabsContent } from "@/components/ui/tabs"
 
-import { SelectContent } from "@/components/ui/select"
+import { TabsTrigger } from "@/components/ui/tabs"
 
-import { SelectValue } from "@/components/ui/select"
+import { TabsList } from "@/components/ui/tabs"
 
-import { SelectTrigger } from "@/components/ui/select"
-
-import { Select } from "@/components/ui/select"
-
-import type React from "react"
+import { Tabs } from "@/components/ui/tabs"
 
 import { useState } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, PlusCircle, Edit, Trash2, Users } from "lucide-react"
-import { format } from "date-fns"
-import { Calendar } from "@/components/ui/calendar"
-import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Building2, MapPin, Users, Plus, Edit, Crown, User, Briefcase, Phone, Mail } from "lucide-react"
 
-interface ExecutiveBureau {
-  id: number
-  name: string
-  start_date: string
-  end_date: string | null
-  is_active: boolean
-}
-
-interface BureauMember {
-  id: number
-  bureau_id: number
-  member_id: number
+interface BureauMembre {
+  id: string
   nom: string
   prenom: string
-  role: string
-  start_date: string
-  end_date: string | null
+  poste: "Président" | "Secrétaire Général" | "Trésorier"
+  email: string
+  telephone: string
+  dateNomination: string
+  mandatFin: string
+  photo?: string
 }
 
-interface Membre {
-  id: number
+interface BureauExecutif {
+  id: string
   nom: string
-  prenom: string
+  type: "nation" | "departement" | "arrondissement"
+  niveau: string
+  membres: BureauMembre[]
 }
+
+const bureauxData: BureauExecutif[] = [
+  {
+    id: "congo-national",
+    nom: "République du Congo",
+    type: "nation",
+    niveau: "National",
+    membres: [
+      {
+        id: "1",
+        nom: "Mukendi",
+        prenom: "Jean",
+        poste: "Président",
+        email: "president@croixrouge-congo.org",
+        telephone: "+242 123 456 789",
+        dateNomination: "2023-01-15",
+        mandatFin: "2027-01-15",
+      },
+      {
+        id: "2",
+        nom: "Kabila",
+        prenom: "Marie",
+        poste: "Secrétaire Général",
+        email: "secretaire@croixrouge-congo.org",
+        telephone: "+242 987 654 321",
+        dateNomination: "2023-01-15",
+        mandatFin: "2027-01-15",
+      },
+      {
+        id: "3",
+        nom: "Tshisekedi",
+        prenom: "Paul",
+        poste: "Trésorier",
+        email: "tresorier@croixrouge-congo.org",
+        telephone: "+242 555 123 456",
+        dateNomination: "2023-01-15",
+        mandatFin: "2027-01-15",
+      },
+    ],
+  },
+  {
+    id: "brazzaville-dept",
+    nom: "Brazzaville",
+    type: "departement",
+    niveau: "Départemental",
+    membres: [
+      {
+        id: "4",
+        nom: "Ngouabi",
+        prenom: "Sophie",
+        poste: "Président",
+        email: "president.brazzaville@croixrouge-congo.org",
+        telephone: "+242 666 789 123",
+        dateNomination: "2023-02-01",
+        mandatFin: "2027-02-01",
+      },
+      {
+        id: "5",
+        nom: "Sassou",
+        prenom: "André",
+        poste: "Secrétaire Général",
+        email: "secretaire.brazzaville@croixrouge-congo.org",
+        telephone: "+242 777 456 789",
+        dateNomination: "2023-02-01",
+        mandatFin: "2027-02-01",
+      },
+      {
+        id: "6",
+        nom: "Opangault",
+        prenom: "Claudine",
+        poste: "Trésorier",
+        email: "tresorier.brazzaville@croixrouge-congo.org",
+        telephone: "+242 888 321 654",
+        dateNomination: "2023-02-01",
+        mandatFin: "2027-02-01",
+      },
+    ],
+  },
+  {
+    id: "bacongo-arr",
+    nom: "Lumumba",
+    type: "arrondissement",
+    niveau: "Arrondissement",
+    membres: [
+      {
+        id: "7",
+        nom: "Nziengi",
+        prenom: "Olivier",
+        poste: "Président",
+        email: "president.lumumba@croixrouge-congo.org",
+        telephone: "+242 06 663 5880",
+        dateNomination: "2020-03-01",
+        mandatFin: "2025-03-01",
+      },
+      {
+        id: "8",
+        nom: "Kolelas",
+        prenom: "Jeanne",
+        poste: "Secrétaire Général",
+        email: "secretaire.bacongo@croixrouge-congo.org",
+        telephone: "+242 111 369 852",
+        dateNomination: "2023-03-01",
+        mandatFin: "2027-03-01",
+      },
+      {
+        id: "9",
+        nom: "Yhombi",
+        prenom: "Robert",
+        poste: "Trésorier",
+        email: "tresorier.bacongo@croixrouge-congo.org",
+        telephone: "+242 222 741 963",
+        dateNomination: "2023-03-01",
+        mandatFin: "2027-03-01",
+      },
+    ],
+  },
+  {
+    id: "poto-poto-arr",
+    nom: "Poto-Poto",
+    type: "arrondissement",
+    niveau: "Arrondissement",
+    membres: [
+      {
+        id: "10",
+        nom: "Poaty",
+        prenom: "Sylvie",
+        poste: "Président",
+        email: "president.poto-poto@croixrouge-congo.org",
+        telephone: "+242 333 852 741",
+        dateNomination: "2023-03-15",
+        mandatFin: "2027-03-15",
+      },
+    ],
+  },
+]
 
 export default function BureauExecutifPage() {
-  const queryClient = useQueryClient()
-  const [isBureauDialogOpen, setIsBureauDialogOpen] = useState(false)
-  const [isMemberDialogOpen, setIsMemberDialogOpen] = useState(false)
-  const [currentBureau, setCurrentBureau] = useState<ExecutiveBureau | null>(null)
-  const [currentBureauMember, setCurrentBureauMember] = useState<BureauMember | null>(null)
-  const [bureauFormData, setBureauFormData] = useState({
-    name: "",
-    start_date: null as Date | null,
-    end_date: null as Date | null,
-    is_active: false,
-  })
-  const [memberFormData, setMemberFormData] = useState({
-    bureau_id: "",
-    member_id: "",
-    role: "",
-    start_date: null as Date | null,
-    end_date: null as Date | null,
-  })
-  const [selectedBureauId, setSelectedBureauId] = useState<number | null>(null)
+  const [bureaux, setBureaux] = useState<BureauExecutif[]>(bureauxData)
+  const [activeTab, setActiveTab] = useState("national")
 
-  const { data: bureaus, isLoading: isLoadingBureaus } = useQuery<ExecutiveBureau[]>({
-    queryKey: ["executiveBureaus"],
-    queryFn: async () => {
-      const res = await fetch("/api/bureaux-executifs")
-      if (!res.ok) throw new Error("Failed to fetch executive bureaus")
-      return res.json()
-    },
-  })
-
-  const { data: bureauMembers, isLoading: isLoadingBureauMembers } = useQuery<BureauMember[]>({
-    queryKey: ["bureauMembers", selectedBureauId],
-    queryFn: async () => {
-      if (!selectedBureauId) return []
-      const res = await fetch(`/api/bureau-membres?bureauId=${selectedBureauId}`)
-      if (!res.ok) throw new Error("Failed to fetch bureau members")
-      return res.json()
-    },
-    enabled: !!selectedBureauId,
-  })
-
-  const { data: membres, isLoading: isLoadingMembres } = useQuery<Membre[]>({
-    queryKey: ["membresList"],
-    queryFn: async () => {
-      const res = await fetch("/api/membres") // Assuming an API endpoint for all members
-      if (!res.ok) throw new Error("Failed to fetch members")
-      const data = await res.json()
-      return data.data // Assuming the API returns { data: [], totalCount: ... }
-    },
-  })
-
-  const createBureauMutation = useMutation({
-    mutationFn: async (newBureauData: any) => {
-      const res = await fetch("/api/bureaux-executifs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newBureauData),
-      })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Failed to create bureau")
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["executiveBureaus"] })
-      toast.success("Bureau créé avec succès!")
-      setIsBureauDialogOpen(false)
-    },
-    onError: (error) => {
-      toast.error(`Erreur lors de la création du bureau: ${error.message}`)
-    },
-  })
-
-  const updateBureauMutation = useMutation({
-    mutationFn: async ({ id, updatedData }: { id: number; updatedData: any }) => {
-      const res = await fetch(`/api/bureaux-executifs/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedData),
-      })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Failed to update bureau")
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["executiveBureaus"] })
-      toast.success("Bureau mis à jour avec succès!")
-      setIsBureauDialogOpen(false)
-    },
-    onError: (error) => {
-      toast.error(`Erreur lors de la mise à jour du bureau: ${error.message}`)
-    },
-  })
-
-  const deleteBureauMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await fetch(`/api/bureaux-executifs/${id}`, { method: "DELETE" })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Failed to delete bureau")
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["executiveBureaus"] })
-      toast.success("Bureau supprimé avec succès!")
-      setSelectedBureauId(null) // Deselect bureau if deleted
-    },
-    onError: (error) => {
-      toast.error(`Erreur lors de la suppression du bureau: ${error.message}`)
-    },
-  })
-
-  const createMemberMutation = useMutation({
-    mutationFn: async (newMemberData: any) => {
-      const res = await fetch("/api/bureau-membres", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newMemberData),
-      })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Failed to add bureau member")
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bureauMembers", selectedBureauId] })
-      toast.success("Membre du bureau ajouté avec succès!")
-      setIsMemberDialogOpen(false)
-    },
-    onError: (error) => {
-      toast.error(`Erreur lors de l'ajout du membre du bureau: ${error.message}`)
-    },
-  })
-
-  const updateMemberMutation = useMutation({
-    mutationFn: async ({ id, updatedData }: { id: number; updatedData: any }) => {
-      const res = await fetch(`/api/bureau-membres/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedData),
-      })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Failed to update bureau member")
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bureauMembers", selectedBureauId] })
-      toast.success("Membre du bureau mis à jour avec succès!")
-      setIsMemberDialogOpen(false)
-    },
-    onError: (error) => {
-      toast.error(`Erreur lors de la mise à jour du membre du bureau: ${error.message}`)
-    },
-  })
-
-  const deleteMemberMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const res = await fetch(`/api/bureau-membres/${id}`, { method: "DELETE" })
-      if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Failed to delete bureau member")
-      }
-      return res.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["bureauMembers", selectedBureauId] })
-      toast.success("Membre du bureau supprimé avec succès!")
-    },
-    onError: (error) => {
-      toast.error(`Erreur lors de la suppression du membre du bureau: ${error.message}`)
-    },
-  })
-
-  const handleBureauFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value, type, checked } = e.target
-    setBureauFormData((prev) => ({
-      ...prev,
-      [id]: type === "checkbox" ? checked : value,
-    }))
-  }
-
-  const handleBureauDateChange = (id: string, date: Date | undefined) => {
-    setBureauFormData((prev) => ({ ...prev, [id]: date || null }))
-  }
-
-  const handleMemberFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target
-    setMemberFormData((prev) => ({ ...prev, [id]: value }))
-  }
-
-  const handleMemberSelectChange = (id: string, value: string) => {
-    setMemberFormData((prev) => ({ ...prev, [id]: value }))
-  }
-
-  const handleMemberDateChange = (id: string, date: Date | undefined) => {
-    setMemberFormData((prev) => ({ ...prev, [id]: date || null }))
-  }
-
-  const openCreateBureauDialog = () => {
-    setCurrentBureau(null)
-    setBureauFormData({ name: "", start_date: null, end_date: null, is_active: false })
-    setIsBureauDialogOpen(true)
-  }
-
-  const openEditBureauDialog = (bureau: ExecutiveBureau) => {
-    setCurrentBureau(bureau)
-    setBureauFormData({
-      name: bureau.name,
-      start_date: bureau.start_date ? new Date(bureau.start_date) : null,
-      end_date: bureau.end_date ? new Date(bureau.end_date) : null,
-      is_active: bureau.is_active,
-    })
-    setIsBureauDialogOpen(true)
-  }
-
-  const handleBureauSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const dataToSubmit = {
-      ...bureauFormData,
-      start_date: bureauFormData.start_date ? format(bureauFormData.start_date, "yyyy-MM-dd") : null,
-      end_date: bureauFormData.end_date ? format(bureauFormData.end_date, "yyyy-MM-dd") : null,
-    }
-    if (currentBureau) {
-      updateBureauMutation.mutate({ id: currentBureau.id, updatedData: dataToSubmit })
-    } else {
-      createBureauMutation.mutate(dataToSubmit)
+  const getPosteIcon = (poste: string) => {
+    switch (poste) {
+      case "Président":
+        return <Crown className="h-4 w-4 text-yellow-600" />
+      case "Secrétaire Général":
+        return <User className="h-4 w-4 text-blue-600" />
+      case "Trésorier":
+        return <Briefcase className="h-4 w-4 text-green-600" />
+      default:
+        return <User className="h-4 w-4" />
     }
   }
 
-  const openCreateMemberDialog = () => {
-    if (!selectedBureauId) {
-      toast.error("Veuillez sélectionner un bureau d'abord.")
-      return
-    }
-    setCurrentBureauMember(null)
-    setMemberFormData({
-      bureau_id: String(selectedBureauId),
-      member_id: "",
-      role: "",
-      start_date: null,
-      end_date: null,
-    })
-    setIsMemberDialogOpen(true)
-  }
-
-  const openEditMemberDialog = (member: BureauMember) => {
-    setCurrentBureauMember(member)
-    setMemberFormData({
-      bureau_id: String(member.bureau_id),
-      member_id: String(member.member_id),
-      role: member.role,
-      start_date: member.start_date ? new Date(member.start_date) : null,
-      end_date: member.end_date ? new Date(member.end_date) : null,
-    })
-    setIsMemberDialogOpen(true)
-  }
-
-  const handleMemberSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const dataToSubmit = {
-      ...memberFormData,
-      bureau_id: Number.parseInt(memberFormData.bureau_id),
-      member_id: Number.parseInt(memberFormData.member_id),
-      start_date: memberFormData.start_date ? format(memberFormData.start_date, "yyyy-MM-dd") : null,
-      end_date: memberFormData.end_date ? format(memberFormData.end_date, "yyyy-MM-dd") : null,
-    }
-    if (currentBureauMember) {
-      updateMemberMutation.mutate({ id: currentBureauMember.id, updatedData: dataToSubmit })
-    } else {
-      createMemberMutation.mutate(dataToSubmit)
+  const getPosteColor = (poste: string) => {
+    switch (poste) {
+      case "Président":
+        return "bg-yellow-100 text-yellow-800"
+      case "Secrétaire Général":
+        return "bg-blue-100 text-blue-800"
+      case "Trésorier":
+        return "bg-green-100 text-green-800"
+      default:
+        return "bg-gray-100 text-gray-800"
     }
   }
 
-  if (isLoadingBureaus) return <p className="p-4 md:p-6">Chargement des bureaux exécutifs...</p>
+  const getInitials = (prenom: string, nom: string) => {
+    return `${prenom.charAt(0)}${nom.charAt(0)}`
+  }
+
+  const filteredBureaux = (type: string) => {
+    return bureaux.filter((bureau) => bureau.type === type)
+  }
+
+  const renderBureauCard = (bureau: BureauExecutif) => (
+    <Card key={bureau.id} className="cursor-pointer hover:shadow-md transition-shadow">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              {bureau.type === "nation" && <Building2 className="h-5 w-5 text-blue-600" />}
+              {bureau.type === "departement" && <MapPin className="h-5 w-5 text-green-600" />}
+              {bureau.type === "arrondissement" && <Users className="h-5 w-5 text-orange-600" />}
+              {bureau.nom}
+            </CardTitle>
+            <CardDescription>{bureau.niveau}</CardDescription>
+          </div>
+          <Button variant="outline" size="sm">
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {bureau.membres.map((membre) => (
+            <div key={membre.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={membre.photo || "/placeholder.svg"} />
+                <AvatarFallback>{getInitials(membre.prenom, membre.nom)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium">
+                    {membre.prenom} {membre.nom}
+                  </span>
+                  <Badge className={getPosteColor(membre.poste)} variant="secondary">
+                    {getPosteIcon(membre.poste)}
+                    <span className="ml-1">{membre.poste}</span>
+                  </Badge>
+                </div>
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
+                  <div className="flex items-center space-x-1">
+                    <Mail className="h-3 w-3" />
+                    <span>{membre.email}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Phone className="h-3 w-3" />
+                    <span>{membre.telephone}</span>
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">
+                  Mandat: {new Date(membre.dateNomination).toLocaleDateString("fr-FR")} -{" "}
+                  {new Date(membre.mandatFin).toLocaleDateString("fr-FR")}
+                </div>
+              </div>
+            </div>
+          ))}
+          {bureau.membres.length < 3 && (
+            <div className="flex items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-lg">
+              <Button variant="ghost" className="text-muted-foreground">
+                <Plus className="h-4 w-4 mr-2" />
+                Ajouter un membre
+              </Button>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
 
   return (
-    <div className="flex-1 p-4 md:p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Bureau Exécutif</h1>
-        <Button onClick={openCreateBureauDialog}>
-          <PlusCircle className="mr-2 h-4 w-4" />
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Bureau Exécutif</h1>
+          <p className="text-gray-600 mt-1">Gestion des bureaux exécutifs à tous les niveaux</p>
+        </div>
+        <Button className="bg-red-600 hover:bg-red-700">
+          <Plus className="h-4 w-4 mr-2" />
           Nouveau Bureau
         </Button>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Bureaux Exécutifs</CardTitle>
-          <CardDescription>Gérez les différents bureaux exécutifs de la Croix-Rouge.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nom du Bureau</TableHead>
-                <TableHead>Date Début</TableHead>
-                <TableHead>Date Fin</TableHead>
-                <TableHead>Actif</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bureaus?.length > 0 ? (
-                bureaus.map((bureau) => (
-                  <TableRow
-                    key={bureau.id}
-                    onClick={() => setSelectedBureauId(bureau.id)}
-                    className={cn("cursor-pointer", selectedBureauId === bureau.id && "bg-muted")}
-                  >
-                    <TableCell className="font-medium">{bureau.name}</TableCell>
-                    <TableCell>{format(new Date(bureau.start_date), "dd/MM/yyyy")}</TableCell>
-                    <TableCell>{bureau.end_date ? format(new Date(bureau.end_date), "dd/MM/yyyy") : "N/A"}</TableCell>
-                    <TableCell>{bureau.is_active ? "Oui" : "Non"}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          openEditBureauDialog(bureau)
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                        <span className="sr-only">Modifier</span>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          deleteBureauMutation.mutate(bureau.id)
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Supprimer</span>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    Aucun bureau exécutif trouvé.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {selectedBureauId && (
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Membres du Bureau Actuel
-            </CardTitle>
-            <CardDescription>Gérez les membres du bureau sélectionné.</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Bureaux Nationaux</CardTitle>
+            <Building2 className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="flex justify-end mb-4">
-              <Button onClick={openCreateMemberDialog}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Ajouter Membre au Bureau
-              </Button>
-            </div>
-            {isLoadingBureauMembers ? (
-              <p>Chargement des membres du bureau...</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Rôle</TableHead>
-                    <TableHead>Date Début</TableHead>
-                    <TableHead>Date Fin</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bureauMembers?.length > 0 ? (
-                    bureauMembers.map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell className="font-medium">
-                          {member.prenom} {member.nom}
-                        </TableCell>
-                        <TableCell>{member.role}</TableCell>
-                        <TableCell>{format(new Date(member.start_date), "dd/MM/yyyy")}</TableCell>
-                        <TableCell>
-                          {member.end_date ? format(new Date(member.end_date), "dd/MM/yyyy") : "N/A"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={() => openEditMemberDialog(member)}>
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Modifier</span>
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => deleteMemberMutation.mutate(member.id)}>
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Supprimer</span>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center">
-                        Aucun membre dans ce bureau.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
+            <div className="text-2xl font-bold text-blue-600">{filteredBureaux("nation").length}</div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Bureau Dialog */}
-      <Dialog open={isBureauDialogOpen} onOpenChange={setIsBureauDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{currentBureau ? "Modifier Bureau" : "Nouveau Bureau"}</DialogTitle>
-            <CardDescription>
-              {currentBureau ? "Mettez à jour les informations du bureau." : "Ajoutez un nouveau bureau exécutif."}
-            </CardDescription>
-          </DialogHeader>
-          <form onSubmit={handleBureauSubmit} className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nom du Bureau</Label>
-              <Input id="name" value={bureauFormData.name} onChange={handleBureauFormChange} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Date de Début</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !bureauFormData.start_date && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {bureauFormData.start_date ? (
-                      format(bureauFormData.start_date, "PPP")
-                    ) : (
-                      <span>Choisir une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={bureauFormData.start_date || undefined}
-                    onSelect={(date) => handleBureauDateChange("start_date", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_date">Date de Fin</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !bureauFormData.end_date && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {bureauFormData.end_date ? format(bureauFormData.end_date, "PPP") : <span>Choisir une date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={bureauFormData.end_date || undefined}
-                    onSelect={(date) => handleBureauDateChange("end_date", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is_active"
-                checked={bureauFormData.is_active}
-                onCheckedChange={(checked) => setBureauFormData((prev) => ({ ...prev, is_active: Boolean(checked) }))}
-              />
-              <Label htmlFor="is_active">Actif</Label>
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={createBureauMutation.isPending || updateBureauMutation.isPending}>
-                {currentBureau
-                  ? updateBureauMutation.isPending
-                    ? "Mise à jour..."
-                    : "Mettre à jour"
-                  : createBureauMutation.isPending
-                    ? "Création..."
-                    : "Créer"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Bureaux Départementaux</CardTitle>
+            <MapPin className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{filteredBureaux("departement").length}</div>
+          </CardContent>
+        </Card>
 
-      {/* Member Dialog */}
-      <Dialog open={isMemberDialogOpen} onOpenChange={setIsMemberDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{currentBureauMember ? "Modifier Membre du Bureau" : "Ajouter Membre au Bureau"}</DialogTitle>
-            <CardDescription>
-              {currentBureauMember
-                ? "Mettez à jour les informations du membre."
-                : "Ajoutez un nouveau membre au bureau sélectionné."}
-            </CardDescription>
-          </DialogHeader>
-          <form onSubmit={handleMemberSubmit} className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="member_id">Membre</Label>
-              <Select
-                value={memberFormData.member_id}
-                onValueChange={(value) => handleMemberSelectChange("member_id", value)}
-                disabled={isLoadingMembres || !!currentBureauMember} // Disable if editing or loading members
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un membre" />
-                </SelectTrigger>
-                <SelectContent>
-                  {membres?.map((membre) => (
-                    <SelectItem key={membre.id} value={String(membre.id)}>
-                      {membre.prenom} {membre.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Bureaux d'Arrondissement</CardTitle>
+            <Users className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{filteredBureaux("arrondissement").length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Dirigeants</CardTitle>
+            <Crown className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">
+              {bureauxData.reduce((total, bureau) => total + bureau.membres.length, 0)}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Rôle</Label>
-              <Input id="role" value={memberFormData.role} onChange={handleMemberFormChange} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Date de Début</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !memberFormData.start_date && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {memberFormData.start_date ? (
-                      format(memberFormData.start_date, "PPP")
-                    ) : (
-                      <span>Choisir une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={memberFormData.start_date || undefined}
-                    onSelect={(date) => handleMemberDateChange("start_date", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_date">Date de Fin</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !memberFormData.end_date && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {memberFormData.end_date ? format(memberFormData.end_date, "PPP") : <span>Choisir une date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={memberFormData.end_date || undefined}
-                    onSelect={(date) => handleMemberDateChange("end_date", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={createMemberMutation.isPending || updateMemberMutation.isPending}>
-                {currentBureauMember
-                  ? updateMemberMutation.isPending
-                    ? "Mise à jour..."
-                    : "Mettre à jour"
-                  : createMemberMutation.isPending
-                    ? "Ajout..."
-                    : "Ajouter"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Bureaux Exécutifs</CardTitle>
+          <CardDescription>Organisation hiérarchique des bureaux exécutifs</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="national">National</TabsTrigger>
+              <TabsTrigger value="departemental">Départemental</TabsTrigger>
+              <TabsTrigger value="arrondissement">Arrondissement</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="national" className="space-y-6">
+              <div className="grid grid-cols-1 gap-6">
+                {filteredBureaux("nation").map((bureau) => renderBureauCard(bureau))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="departemental" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {filteredBureaux("departement").map((bureau) => renderBureauCard(bureau))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="arrondissement" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredBureaux("arrondissement").map((bureau) => renderBureauCard(bureau))}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   )
 }
