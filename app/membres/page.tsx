@@ -1,521 +1,216 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Pagination } from "@/components/ui/pagination"
-import { Search, Plus, Edit, Trash2, Eye, Filter, Download } from "lucide-react"
 import Link from "next/link"
+import { PlusCircle, Search } from "lucide-react"
 
-interface Membre {
-  id: string
-  nom: string
-  prenom: string
-  email: string
-  telephone: string
-  departement: string
-  arrondissement: string
-  statut: "Actif" | "Inactif" | "Suspendu"
-  dateAdhesion: string
-  dateNaissance: string
-  age: number
-  profession: string
-  typeAdhesion: string
-  numeroCarte: string
-  sexe: "M" | "F"
-  adresse: string
-}
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
-const membresData: Membre[] = [
+// Sample members data (centralized as requested)
+const membersData = [
   {
     id: "1",
-    nom: "Mukendi",
-    prenom: "Jean",
-    email: "jean.mukendi@email.com",
-    telephone: "+242 123 456 789",
-    departement: "Brazzaville",
-    arrondissement: "Bacongo",
-    statut: "Actif",
-    dateAdhesion: "2023-01-15",
-    dateNaissance: "1985-03-20",
-    age: 39,
-    profession: "Médecin",
-    typeAdhesion: "Membre Actif",
-    numeroCarte: "CRC-BZV-001",
-    sexe: "M",
-    adresse: "Avenue Félix Éboué, Bacongo",
+    name: "Alice Dupont",
+    email: "alice.dupont@example.com",
+    phone: "+242 06 123 4567",
+    department: "Brazzaville",
+    status: "Actif",
   },
   {
     id: "2",
-    nom: "Kabila",
-    prenom: "Marie",
-    email: "marie.kabila@email.com",
-    telephone: "+242 987 654 321",
-    departement: "Brazzaville",
-    arrondissement: "Poto-Poto",
-    statut: "Actif",
-    dateAdhesion: "2023-03-20",
-    dateNaissance: "1990-07-15",
-    age: 34,
-    profession: "Infirmière",
-    typeAdhesion: "Volontaire",
-    numeroCarte: "CRC-BZV-002",
-    sexe: "F",
-    adresse: "Rue Monseigneur Augouard, Poto-Poto",
+    name: "Bob Martin",
+    email: "bob.martin@example.com",
+    phone: "+242 05 987 6543",
+    department: "Pointe-Noire",
+    status: "Actif",
   },
   {
     id: "3",
-    nom: "Tshisekedi",
-    prenom: "Paul",
-    email: "paul.tshisekedi@email.com",
-    telephone: "+242 555 123 456",
-    departement: "Kouilou",
-    arrondissement: "Pointe-Noire",
-    statut: "Inactif",
-    dateAdhesion: "2022-11-10",
-    dateNaissance: "1978-12-05",
-    age: 45,
-    profession: "Enseignant",
-    typeAdhesion: "Membre Bienfaiteur",
-    numeroCarte: "CRC-KOU-001",
-    sexe: "M",
-    adresse: "Boulevard Pierre Savorgnan de Brazza, Pointe-Noire",
+    name: "Claire Dubois",
+    email: "claire.dubois@example.com",
+    phone: "+242 04 111 2233",
+    department: "Niari",
+    status: "Inactif",
   },
   {
     id: "4",
-    nom: "Ngouabi",
-    prenom: "Sophie",
-    email: "sophie.ngouabi@email.com",
-    telephone: "+242 666 789 123",
-    departement: "Brazzaville",
-    arrondissement: "Moungali",
-    statut: "Actif",
-    dateAdhesion: "2023-05-12",
-    dateNaissance: "1992-09-30",
-    age: 32,
-    profession: "Pharmacienne",
-    typeAdhesion: "Volontaire",
-    numeroCarte: "CRC-BZV-003",
-    sexe: "F",
-    adresse: "Avenue Amiral Cabral, Moungali",
+    name: "David Nkounkou",
+    email: "david.nkounkou@example.com",
+    phone: "+242 06 222 3344",
+    department: "Pool",
+    status: "Actif",
   },
   {
     id: "5",
-    nom: "Sassou",
-    prenom: "André",
-    email: "andre.sassou@email.com",
-    telephone: "+242 777 456 789",
-    departement: "Niari",
-    arrondissement: "Dolisie",
-    statut: "Actif",
-    dateAdhesion: "2023-02-28",
-    dateNaissance: "1988-04-18",
-    age: 36,
-    profession: "Ingénieur",
-    typeAdhesion: "Membre Actif",
-    numeroCarte: "CRC-NIA-001",
-    sexe: "M",
-    adresse: "Quartier Résidentiel, Dolisie",
+    name: "Émilie Ngoma",
+    email: "emilie.ngoma@example.com",
+    phone: "+242 05 333 4455",
+    department: "Kouilou",
+    status: "Actif",
   },
   {
     id: "6",
-    nom: "Opangault",
-    prenom: "Claudine",
-    email: "claudine.opangault@email.com",
-    telephone: "+242 888 321 654",
-    departement: "Brazzaville",
-    arrondissement: "Ouenzé",
-    statut: "Suspendu",
-    dateAdhesion: "2022-08-15",
-    dateNaissance: "1995-11-22",
-    age: 29,
-    profession: "Juriste",
-    typeAdhesion: "Volontaire",
-    numeroCarte: "CRC-BZV-004",
-    sexe: "F",
-    adresse: "Avenue de la Paix, Ouenzé",
+    name: "François M'Boulou",
+    email: "francois.mboulou@example.com",
+    phone: "+242 04 555 6677",
+    department: "Bouenza",
+    status: "Inactif",
   },
   {
     id: "7",
-    nom: "Lissouba",
-    prenom: "Michel",
-    email: "michel.lissouba@email.com",
-    telephone: "+242 999 147 258",
-    departement: "Bouenza",
-    arrondissement: "Nkayi",
-    statut: "Actif",
-    dateAdhesion: "2023-04-10",
-    dateNaissance: "1980-06-12",
-    age: 44,
-    profession: "Comptable",
-    typeAdhesion: "Membre Bienfaiteur",
-    numeroCarte: "CRC-BOU-001",
-    sexe: "M",
-    adresse: "Centre-ville, Nkayi",
+    name: "Grace Malonga",
+    email: "grace.malonga@example.com",
+    phone: "+242 06 777 8899",
+    department: "Lékoumou",
+    status: "Actif",
   },
   {
     id: "8",
-    nom: "Kolelas",
-    prenom: "Jeanne",
-    email: "jeanne.kolelas@email.com",
-    telephone: "+242 111 369 852",
-    departement: "Brazzaville",
-    arrondissement: "Talangaï",
-    statut: "Actif",
-    dateAdhesion: "2023-06-05",
-    dateNaissance: "1987-01-28",
-    age: 37,
-    profession: "Sage-femme",
-    typeAdhesion: "Volontaire",
-    numeroCarte: "CRC-BZV-005",
-    sexe: "F",
-    adresse: "Quartier Plateau des 15 ans, Talangaï",
+    name: "Henriette Ondongo",
+    email: "henriette.ondongo@example.com",
+    phone: "+242 05 999 0011",
+    department: "Cuvette",
+    status: "Actif",
+  },
+  {
+    id: "9",
+    name: "Isabelle Kaba",
+    email: "isabelle.kaba@example.com",
+    phone: "+242 04 123 0987",
+    department: "Plateaux",
+    status: "Actif",
+  },
+  {
+    id: "10",
+    name: "Julien Massamba",
+    email: "julien.massamba@example.com",
+    phone: "+242 06 456 7890",
+    department: "Sangha",
+    status: "Inactif",
   },
 ]
 
+const ITEMS_PER_PAGE = 5
+
 export default function MembresPage() {
-  const [membres, setMembres] = useState<Membre[]>(membresData)
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterDepartement, setFilterDepartement] = useState("all")
-  const [filterArrondissement, setFilterArrondissement] = useState("all")
-  const [filterStatut, setFilterStatut] = useState("all")
-  const [filterAge, setFilterAge] = useState("all")
-  const [filterSexe, setFilterSexe] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
 
-  const departements = ["Brazzaville", "Kouilou", "Niari", "Bouenza", "Pool", "Plateaux"]
-  const arrondissements = {
-    Brazzaville: ["Bacongo", "Poto-Poto", "Moungali", "Ouenzé", "Talangaï"],
-    Kouilou: ["Pointe-Noire"],
-    Niari: ["Dolisie"],
-    Bouenza: ["Nkayi"],
-    Pool: ["Kinkala"],
-    Plateaux: ["Djambala"],
+  const filteredMembers = membersData.filter(
+    (member) =>
+      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.phone.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.department.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  const totalPages = Math.ceil(filteredMembers.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const currentMembers = filteredMembers.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1))
   }
 
-  const filteredMembres = membres.filter((membre) => {
-    const matchesSearch =
-      membre.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      membre.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      membre.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      membre.profession.toLowerCase().includes(searchTerm.toLowerCase())
-
-    const matchesDepartement = filterDepartement === "all" || membre.departement === filterDepartement
-    const matchesArrondissement = filterArrondissement === "all" || membre.arrondissement === filterArrondissement
-    const matchesStatut = filterStatut === "all" || membre.statut === filterStatut
-    const matchesSexe = filterSexe === "all" || membre.sexe === filterSexe
-
-    let matchesAge = true
-    if (filterAge !== "all") {
-      switch (filterAge) {
-        case "18-25":
-          matchesAge = membre.age >= 18 && membre.age <= 25
-          break
-        case "26-35":
-          matchesAge = membre.age >= 26 && membre.age <= 35
-          break
-        case "36-45":
-          matchesAge = membre.age >= 36 && membre.age <= 45
-          break
-        case "46+":
-          matchesAge = membre.age >= 46
-          break
-      }
-    }
-
-    return matchesSearch && matchesDepartement && matchesArrondissement && matchesStatut && matchesAge && matchesSexe
-  })
-
-  // Pagination
-  const itemsPerPage = 10
-  const totalPages = Math.ceil(filteredMembres.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedMembres = filteredMembres.slice(startIndex, startIndex + itemsPerPage)
-
-  const getStatutColor = (statut: string) => {
-    switch (statut) {
-      case "Actif":
-        return "bg-green-100 text-green-800"
-      case "Inactif":
-        return "bg-gray-100 text-gray-800"
-      case "Suspendu":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const clearFilters = () => {
-    setFilterDepartement("all")
-    setFilterArrondissement("all")
-    setFilterStatut("all")
-    setFilterAge("all")
-    setFilterSexe("all")
-    setSearchTerm("")
-    setCurrentPage(1)
-  }
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion des Membres</h1>
-          <p className="text-gray-600 mt-1">Gérez tous les membres de la Croix Rouge</p>
-        </div>
+    <div className="flex-1 p-4 md:p-8">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Membres</h1>
         <Link href="/membres/nouveau">
-          <Button className="bg-red-600 hover:bg-red-700">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
             Nouveau Membre
           </Button>
         </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Membres</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{filteredMembres.length}</div>
-            <p className="text-xs text-muted-foreground">sur {membres.length} total</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Membres Actifs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {filteredMembres.filter((m) => m.statut === "Actif").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Âge Moyen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {Math.round(filteredMembres.reduce((sum, m) => sum + m.age, 0) / filteredMembres.length || 0)} ans
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Répartition H/F</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm">
-              <span className="font-bold">{filteredMembres.filter((m) => m.sexe === "M").length}H</span> /{" "}
-              <span className="font-bold">{filteredMembres.filter((m) => m.sexe === "F").length}F</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filtres et Recherche
-              </CardTitle>
-              <CardDescription>Filtrez la liste des membres selon vos critères</CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={clearFilters} size="sm">
-                Effacer les filtres
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Exporter
-              </Button>
-            </div>
-          </div>
+          <CardTitle>Liste des Membres</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Recherche</label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Nom, email, profession..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Département</label>
-              <Select value={filterDepartement} onValueChange={setFilterDepartement}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les départements</SelectItem>
-                  {departements.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Arrondissement</label>
-              <Select
-                value={filterArrondissement}
-                onValueChange={setFilterArrondissement}
-                disabled={!filterDepartement || filterDepartement === "all"}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les arrondissements</SelectItem>
-                  {filterDepartement &&
-                    arrondissements[filterDepartement as keyof typeof arrondissements]?.map((arr) => (
-                      <SelectItem key={arr} value={arr}>
-                        {arr}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Statut</label>
-              <Select value={filterStatut} onValueChange={setFilterStatut}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="Actif">Actif</SelectItem>
-                  <SelectItem value="Inactif">Inactif</SelectItem>
-                  <SelectItem value="Suspendu">Suspendu</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Âge</label>
-              <Select value={filterAge} onValueChange={setFilterAge}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les âges</SelectItem>
-                  <SelectItem value="18-25">18-25 ans</SelectItem>
-                  <SelectItem value="26-35">26-35 ans</SelectItem>
-                  <SelectItem value="36-45">36-45 ans</SelectItem>
-                  <SelectItem value="46+">46 ans et plus</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Sexe</label>
-              <Select value={filterSexe} onValueChange={setFilterSexe}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
-                  <SelectItem value="M">Masculin</SelectItem>
-                  <SelectItem value="F">Féminin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="relative mb-4">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Rechercher un membre..."
+              className="w-full rounded-lg bg-background pl-8 md:w-[300px] lg:w-[450px]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Members Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Liste des Membres ({filteredMembres.length})</CardTitle>
-          <CardDescription>Gérez les informations détaillées de chaque membre.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom Complet</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Localisation</TableHead>
-                  <TableHead>Profession</TableHead>
-                  <TableHead>Adhésion</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedMembres.map((membre) => (
-                  <TableRow key={membre.id}>
-                    <TableCell className="font-medium">
-                      {membre.prenom} {membre.nom}
-                    </TableCell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nom</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Téléphone</TableHead>
+                <TableHead>Département</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentMembers.length > 0 ? (
+                currentMembers.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell className="font-medium">{member.name}</TableCell>
+                    <TableCell>{member.email}</TableCell>
+                    <TableCell>{member.phone}</TableCell>
+                    <TableCell>{member.department}</TableCell>
                     <TableCell>
-                      <div>{membre.email}</div>
-                      <div className="text-sm text-muted-foreground">{membre.telephone}</div>
+                      <Badge variant={member.status === "Actif" ? "default" : "secondary"}>{member.status}</Badge>
                     </TableCell>
-                    <TableCell>
-                      <div>{membre.departement}</div>
-                      <div className="text-sm text-muted-foreground">{membre.arrondissement}</div>
-                    </TableCell>
-                    <TableCell>{membre.profession}</TableCell>
-                    <TableCell>
-                      <div>{membre.typeAdhesion}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(membre.dateAdhesion).toLocaleDateString("fr-FR")}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatutColor(membre.statut)}>{membre.statut}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Link href={`/membres/${membre.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
+                    <TableCell className="text-right">
+                      <Link href={`/membres/${member.id}`}>
+                        <Button variant="outline" size="sm">
+                          Voir Détails
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      </Link>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination */}
-          <div className="mt-6">
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-          </div>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    Aucun membre trouvé.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious onClick={handlePreviousPage} disabled={currentPage === 1} />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <PaginationItem key={i}>
+                  <Button variant={currentPage === i + 1 ? "default" : "outline"} onClick={() => setCurrentPage(i + 1)}>
+                    {i + 1}
+                  </Button>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext onClick={handleNextPage} disabled={currentPage === totalPages} />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </CardContent>
       </Card>
     </div>

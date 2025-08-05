@@ -1,353 +1,171 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Pagination } from "@/components/ui/pagination"
-import { Search, Plus, Calendar, MapPin, Users, Clock, Edit, Trash2, Eye } from "lucide-react"
 import Link from "next/link"
+import { format } from "date-fns"
+import { fr } from "date-fns/locale"
+import { PlusCircle, Search, CalendarIcon } from "lucide-react"
 
-interface Activite {
-  id: string
-  titre: string
-  description: string
-  type: "Formation" | "Don de sang" | "Secours" | "Sensibilisation" | "Collecte"
-  statut: "Planifiée" | "En cours" | "Terminée" | "Annulée"
-  dateDebut: string
-  dateFin: string
-  lieu: string
-  departement: string
-  arrondissement: string
-  responsable: string
-  participants: number
-  participantsMax: number
-}
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
 
-const activitesData: Activite[] = [
+// Sample activities data (centralized as requested)
+const activitiesData = [
   {
     id: "1",
-    titre: "Formation Premiers Secours",
-    description: "Formation aux gestes de premiers secours pour les nouveaux volontaires",
-    type: "Formation",
-    statut: "En cours",
-    dateDebut: "2024-01-15T09:00:00",
-    dateFin: "2024-01-15T17:00:00",
-    lieu: "Centre Communautaire Bacongo",
-    departement: "Brazzaville",
-    arrondissement: "Bacongo",
-    responsable: "Dr. Marie Kabila",
-    participants: 25,
-    participantsMax: 30,
+    name: "Campagne de vaccination contre la rougeole",
+    date: "2024-03-15",
+    location: "Brazzaville",
+    status: "Terminée",
+    type: "Santé",
   },
   {
     id: "2",
-    titre: "Campagne Don de Sang",
-    description: "Collecte de sang pour les hôpitaux de Pointe-Noire",
-    type: "Don de sang",
-    statut: "Planifiée",
-    dateDebut: "2024-01-20T08:00:00",
-    dateFin: "2024-01-20T16:00:00",
-    lieu: "Hôpital Général de Pointe-Noire",
-    departement: "Kouilou",
-    arrondissement: "Pointe-Noire",
-    responsable: "Paul Tshisekedi",
-    participants: 0,
-    participantsMax: 100,
+    name: "Formation aux premiers secours",
+    date: "2024-04-01",
+    location: "Pointe-Noire",
+    status: "En cours",
+    type: "Formation",
   },
   {
     id: "3",
-    titre: "Distribution de Kits Alimentaires",
-    description: "Distribution de kits alimentaires aux familles vulnérables à Ouenzé",
-    type: "Secours",
-    statut: "Terminée",
-    dateDebut: "2023-12-24T10:00:00",
-    dateFin: "2023-12-24T15:00:00",
-    lieu: "Centre Social Ouenzé",
-    departement: "Brazzaville",
-    arrondissement: "Ouenzé",
-    responsable: "André Sassou",
-    participants: 50,
-    participantsMax: 50,
+    name: "Distribution de kits d'hygiène",
+    date: "2024-04-20",
+    location: "Dolisie",
+    status: "Planifiée",
+    type: "Humanitaire",
   },
   {
     id: "4",
-    titre: "Sensibilisation au VIH/SIDA",
-    description: "Campagne de sensibilisation sur la prévention du VIH/SIDA à Dolisie",
-    type: "Sensibilisation",
-    statut: "En cours",
-    dateDebut: "2024-02-01T09:00:00",
-    dateFin: "2024-02-01T16:00:00",
-    lieu: "Marché Central Dolisie",
-    departement: "Niari",
-    arrondissement: "Dolisie",
-    responsable: "Jeanne Kolelas",
-    participants: 100,
-    participantsMax: 150,
+    name: "Sensibilisation au paludisme",
+    date: "2024-05-10",
+    location: "Ouesso",
+    status: "Planifiée",
+    type: "Santé",
   },
   {
     id: "5",
-    titre: "Collecte de Vêtements Chauds",
-    description: "Collecte de vêtements chauds pour les personnes sans-abri à Nkayi",
-    type: "Collecte",
-    statut: "Planifiée",
-    dateDebut: "2024-02-15T10:00:00",
-    dateFin: "2024-02-15T17:00:00",
-    lieu: "Place de la Mairie Nkayi",
-    departement: "Bouenza",
-    arrondissement: "Nkayi",
-    responsable: "Michel Lissouba",
-    participants: 0,
-    participantsMax: 80,
+    name: "Collecte de sang",
+    date: "2024-05-25",
+    location: "Kinkala",
+    status: "Planifiée",
+    type: "Santé",
   },
 ]
 
 export default function ActivitesPage() {
-  const [activites, setActivites] = useState<Activite[]>(activitesData)
   const [searchTerm, setSearchTerm] = useState("")
-  const [activeTab, setActiveTab] = useState("toutes")
-  const [currentPage, setCurrentPage] = useState(1)
+  const [date, setDate] = useState<Date | undefined>(undefined)
 
-  const filteredActivites = activites.filter((activite) => {
+  const filteredActivities = activitiesData.filter((activity) => {
     const matchesSearch =
-      activite.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activite.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      activite.lieu.toLowerCase().includes(searchTerm.toLowerCase())
-
-    if (activeTab === "toutes") return matchesSearch
-    if (activeTab === "planifiees") return matchesSearch && activite.statut === "Planifiée"
-    if (activeTab === "en-cours") return matchesSearch && activite.statut === "En cours"
-    if (activeTab === "terminees") return matchesSearch && activite.statut === "Terminée"
-
-    return matchesSearch
+      activity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      activity.type.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesDate = date ? format(new Date(activity.date), "yyyy-MM-dd") === format(date, "yyyy-MM-dd") : true
+    return matchesSearch && matchesDate
   })
 
-  // Pagination
-  const itemsPerPage = 10
-  const totalPages = Math.ceil(filteredActivites.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedActivites = filteredActivites.slice(startIndex, startIndex + itemsPerPage)
-
-  const getStatutColor = (statut: string) => {
-    switch (statut) {
-      case "Planifiée":
-        return "bg-blue-100 text-blue-800"
-      case "En cours":
-        return "bg-green-100 text-green-800"
-      case "Terminée":
-        return "bg-gray-100 text-gray-800"
-      case "Annulée":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "Formation":
-        return "bg-purple-100 text-purple-800"
-      case "Don de sang":
-        return "bg-red-100 text-red-800"
-      case "Secours":
-        return "bg-orange-100 text-orange-800"
-      case "Sensibilisation":
-        return "bg-yellow-100 text-yellow-800"
-      case "Collecte":
-        return "bg-green-100 text-green-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
-
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion des Activités</h1>
-          <p className="text-gray-600 mt-1">Planifiez et suivez toutes les activités de la Croix Rouge</p>
-        </div>
+    <div className="flex-1 p-4 md:p-8">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Activités</h1>
         <Link href="/activites/nouvelle">
-          <Button className="bg-red-600 hover:bg-red-700">
-            <Plus className="h-4 w-4 mr-2" />
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
             Nouvelle Activité
           </Button>
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Activités</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{filteredActivites.length}</div>
-            <p className="text-xs text-muted-foreground">sur {activites.length} total</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">En Cours</CardTitle>
-            <Clock className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {filteredActivites.filter((a) => a.statut === "En cours").length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Planifiées</CardTitle>
-            <Calendar className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {filteredActivites.filter((a) => a.statut === "Planifiée").length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Participants</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{filteredActivites.reduce((sum, a) => sum + a.participants, 0)}</div>
-            <p className="text-xs text-muted-foreground">Total inscrits</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Liste des Activités ({filteredActivites.length})</CardTitle>
-            <CardDescription>Gérez les activités de la Croix-Rouge.</CardDescription>
-          </div>
+          <CardTitle>Liste des Activités</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-2 mb-4">
-            <Search className="h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Rechercher par nom ou description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
+          <div className="flex items-center gap-4 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Rechercher une activité..."
+                className="w-full rounded-lg bg-background pl-8 md:w-[300px] lg:w-[450px]"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn("w-[240px] justify-start text-left font-normal", !date && "text-muted-foreground")}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {date ? format(date, "PPP", { locale: fr }) : <span>Choisir une date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus locale={fr} />
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchTerm("")
+                setDate(undefined)
+              }}
+            >
+              Réinitialiser
+            </Button>
           </div>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="toutes">Toutes</TabsTrigger>
-              <TabsTrigger value="planifiees">Planifiées</TabsTrigger>
-              <TabsTrigger value="en-cours">En cours</TabsTrigger>
-              <TabsTrigger value="terminees">Terminées</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value={activeTab} className="space-y-4">
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Activité</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Date & Lieu</TableHead>
-                      <TableHead>Responsable</TableHead>
-                      <TableHead>Participants</TableHead>
-                      <TableHead>Statut</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedActivites.map((activite) => (
-                      <TableRow key={activite.id}>
-                        <TableCell className="font-medium">{activite.titre}</TableCell>
-                        <TableCell>
-                          <Badge className={getTypeColor(activite.type)}>{activite.type}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="flex items-center text-sm">
-                              <Calendar className="h-3 w-3 mr-1" />
-                              {formatDate(activite.dateDebut)}
-                            </div>
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <MapPin className="h-3 w-3 mr-1" />
-                              {activite.lieu}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm font-medium">{activite.responsable}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Users className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {activite.participants}/{activite.participantsMax}
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                            <div
-                              className="bg-red-600 h-2 rounded-full"
-                              style={{
-                                width: `${(activite.participants / activite.participantsMax) * 100}%`,
-                              }}
-                            ></div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatutColor(activite.statut)}>{activite.statut}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button variant="ghost" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Pagination */}
-              <div className="mt-6">
-                <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-              </div>
-            </TabsContent>
-          </Tabs>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nom</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Lieu</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Statut</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredActivities.length > 0 ? (
+                filteredActivities.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell className="font-medium">{activity.name}</TableCell>
+                    <TableCell>{format(new Date(activity.date), "PPP", { locale: fr })}</TableCell>
+                    <TableCell>{activity.location}</TableCell>
+                    <TableCell>{activity.type}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          activity.status === "Terminée"
+                            ? "secondary"
+                            : activity.status === "En cours"
+                              ? "default"
+                              : "outline"
+                        }
+                      >
+                        {activity.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">
+                    Aucune activité trouvée.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

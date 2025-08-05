@@ -1,46 +1,85 @@
 "use client"
-
-import { useState, useEffect } from "react"
-import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { LayoutDashboard, Settings, User, Activity, CreditCard, Building2, LogOut } from "lucide-react"
-import { useSidebar } from "@/components/ui/sidebar"
-import { useMobile } from "@/hooks/use-mobile"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
+import {
+  Calendar,
+  Home,
+  Inbox,
+  Search,
+  Settings,
+  Users,
+  CreditCard,
+  Building2,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react"
 
-interface NavItem {
-  title: string
-  href: string
-  icon: any
+import { cn } from "@/lib/utils"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import { Label } from "@/components/ui/label"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+
+// Sample user data (centralized as requested)
+const currentUser = {
+  name: "John Doe",
+  email: "john.doe@example.com",
+  avatar: "/placeholder.svg?height=32&width=32",
 }
 
-const navItems: NavItem[] = [
+// Sample menu items (centralized as requested)
+const navItems = [
   {
-    title: "Tableau de bord",
+    title: "Accueil",
     href: "/",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Organisation",
-    href: "/organisation",
-    icon: Building2,
+    icon: Home,
   },
   {
     title: "Membres",
     href: "/membres",
-    icon: User,
-  },
-  {
-    title: "Activités",
-    href: "/activites",
-    icon: Activity,
+    icon: Users,
   },
   {
     title: "Cartes",
     href: "/cartes",
     icon: CreditCard,
+  },
+  {
+    title: "Activités",
+    href: "/activites",
+    icon: Calendar,
+  },
+  {
+    title: "Bureau Exécutif",
+    href: "/bureau-executif",
+    icon: Building2,
+  },
+  {
+    title: "Organisation",
+    href: "/organisation",
+    icon: FileText,
+  },
+  {
+    title: "Rapports",
+    href: "/rapports",
+    icon: Inbox, // Using Inbox for reports as a placeholder icon
   },
   {
     title: "Paramètres",
@@ -49,78 +88,113 @@ const navItems: NavItem[] = [
   },
 ]
 
-interface UserProfile {
-  name: string
-  email: string
-  imageUrl: string
-}
-
-const userProfile: UserProfile = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  imageUrl: "/placeholder.svg?height=40&width=40",
-}
-
-export default function Sidebar() {
+export default function AppSidebar() {
+  const { toggleSidebar, state } = useSidebar()
   const pathname = usePathname()
-  const { collapsed } = useSidebar()
-  const isMobile = useMobile()
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  if (!isMounted) {
-    return null
-  }
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 z-50 flex flex-col h-screen bg-secondary border-r border-r-secondary/10 w-[280px] md:w-[280px] transition-transform -translate-x-full md:translate-x-0",
-        collapsed ? "-translate-x-full" : "",
-        isMobile ? "fixed" : "sticky",
-      )}
-    >
-      <div className="flex-1 px-3 py-2">
-        <Link href="/" className="grid h-14 place-items-center">
-          <h1 className="font-semibold text-lg">Croix-Rouge</h1>
-        </Link>
-        <div className="space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "group flex w-full items-center rounded-md border border-transparent py-2 px-3 text-sm font-medium transition-colors hover:bg-secondary/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-                pathname === item.href ? "bg-secondary/50 text-primary" : "text-secondary-foreground",
-              )}
-            >
-              <item.icon className="mr-2 h-4 w-4" />
-              {item.title}
-            </Link>
-          ))}
+    <Sidebar>
+      <SidebarHeader>
+        <div className="flex items-center justify-between p-2">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <img src="/placeholder.svg?height=24&width=24" alt="Logo" className="h-6 w-6" />
+            <span className={cn("transition-opacity duration-200", state === "collapsed" && "opacity-0")}>
+              Croix Rouge
+            </span>
+          </Link>
+          <SidebarTrigger className={cn("hidden md:block", state === "collapsed" && "opacity-0")} />
         </div>
-      </div>
-      <div className="p-4">
-        <div className="border rounded-lg p-3">
-          <div className="flex items-center space-x-4">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={userProfile.imageUrl || "/placeholder.svg"} alt={userProfile.name} />
-              <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div className="space-y-1">
-              <p className="text-sm font-medium leading-none">{userProfile.name}</p>
-              <p className="text-sm text-muted-foreground">{userProfile.email}</p>
-            </div>
-          </div>
-          <Button variant="ghost" className="w-full mt-3 justify-start">
-            <LogOut className="mr-2 h-4 w-4" />
-            Déconnexion
-          </Button>
+        <div className={cn("p-2", state === "collapsed" && "hidden")}>
+          <Label htmlFor="search" className="sr-only">
+            Rechercher
+          </Label>
+          <SidebarInput id="search" placeholder="Rechercher..." className="pl-8" />
+          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         </div>
-      </div>
-    </aside>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname === item.href}>
+                    <Link href={item.href}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Example of a collapsible group */}
+        <Collapsible defaultOpen className="group/collapsible">
+          <SidebarGroup>
+            <SidebarGroupLabel asChild>
+              <CollapsibleTrigger
+                className={cn("flex w-full items-center justify-between", state === "collapsed" && "hidden")}
+              >
+                <span>Aide & Support</span>
+                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+              </CollapsibleTrigger>
+            </SidebarGroupLabel>
+            <CollapsibleContent>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="#">
+                        <span>Documentation</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link href="#">
+                        <span>FAQ</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </CollapsibleContent>
+          </SidebarGroup>
+        </Collapsible>
+      </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton>
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={currentUser.avatar || "/placeholder.svg"} alt={currentUser.name} />
+                    <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className={cn("transition-opacity duration-200", state === "collapsed" && "opacity-0")}>
+                    {currentUser.name}
+                  </span>
+                  <ChevronUp
+                    className={cn("ml-auto transition-opacity duration-200", state === "collapsed" && "opacity-0")}
+                  />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
+                <DropdownMenuItem>
+                  <span>Mon Profil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <span>Déconnexion</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   )
 }

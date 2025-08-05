@@ -1,389 +1,181 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+
+import { useState } from "react"
+import { Search } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Pagination } from "@/components/ui/pagination"
-import { Search, Plus, Trash2, Eye, Filter, Download, CreditCard, Printer } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 import Image from "next/image"
 
-interface Carte {
-  id: string
-  numeroCarte: string
-  nomMembre: string
-  prenomMembre: string
-  statut: "Active" | "Expirée" | "Perdue" | "Bloquée"
-  dateEmission: string
-  dateExpiration: string
-  typeAdhesion: string
-  departement: string
-  arrondissement: string
-  photoMembre: string
-  qrCode: string
-}
-
-const cartesData: Carte[] = [
+// Sample card data (centralized as requested)
+const cardsData = [
   {
-    id: "1",
-    numeroCarte: "CRC-BZV-001",
-    nomMembre: "Mukendi",
-    prenomMembre: "Jean",
-    statut: "Active",
-    dateEmission: "2023-01-15",
-    dateExpiration: "2025-01-15",
-    typeAdhesion: "Membre Actif",
-    departement: "Brazzaville",
-    arrondissement: "Bacongo",
-    photoMembre: "/placeholder.svg?height=50&width=50&text=JM",
-    qrCode: "/placeholder.svg?height=50&width=50&text=QR1",
+    id: "C001",
+    memberId: "1",
+    memberName: "Alice Dupont",
+    type: "Bénévole",
+    issueDate: "2023-01-01",
+    expiryDate: "2025-01-01",
+    status: "Active",
+    imageUrl: "/public/images/sim-chip.png", // Using the provided image
   },
   {
-    id: "2",
-    numeroCarte: "CRC-BZV-002",
-    nomMembre: "Kabila",
-    prenomMembre: "Marie",
-    statut: "Active",
-    dateEmission: "2023-03-20",
-    dateExpiration: "2025-03-20",
-    typeAdhesion: "Volontaire",
-    departement: "Brazzaville",
-    arrondissement: "Poto-Poto",
-    photoMembre: "/placeholder.svg?height=50&width=50&text=MK",
-    qrCode: "/placeholder.svg?height=50&width=50&text=QR2",
+    id: "C002",
+    memberId: "2",
+    memberName: "Bob Martin",
+    type: "Coordinateur",
+    issueDate: "2022-06-15",
+    expiryDate: "2024-06-15",
+    status: "Active",
+    imageUrl: "/public/images/sim-chip.png",
   },
   {
-    id: "3",
-    numeroCarte: "CRC-KOU-001",
-    nomMembre: "Tshisekedi",
-    prenomMembre: "Paul",
-    statut: "Expirée",
-    dateEmission: "2022-11-10",
-    dateExpiration: "2024-11-10",
-    typeAdhesion: "Membre Bienfaiteur",
-    departement: "Kouilou",
-    arrondissement: "Pointe-Noire",
-    photoMembre: "/placeholder.svg?height=50&width=50&text=PT",
-    qrCode: "/placeholder.svg?height=50&width=50&text=QR3",
+    id: "C003",
+    memberId: "3",
+    memberName: "Claire Dubois",
+    type: "Bénévole",
+    issueDate: "2023-03-20",
+    expiryDate: "2025-03-20",
+    status: "Expirée",
+    imageUrl: "/public/images/sim-chip.png",
   },
   {
-    id: "4",
-    numeroCarte: "CRC-BZV-003",
-    nomMembre: "Ngouabi",
-    prenomMembre: "Sophie",
-    statut: "Active",
-    dateEmission: "2023-05-12",
-    dateExpiration: "2025-05-12",
-    typeAdhesion: "Volontaire",
-    departement: "Brazzaville",
-    arrondissement: "Moungali",
-    photoMembre: "/placeholder.svg?height=50&width=50&text=SN",
-    qrCode: "/placeholder.svg?height=50&width=50&text=QR4",
+    id: "C004",
+    memberId: "4",
+    memberName: "David Nkounkou",
+    type: "Bénévole",
+    issueDate: "2023-04-01",
+    expiryDate: "2025-04-01",
+    status: "Active",
+    imageUrl: "/public/images/sim-chip.png",
   },
   {
-    id: "5",
-    numeroCarte: "CRC-NIA-001",
-    nomMembre: "Sassou",
-    prenomMembre: "André",
-    statut: "Active",
-    dateEmission: "2023-02-28",
-    dateExpiration: "2025-02-28",
-    typeAdhesion: "Membre Actif",
-    departement: "Niari",
-    arrondissement: "Dolisie",
-    photoMembre: "/placeholder.svg?height=50&width=50&text=AS",
-    qrCode: "/placeholder.svg?height=50&width=50&text=QR5",
+    id: "C005",
+    memberId: "5",
+    memberName: "Émilie Ngoma",
+    type: "Coordinateur",
+    issueDate: "2022-09-10",
+    expiryDate: "2024-09-10",
+    status: "Active",
+    imageUrl: "/public/images/sim-chip.png",
   },
 ]
 
+const ITEMS_PER_PAGE = 5
+
 export default function CartesPage() {
-  const [cartes, setCartes] = useState<Carte[]>(cartesData)
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterStatut, setFilterStatut] = useState("all")
-  const [filterDepartement, setFilterDepartement] = useState("all")
-  const [filterTypeAdhesion, setFilterTypeAdhesion] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
 
-  const departements = ["Brazzaville", "Kouilou", "Niari", "Bouenza", "Pool", "Plateaux"]
-  const typesAdhesion = ["Membre Actif", "Volontaire", "Membre Bienfaiteur", "Membre d'Honneur"]
+  const filteredCards = cardsData.filter(
+    (card) =>
+      card.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      card.memberName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      card.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      card.status.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
 
-  const filteredCartes = cartes.filter((carte) => {
-    const matchesSearch =
-      carte.numeroCarte.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      carte.nomMembre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      carte.prenomMembre.toLowerCase().includes(searchTerm.toLowerCase())
+  const totalPages = Math.ceil(filteredCards.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const currentCards = filteredCards.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 
-    const matchesStatut = filterStatut === "all" || carte.statut === filterStatut
-    const matchesDepartement = filterDepartement === "all" || carte.departement === filterDepartement
-    const matchesTypeAdhesion = filterTypeAdhesion === "all" || carte.typeAdhesion === filterTypeAdhesion
-
-    return matchesSearch && matchesStatut && matchesDepartement && matchesTypeAdhesion
-  })
-
-  // Pagination
-  const itemsPerPage = 10
-  const totalPages = Math.ceil(filteredCartes.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedCartes = filteredCartes.slice(startIndex, startIndex + itemsPerPage)
-
-  const getStatutColor = (statut: string) => {
-    switch (statut) {
-      case "Active":
-        return "bg-green-100 text-green-800"
-      case "Expirée":
-        return "bg-orange-100 text-orange-800"
-      case "Perdue":
-        return "bg-red-100 text-red-800"
-      case "Bloquée":
-        return "bg-gray-100 text-gray-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1))
   }
 
-  const clearFilters = () => {
-    setSearchTerm("")
-    setFilterStatut("all")
-    setFilterDepartement("all")
-    setFilterTypeAdhesion("all")
-    setCurrentPage(1)
-  }
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestion des Cartes de Membre</h1>
-          <p className="text-gray-600 mt-1">Générez, suivez et gérez les cartes d'identification des membres</p>
-        </div>
-        <Button className="bg-red-600 hover:bg-red-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle Carte
-        </Button>
-      </div>
+    <div className="flex-1 p-4 md:p-8">
+      <h1 className="text-2xl font-bold mb-4">Gestion des Cartes</h1>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Cartes</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{filteredCartes.length}</div>
-            <p className="text-xs text-muted-foreground">sur {cartes.length} total</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cartes Actives</CardTitle>
-            <CreditCard className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {filteredCartes.filter((c) => c.statut === "Active").length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cartes Expirées</CardTitle>
-            <CreditCard className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {filteredCartes.filter((c) => c.statut === "Expirée").length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">À Imprimer</CardTitle>
-            <Printer className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">5</div>
-            <p className="text-xs text-muted-foreground">Nouvelles demandes</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                Filtres et Recherche
-              </CardTitle>
-              <CardDescription>Filtrez la liste des cartes selon vos critères</CardDescription>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={clearFilters} size="sm">
-                Effacer les filtres
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Exporter
-              </Button>
-            </div>
-          </div>
+          <CardTitle>Liste des Cartes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Recherche</label>
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Numéro, nom du membre..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Statut</label>
-              <Select value={filterStatut} onValueChange={setFilterStatut}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Expirée">Expirée</SelectItem>
-                  <SelectItem value="Perdue">Perdue</SelectItem>
-                  <SelectItem value="Bloquée">Bloquée</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Département</label>
-              <Select value={filterDepartement} onValueChange={setFilterDepartement}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les départements</SelectItem>
-                  {departements.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Type d'Adhésion</label>
-              <Select value={filterTypeAdhesion} onValueChange={setFilterTypeAdhesion}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Tous" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les types</SelectItem>
-                  {typesAdhesion.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="relative mb-4">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Rechercher une carte..."
+              className="w-full rounded-lg bg-background pl-8 md:w-[300px] lg:w-[450px]"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Cards Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Liste des Cartes ({filteredCartes.length})</CardTitle>
-          <CardDescription>Aperçu et gestion des cartes de membre.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Numéro de Carte</TableHead>
-                  <TableHead>Membre</TableHead>
-                  <TableHead>Type Adhésion</TableHead>
-                  <TableHead>Localisation</TableHead>
-                  <TableHead>Dates</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedCartes.map((carte) => (
-                  <TableRow key={carte.id}>
-                    <TableCell className="font-medium">{carte.numeroCarte}</TableCell>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID Carte</TableHead>
+                <TableHead>Membre</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Date d'émission</TableHead>
+                <TableHead>Date d'expiration</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Image</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {currentCards.length > 0 ? (
+                currentCards.map((card) => (
+                  <TableRow key={card.id}>
+                    <TableCell className="font-medium">{card.id}</TableCell>
+                    <TableCell>{card.memberName}</TableCell>
+                    <TableCell>{card.type}</TableCell>
+                    <TableCell>{card.issueDate}</TableCell>
+                    <TableCell>{card.expiryDate}</TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Image
-                          src={carte.photoMembre || "/placeholder.svg"}
-                          alt={`${carte.prenomMembre} ${carte.nomMembre}`}
-                          width={32}
-                          height={32}
-                          className="rounded-full object-cover"
-                        />
-                        <div>
-                          {carte.prenomMembre} {carte.nomMembre}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{carte.typeAdhesion}</TableCell>
-                    <TableCell>
-                      <div>{carte.departement}</div>
-                      <div className="text-sm text-muted-foreground">{carte.arrondissement}</div>
+                      <Badge variant={card.status === "Active" ? "default" : "secondary"}>{card.status}</Badge>
                     </TableCell>
                     <TableCell>
-                      <div>Émise: {new Date(carte.dateEmission).toLocaleDateString("fr-FR")}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Expire: {new Date(carte.dateExpiration).toLocaleDateString("fr-FR")}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatutColor(carte.statut)}>{carte.statut}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <Printer className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <Image
+                        src={card.imageUrl || "/placeholder.svg"}
+                        alt={`Carte ${card.id}`}
+                        width={50}
+                        height={30}
+                      />
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination */}
-          <div className="mt-6">
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
-          </div>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">
+                    Aucune carte trouvée.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+          <Pagination className="mt-4">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious onClick={handlePreviousPage} disabled={currentPage === 1} />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <PaginationItem key={i}>
+                  <Button variant={currentPage === i + 1 ? "default" : "outline"} onClick={() => setCurrentPage(i + 1)}>
+                    {i + 1}
+                  </Button>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext onClick={handleNextPage} disabled={currentPage === totalPages} />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </CardContent>
       </Card>
     </div>
