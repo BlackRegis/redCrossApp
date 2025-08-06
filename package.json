@@ -9,7 +9,9 @@
     "start": "next start",
     "db:test": "node scripts/test-db-pg.js",
     "db:migrate": "node scripts/migrate-simple.js",
-    "db:seed": "node scripts/seed-complete.js"
+    "db:seed": "node scripts/seed-complete.js",
+    "db:seed-cartes": "node scripts/seed-cartes.js",
+    "db:seed-bureaux": "node scripts/seed-bureaux.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

@@ -1,18 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Building2, MapPin, Users, Plus, Edit, Crown, User, Briefcase, Phone, Mail } from "lucide-react"
+import Link from "next/link"
 
 interface BureauMembre {
   id: string
   nom: string
   prenom: string
-  poste: "Président" | "Secrétaire Général" | "Trésorier"
+  poste: "Président" | "Vice-Président" | "Secrétaire Général" | "Secrétaire Adjoint" | "Trésorier" | "Trésorier Adjoint" | "Commissaire aux Comptes" | "Membre"
   email: string
   telephone: string
   dateNomination: string
@@ -27,141 +28,6 @@ interface BureauExecutif {
   niveau: string
   membres: BureauMembre[]
 }
-
-const bureauxData: BureauExecutif[] = [
-  {
-    id: "congo-national",
-    nom: "République du Congo",
-    type: "nation",
-    niveau: "National",
-    membres: [
-      {
-        id: "1",
-        nom: "Mukendi",
-        prenom: "Jean",
-        poste: "Président",
-        email: "president@croixrouge-congo.org",
-        telephone: "+242 123 456 789",
-        dateNomination: "2023-01-15",
-        mandatFin: "2027-01-15",
-      },
-      {
-        id: "2",
-        nom: "Kabila",
-        prenom: "Marie",
-        poste: "Secrétaire Général",
-        email: "secretaire@croixrouge-congo.org",
-        telephone: "+242 987 654 321",
-        dateNomination: "2023-01-15",
-        mandatFin: "2027-01-15",
-      },
-      {
-        id: "3",
-        nom: "Tshisekedi",
-        prenom: "Paul",
-        poste: "Trésorier",
-        email: "tresorier@croixrouge-congo.org",
-        telephone: "+242 555 123 456",
-        dateNomination: "2023-01-15",
-        mandatFin: "2027-01-15",
-      },
-    ],
-  },
-  {
-    id: "brazzaville-dept",
-    nom: "Brazzaville",
-    type: "departement",
-    niveau: "Départemental",
-    membres: [
-      {
-        id: "4",
-        nom: "Ngouabi",
-        prenom: "Sophie",
-        poste: "Président",
-        email: "president.brazzaville@croixrouge-congo.org",
-        telephone: "+242 666 789 123",
-        dateNomination: "2023-02-01",
-        mandatFin: "2027-02-01",
-      },
-      {
-        id: "5",
-        nom: "Sassou",
-        prenom: "André",
-        poste: "Secrétaire Général",
-        email: "secretaire.brazzaville@croixrouge-congo.org",
-        telephone: "+242 777 456 789",
-        dateNomination: "2023-02-01",
-        mandatFin: "2027-02-01",
-      },
-      {
-        id: "6",
-        nom: "Opangault",
-        prenom: "Claudine",
-        poste: "Trésorier",
-        email: "tresorier.brazzaville@croixrouge-congo.org",
-        telephone: "+242 888 321 654",
-        dateNomination: "2023-02-01",
-        mandatFin: "2027-02-01",
-      },
-    ],
-  },
-  {
-    id: "bacongo-arr",
-    nom: "Lumumba",
-    type: "arrondissement",
-    niveau: "Arrondissement",
-    membres: [
-      {
-        id: "7",
-        nom: "Nziengi",
-        prenom: "Olivier",
-        poste: "Président",
-        email: "president.lumumba@croixrouge-congo.org",
-        telephone: "+242 06 663 5880",
-        dateNomination: "2020-03-01",
-        mandatFin: "2025-03-01",
-      },
-      {
-        id: "8",
-        nom: "Kolelas",
-        prenom: "Jeanne",
-        poste: "Secrétaire Général",
-        email: "secretaire.bacongo@croixrouge-congo.org",
-        telephone: "+242 111 369 852",
-        dateNomination: "2023-03-01",
-        mandatFin: "2027-03-01",
-      },
-      {
-        id: "9",
-        nom: "Yhombi",
-        prenom: "Robert",
-        poste: "Trésorier",
-        email: "tresorier.bacongo@croixrouge-congo.org",
-        telephone: "+242 222 741 963",
-        dateNomination: "2023-03-01",
-        mandatFin: "2027-03-01",
-      },
-    ],
-  },
-  {
-    id: "poto-poto-arr",
-    nom: "Poto-Poto",
-    type: "arrondissement",
-    niveau: "Arrondissement",
-    membres: [
-      {
-        id: "10",
-        nom: "Poaty",
-        prenom: "Sylvie",
-        poste: "Président",
-        email: "president.poto-poto@croixrouge-congo.org",
-        telephone: "+242 333 852 741",
-        dateNomination: "2023-03-15",
-        mandatFin: "2027-03-15",
-      },
-    ],
-  },
-]
 
 // Sample data for executive members
 const executiveMembers = [
@@ -202,6 +68,45 @@ const executiveMembers = [
 export default function BureauExecutifPage() {
   const [selectedBureau, setSelectedBureau] = useState<BureauExecutif | null>(null)
   const [activeTab, setActiveTab] = useState("national")
+  const [bureaux, setBureaux] = useState<BureauExecutif[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Charger les données depuis l'API
+  useEffect(() => {
+    const fetchBureaux = async () => {
+      try {
+        setLoading(true)
+        const response = await fetch('/api/bureaux')
+        const data = await response.json()
+        
+        // Transformer les données de l'API vers le format attendu
+        const transformedBureaux = data.map((bureau: any) => ({
+          id: bureau.id,
+          nom: bureau.nom,
+          type: bureau.type,
+          niveau: bureau.niveau,
+          membres: bureau.membres.map((membre: any) => ({
+            id: membre.id,
+            nom: membre.membre_nom,
+            prenom: membre.membre_prenom,
+            poste: membre.poste,
+            email: membre.membre_email,
+            telephone: membre.membre_telephone,
+            dateNomination: membre.date_nomination,
+            mandatFin: membre.date_fin_mandat
+          }))
+        }))
+        
+        setBureaux(transformedBureaux)
+      } catch (error) {
+        console.error('Erreur lors du chargement des bureaux:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBureaux()
+  }, [])
 
   const getPosteIcon = (poste: string) => {
     switch (poste) {
@@ -220,10 +125,18 @@ export default function BureauExecutifPage() {
     switch (poste) {
       case "Président":
         return "bg-yellow-100 text-yellow-800"
+      case "Vice-Président":
+        return "bg-orange-100 text-orange-800"
       case "Secrétaire Général":
         return "bg-blue-100 text-blue-800"
+      case "Secrétaire Adjoint":
+        return "bg-indigo-100 text-indigo-800"
       case "Trésorier":
         return "bg-green-100 text-green-800"
+      case "Trésorier Adjoint":
+        return "bg-emerald-100 text-emerald-800"
+      case "Commissaire aux Comptes":
+        return "bg-purple-100 text-purple-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -234,7 +147,7 @@ export default function BureauExecutifPage() {
   }
 
   const filteredBureaux = (type: string) => {
-    return bureauxData.filter((bureau) => bureau.type === type)
+    return bureaux.filter((bureau) => bureau.type === type)
   }
 
   const renderBureauCard = (bureau: BureauExecutif) => (
@@ -303,6 +216,17 @@ export default function BureauExecutifPage() {
     </Card>
   )
 
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement des bureaux...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -311,42 +235,15 @@ export default function BureauExecutifPage() {
           <h1 className="text-3xl font-bold text-gray-900">Bureau Exécutif</h1>
           <p className="text-gray-600 mt-1">Gestion des bureaux exécutifs à tous les niveaux</p>
         </div>
-        <Button className="bg-red-600 hover:bg-red-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Nouveau Bureau
-        </Button>
+        <Link href="/bureau-executif/nouveau">
+          <Button className="bg-red-600 hover:bg-red-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Nouveau Bureau
+          </Button>
+        </Link>
       </div>
 
       {/* Executive Members */}
-      <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-6">Bureau Exécutif National</h1>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {executiveMembers.map((member) => (
-            <Card key={member.id}>
-              <CardHeader className="flex flex-col items-center text-center">
-                <Avatar className="h-24 w-24 mb-4">
-                  <AvatarImage src={member.imageUrl || "/placeholder.svg"} alt={member.name} />
-                  <AvatarFallback>
-                    {member.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <CardTitle className="text-xl">{member.name}</CardTitle>
-                <CardDescription className="text-muted-foreground">{member.title}</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center text-sm">
-                <p className="mb-1">Email: {member.email}</p>
-                <p>Téléphone: {member.phone}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -385,7 +282,7 @@ export default function BureauExecutifPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">
-              {bureauxData.reduce((total, bureau) => total + bureau.membres.length, 0)}
+              {bureaux.reduce((total, bureau) => total + bureau.membres.length, 0)}
             </div>
           </CardContent>
         </Card>
