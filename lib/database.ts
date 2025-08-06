@@ -1,10 +1,7 @@
-import { neon } from '@neondatabase/serverless';
+import { sql } from './db';
 
 // This is a simple example. In a real application, you might want to
 // use a more robust database client or ORM, and handle connection pooling.
-
-// Ensure DATABASE_URL is set in your environment variables
-const sql = neon(process.env.DATABASE_URL!);
 
 // Fonctions pour les paramètres d'application
 export async function saveAppSettings(settings: any) {
@@ -41,7 +38,7 @@ export async function saveAppSettings(settings: any) {
 export async function getAppSettings() {
   try {
     const result = await sql`SELECT * FROM app_settings LIMIT 1`
-    return result.rows[0] || null
+    return result.rows?.[0] || null
   } catch (error) {
     console.error("Erreur lors de la récupération des paramètres:", error)
     return null
@@ -87,7 +84,7 @@ export async function createDepartement(departement: any) {
               ${departement.population}, ${departement.superficie}, NOW())
       RETURNING *
     `
-    return { success: true, data: result.rows[0] }
+    return { success: true, data: result.rows?.[0] }
   } catch (error) {
     console.error("Erreur lors de la création du département:", error)
     return { success: false, error }
@@ -104,7 +101,7 @@ export async function getDepartements() {
       GROUP BY d.id
       ORDER BY d.nom
     `
-    return result.rows
+    return result.rows || []
   } catch (error) {
     console.error("Erreur lors de la récupération des départements:", error)
     return []
@@ -133,7 +130,7 @@ export async function createArrondissement(arrondissement: any) {
               ${arrondissement.population}, ${arrondissement.superficie}, NOW())
       RETURNING *
     `
-    return { success: true, data: result.rows[0] }
+    return { success: true, data: result.rows?.[0] }
   } catch (error) {
     console.error("Erreur lors de la création de l'arrondissement:", error)
     return { success: false, error }
@@ -148,7 +145,7 @@ export async function getArrondissements(departementId?: string) {
             JOIN departements d ON a.departement_id = d.id ORDER BY d.nom, a.nom`
 
     const result = await query
-    return result.rows
+    return result.rows || []
   } catch (error) {
     console.error("Erreur lors de la récupération des arrondissements:", error)
     return []
@@ -179,7 +176,7 @@ export async function updateDepartement(id: string, departement: any) {
       WHERE id = ${id}
       RETURNING *
     `
-    return { success: true, data: result.rows[0] }
+    return { success: true, data: result.rows?.[0] }
   } catch (error) {
     console.error("Erreur lors de la modification du département:", error)
     return { success: false, error }
@@ -199,7 +196,7 @@ export async function updateArrondissement(id: string, arrondissement: any) {
       WHERE id = ${id}
       RETURNING *
     `
-    return { success: true, data: result.rows[0] }
+    return { success: true, data: result.rows?.[0] }
   } catch (error) {
     console.error("Erreur lors de la modification de l'arrondissement:", error)
     return { success: false, error }
@@ -217,7 +214,7 @@ export async function getMembreDetails(id: string) {
       WHERE m.id = ${id}
     `
 
-    if (membre.rows.length === 0) return null
+    if (!membre.rows || membre.rows.length === 0) return null
 
     // Récupérer les formations du membre
     const formations = await sql`
@@ -235,8 +232,8 @@ export async function getMembreDetails(id: string) {
 
     return {
       ...membre.rows[0],
-      formations: formations.rows,
-      activites: activites.rows,
+      formations: formations.rows || [],
+      activites: activites.rows || [],
     }
   } catch (error) {
     console.error("Erreur lors de la récupération des détails du membre:", error)

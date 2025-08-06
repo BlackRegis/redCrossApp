@@ -1,13 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2 } from 'lucide-react'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 interface AppSettings {
   app_name: string
@@ -124,7 +127,7 @@ export default function ParametresPage() {
           <Card>
             <CardHeader>
               <CardTitle>Paramètres Généraux de l'Application</CardTitle>
-              <CardDescription>Configurez les informations de base de votre application.</CardDescription>
+              <p className="text-sm text-muted-foreground">Configurez les informations de base de votre application.</p>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSaveAppSettings} className="space-y-4">
@@ -178,7 +181,7 @@ export default function ParametresPage() {
           <Card>
             <CardHeader>
               <CardTitle>Paramètres de Notifications</CardTitle>
-              <CardDescription>Gérez vos préférences de notification.</CardDescription>
+              <p className="text-sm text-muted-foreground">Gérez vos préférences de notification.</p>
             </CardHeader>
             <CardContent>
               <p>Contenu des paramètres de notifications...</p>
@@ -189,7 +192,7 @@ export default function ParametresPage() {
           <Card>
             <CardHeader>
               <CardTitle>Paramètres de Sécurité</CardTitle>
-              <CardDescription>Gérez les paramètres de sécurité de votre compte.</CardDescription>
+              <p className="text-sm text-muted-foreground">Gérez les paramètres de sécurité de votre compte.</p>
             </CardHeader>
             <CardContent>
               <p>Contenu des paramètres de sécurité...</p>

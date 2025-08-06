@@ -1,12 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Search, Filter, Download, BarChart, LineChart, PieChart } from 'lucide-react'
+import { Search, Filter, Download, BarChart, LineChart, PieChart, Plus } from 'lucide-react'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 interface Rapport {
   id: string
@@ -104,7 +107,7 @@ export default function RapportsPage() {
         <Card className="flex flex-col items-center justify-center p-6 text-center">
           <BarChart className="h-12 w-12 text-red-600 mb-3" />
           <CardTitle className="text-lg">Rapports Membres</CardTitle>
-          <CardDescription>Statistiques sur les adhésions, démographie, etc.</CardDescription>
+          <p className="text-sm text-muted-foreground">Statistiques sur les adhésions, démographie, etc.</p>
           <Button variant="outline" className="mt-4">
             Voir les rapports
           </Button>
@@ -112,7 +115,7 @@ export default function RapportsPage() {
         <Card className="flex flex-col items-center justify-center p-6 text-center">
           <LineChart className="h-12 w-12 text-red-600 mb-3" />
           <CardTitle className="text-lg">Rapports Activités</CardTitle>
-          <CardDescription>Suivi des campagnes, formations, interventions.</CardDescription>
+          <p className="text-sm text-muted-foreground">Suivi des campagnes, formations, interventions.</p>
           <Button variant="outline" className="mt-4">
             Voir les rapports
           </Button>
@@ -120,7 +123,7 @@ export default function RapportsPage() {
         <Card className="flex flex-col items-center justify-center p-6 text-center">
           <PieChart className="h-12 w-12 text-red-600 mb-3" />
           <CardTitle className="text-lg">Rapports Financiers</CardTitle>
-          <CardDescription>Dons, dépenses, budgets.</CardDescription>
+          <p className="text-sm text-muted-foreground">Dons, dépenses, budgets.</p>
           <Button variant="outline" className="mt-4">
             Voir les rapports
           </Button>
@@ -136,7 +139,7 @@ export default function RapportsPage() {
                 <Filter className="h-5 w-5" />
                 Filtres et Recherche
               </CardTitle>
-              <CardDescription>Filtrez la liste des rapports disponibles</CardDescription>
+              <p className="text-sm text-muted-foreground">Filtrez la liste des rapports disponibles</p>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" onClick={clearFilters} size="sm">
