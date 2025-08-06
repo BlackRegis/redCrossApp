@@ -1,4 +1,4 @@
-import { sql } from "@vercel/postgres"
+import { sql } from "./db"
 
 // Fonctions pour les paramètres d'application
 export async function saveAppSettings(settings: any) {

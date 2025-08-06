@@ -1,13 +1,48 @@
-import { sql } from "@vercel/postgres"
+import { sql } from "../../../lib/db"
 import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
-    const { rows } = await sql`SELECT * FROM departments ORDER BY name ASC;`
-    return NextResponse.json(rows, { status: 200 })
+    const result = await sql`
+      SELECT 
+        d.id,
+        d.nom,
+        d.code,
+        d.chef_lieu,
+        d.population,
+        d.superficie,
+        json_agg(
+          json_build_object(
+            'id', a.id,
+            'nom', a.nom,
+            'code', a.code,
+            'population', a.population,
+            'superficie', a.superficie
+          )
+        ) as arrondissements
+      FROM departements d
+      LEFT JOIN arrondissements a ON d.id = a.departement_id
+      GROUP BY d.id, d.nom, d.code, d.chef_lieu, d.population, d.superficie
+      ORDER BY d.nom
+    `
+
+    const departements = result.rows.map(row => ({
+      id: row.id,
+      nom: row.nom,
+      code: row.code,
+      chef_lieu: row.chef_lieu,
+      population: row.population,
+      superficie: row.superficie,
+      arrondissements: row.arrondissements[0] === null ? [] : row.arrondissements
+    }))
+
+    return NextResponse.json(departements)
   } catch (error) {
-    console.error("Error fetching departments:", error)
-    return NextResponse.json({ error: "Failed to fetch departments" }, { status: 500 })
+    console.error('Erreur lors de la récupération des départements:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la récupération des départements' },
+      { status: 500 }
+    )
   }
 }
 

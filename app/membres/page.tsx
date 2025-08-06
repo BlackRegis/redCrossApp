@@ -1,13 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Pagination } from "@/components/ui/pagination"
 import { Search, Plus, Filter, Download } from "lucide-react"
 import Link from "next/link"
 
@@ -30,113 +29,14 @@ interface Membre {
   adresse?: string
 }
 
-const membresData: Membre[] = [
-  {
-    id: "1",
-    nom: "Mukendi",
-    prenom: "Jean",
-    email: "jean.mukendi@email.com",
-    telephone: "+242 123 456 789",
-    departement: "Brazzaville",
-    arrondissement: "Bacongo",
-    statut: "Actif",
-    dateAdhesion: "2023-01-15",
-    dateNaissance: "1985-03-20",
-    age: 39,
-    profession: "Médecin",
-    typeAdhesion: "Membre Actif",
-    numeroCarte: "CRC-BZV-001",
-    sexe: "M",
-    adresse: "Avenue Félix Éboué, Bacongo",
-  },
-  {
-    id: "2",
-    nom: "Kabila",
-    prenom: "Marie",
-    email: "marie.kabila@email.com",
-    telephone: "+242 987 654 321",
-    departement: "Brazzaville",
-    arrondissement: "Poto-Poto",
-    statut: "Actif",
-    dateAdhesion: "2023-03-20",
-    dateNaissance: "1990-07-15",
-    age: 34,
-    profession: "Infirmière",
-    typeAdhesion: "Volontaire",
-    numeroCarte: "CRC-BZV-002",
-    sexe: "F",
-    adresse: "Rue Monseigneur Augouard, Poto-Poto",
-  },
-  {
-    id: "3",
-    nom: "Kouadio",
-    prenom: "Marc",
-    telephone: "+242 06 111 2233",
-    email: "marc.kouadio@example.com",
-    departement: "Brazzaville",
-    statut: "Actif",
-  },
-  {
-    id: "4",
-    nom: "Diallo",
-    prenom: "Fatoumata",
-    telephone: "+242 05 444 5566",
-    email: "fatoumata.diallo@example.com",
-    departement: "Pointe-Noire",
-    statut: "Actif",
-  },
-  {
-    id: "5",
-    nom: "Nzouzi",
-    prenom: "Christian",
-    telephone: "+242 04 777 8899",
-    email: "christian.nzouzi@example.com",
-    departement: "Niari",
-    statut: "Inactif",
-  },
-  {
-    id: "6",
-    nom: "Brazza",
-    prenom: "Congo",
-    telephone: "+242 06 123 4567",
-    email: "brazza.congo@example.com",
-    departement: "Brazzaville",
-    statut: "Actif",
-  },
-  {
-    id: "7",
-    nom: "Pointe",
-    prenom: "Noire",
-    telephone: "+242 05 987 6543",
-    email: "pointe.noire@example.com",
-    departement: "Pointe-Noire",
-    statut: "Actif",
-  },
-  // Ajout de données supplémentaires pour tester la pagination
-  ...Array.from({ length: 25 }, (_, i) => ({
-    id: `${i + 8}`,
-    nom: `Nom${i + 8}`,
-    prenom: `Prénom${i + 8}`,
-    email: `membre${i + 8}@email.com`,
-    telephone: `+242 ${String(i + 100).padStart(3, "0")} 123 456`,
-    departement: ["Brazzaville", "Kouilou", "Niari", "Bouenza", "Pool", "Plateaux"][i % 6],
-    arrondissement: ["Bacongo", "Poto-Poto", "Pointe-Noire", "Dolisie", "Nkayi", "Kinkala"][i % 6],
-    statut: (["Actif", "Inactif", "Suspendu"] as const)[i % 3],
-    dateAdhesion: `2023-0${(i % 9) + 1}-${String((i % 28) + 1).padStart(2, "0")}`,
-    dateNaissance: `198${i % 10}-0${(i % 9) + 1}-${String((i % 28) + 1).padStart(2, "0")}`,
-    age: 25 + (i % 30),
-    profession: ["Médecin", "Infirmière", "Enseignant", "Ingénieur", "Comptable", "Juriste"][i % 6],
-    typeAdhesion: ["Volontaire", "Membre Actif", "Membre Bienfaiteur"][i % 3],
-    numeroCarte: `CRC-TEST-${String(i + 8).padStart(3, "0")}`,
-    sexe: (i % 2 === 0 ? "M" : "F") as "M" | "F",
-    adresse: `Adresse test ${i + 8}`,
-  })),
-]
+const membresData: Membre[] = []
 
 const ITEMS_PER_PAGE = 15
 
 export default function MembresPage() {
-  const [membres, setMembres] = useState<Membre[]>(membresData)
+  const [membres, setMembres] = useState<Membre[]>([])
+  const [departements, setDepartements] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterDepartement, setFilterDepartement] = useState("all")
   const [filterArrondissement, setFilterArrondissement] = useState("all")
@@ -145,30 +45,69 @@ export default function MembresPage() {
   const [filterSexe, setFilterSexe] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
 
-  const departements = ["Brazzaville", "Kouilou", "Niari", "Bouenza", "Pool", "Plateaux"]
-  const arrondissements = {
-    Brazzaville: ["Bacongo", "Poto-Poto", "Moungali", "Ouenzé", "Talangaï"],
-    Kouilou: ["Pointe-Noire"],
-    Niari: ["Dolisie"],
-    Bouenza: ["Nkayi"],
-    Pool: ["Kinkala"],
-    Plateaux: ["Djambala"],
-  }
+  // Charger les données depuis l'API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        
+        // Charger les membres
+        const membresResponse = await fetch('/api/membres')
+        const membresData = await membresResponse.json()
+        console.log('Membres chargés:', membresData)
+        setMembres(membresData)
+        
+        // Charger les départements
+        const departementsResponse = await fetch('/api/departements')
+        const departementsData = await departementsResponse.json()
+        setDepartements(departementsData)
+        
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  // Obtenir les noms des départements pour les filtres
+  const departementsNoms = departements.map(d => d.nom)
+  
+  // Créer un objet arrondissements pour les filtres
+  const arrondissements = departements.reduce((acc, dept) => {
+    acc[dept.nom] = dept.arrondissements.map((arr: { nom: string }) => arr.nom)
+    return acc
+  }, {} as Record<string, string[]>)
 
   const filteredMembres = membres.filter((membre) => {
-    const matchesSearch =
+    // Recherche
+    const matchesSearch = searchTerm === "" || 
       membre.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       membre.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      membre.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      membre.profession?.toLowerCase().includes(searchTerm.toLowerCase())
+      (membre.email && membre.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (membre.profession && membre.profession.toLowerCase().includes(searchTerm.toLowerCase()))
 
-    const matchesDepartement = filterDepartement === "all" || membre.departement === filterDepartement
-    const matchesArrondissement = filterArrondissement === "all" || membre.arrondissement === filterArrondissement
-    const matchesStatut = filterStatut === "all" || membre.statut === filterStatut
-    const matchesSexe = filterSexe === "all" || membre.sexe === filterSexe
+    // Filtre département
+    const matchesDepartement = filterDepartement === "all" || 
+      (membre.departement && membre.departement === filterDepartement)
 
+    // Filtre arrondissement
+    const matchesArrondissement = filterArrondissement === "all" || 
+      (membre.arrondissement && membre.arrondissement === filterArrondissement)
+
+    // Filtre statut
+    const matchesStatut = filterStatut === "all" || 
+      (membre.statut && membre.statut === filterStatut)
+
+    // Filtre sexe
+    const matchesSexe = filterSexe === "all" || 
+      (membre.sexe && membre.sexe === filterSexe)
+
+    // Filtre âge
     let matchesAge = true
-    if (filterAge !== "all") {
+    if (filterAge !== "all" && membre.age) {
       switch (filterAge) {
         case "18-25":
           matchesAge = membre.age >= 18 && membre.age <= 25
@@ -220,6 +159,17 @@ export default function MembresPage() {
     setCurrentPage(page)
   }
 
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement des données...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -257,27 +207,29 @@ export default function MembresPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Âge Moyen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {Math.round(filteredMembres.reduce((sum, m) => sum + m.age!, 0) / filteredMembres.length || 0)} ans
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Répartition H/F</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm">
-              <span className="font-bold">{filteredMembres.filter((m) => m.sexe === "M").length}H</span> /{" "}
-              <span className="font-bold">{filteredMembres.filter((m) => m.sexe === "F").length}F</span>
-            </div>
-          </CardContent>
-        </Card>
+         <Card>
+           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+             <CardTitle className="text-sm font-medium">Âge Moyen</CardTitle>
+           </CardHeader>
+           <CardContent>
+             <div className="text-2xl font-bold">
+               {filteredMembres.length > 0 
+                 ? Math.round(filteredMembres.reduce((sum, m) => sum + (m.age || 0), 0) / filteredMembres.length) 
+                 : 0} ans
+             </div>
+           </CardContent>
+         </Card>
+         <Card>
+           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+             <CardTitle className="text-sm font-medium">Répartition H/F</CardTitle>
+           </CardHeader>
+           <CardContent>
+             <div className="text-sm">
+               <span className="font-bold">{filteredMembres.filter((m) => m.sexe === "M").length}H</span> /{" "}
+               <span className="font-bold">{filteredMembres.filter((m) => m.sexe === "F").length}F</span>
+             </div>
+           </CardContent>
+         </Card>
       </div>
 
       {/* Filters */}
@@ -325,7 +277,7 @@ export default function MembresPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Tous les départements</SelectItem>
-                  {departements.map((dept) => (
+                  {departementsNoms.map((dept) => (
                     <SelectItem key={dept} value={dept}>
                       {dept}
                     </SelectItem>
@@ -347,7 +299,7 @@ export default function MembresPage() {
                 <SelectContent>
                   <SelectItem value="all">Tous les arrondissements</SelectItem>
                   {filterDepartement &&
-                    arrondissements[filterDepartement as keyof typeof arrondissements]?.map((arr) => (
+                    arrondissements[filterDepartement as keyof typeof arrondissements]?.map((arr: string) => (
                       <SelectItem key={arr} value={arr}>
                         {arr}
                       </SelectItem>
@@ -480,8 +432,24 @@ export default function MembresPage() {
           </div>
 
           {/* Pagination */}
-          <div className="mt-6">
-            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+          <div className="mt-6 flex justify-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              Précédent
+            </Button>
+            <span className="flex items-center px-4">
+              Page {currentPage} sur {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Suivant
+            </Button>
           </div>
         </CardContent>
       </Card>
