@@ -11,18 +11,9 @@ export async function GET() {
         d.chef_lieu,
         d.population,
         d.superficie,
-        json_agg(
-          json_build_object(
-            'id', a.id,
-            'nom', a.nom,
-            'code', a.code,
-            'population', a.population,
-            'superficie', a.superficie
-          )
-        ) as arrondissements
+        d.created_at,
+        d.updated_at
       FROM departements d
-      LEFT JOIN arrondissements a ON d.id = a.departement_id
-      GROUP BY d.id, d.nom, d.code, d.chef_lieu, d.population, d.superficie
       ORDER BY d.nom
     `
 
@@ -33,7 +24,8 @@ export async function GET() {
       chef_lieu: row.chef_lieu,
       population: row.population,
       superficie: row.superficie,
-      arrondissements: row.arrondissements[0] === null ? [] : row.arrondissements
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
     }))
 
     return NextResponse.json(departements)
@@ -48,18 +40,35 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, head_of_department, contact_email } = await request.json()
-    if (!name) {
-      return NextResponse.json({ error: "Department name is required" }, { status: 400 })
-    }
-    const { rows } = await sql`
-      INSERT INTO departments (name, head_of_department, contact_email)
-      VALUES (${name}, ${head_of_department || null}, ${contact_email || null})
-      RETURNING *;
+    const body = await request.json()
+    
+    const {
+      nom,
+      code,
+      chef_lieu,
+      population,
+      superficie
+    } = body
+
+    const result = await sql`
+      INSERT INTO departements (
+        nom, code, chef_lieu, population, superficie
+      ) VALUES (
+        ${nom}, ${code}, ${chef_lieu}, ${population}, ${superficie}
+      )
+      RETURNING id
     `
-    return NextResponse.json(rows[0], { status: 201 })
+
+    return NextResponse.json({ 
+      success: true, 
+      id: result.rows[0].id,
+      message: 'Département créé avec succès' 
+    })
   } catch (error) {
-    console.error("Error creating department:", error)
-    return NextResponse.json({ error: "Failed to create department" }, { status: 500 })
+    console.error('Erreur lors de la création du département:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la création du département' },
+      { status: 500 }
+    )
   }
 }

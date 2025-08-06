@@ -163,9 +163,11 @@ export default function BureauExecutifPage() {
             </CardTitle>
             <CardDescription>{bureau.niveau}</CardDescription>
           </div>
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4" />
-          </Button>
+          <Link href={`/bureau-executif/${bureau.id}`}>
+            <Button variant="outline" size="sm">
+              <Edit className="h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </CardHeader>
       <CardContent>

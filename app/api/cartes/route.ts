@@ -15,7 +15,8 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = (page - 1) * limit
 
-    // Pour l'instant, récupérer toutes les cartes avec pagination simple
+    // Pour l'instant, utiliser une requête simple sans filtres complexes
+    // Nous ajouterons les filtres progressivement
     const result = await sql`
       SELECT 
         cm.id,
@@ -79,13 +80,64 @@ export async function GET(request: Request) {
       }
     }))
 
+    // Filtrer côté client pour l'instant (solution temporaire)
+    let filteredCartes = cartes
+
+    // Filtre de recherche
+    if (search) {
+      filteredCartes = filteredCartes.filter(carte => 
+        carte.numeroCarte.toLowerCase().includes(search.toLowerCase()) ||
+        carte.membre.nom.toLowerCase().includes(search.toLowerCase()) ||
+        carte.membre.prenom.toLowerCase().includes(search.toLowerCase()) ||
+        carte.membre.email.toLowerCase().includes(search.toLowerCase())
+      )
+    }
+
+    // Filtre par département
+    if (departement && departement !== 'all') {
+      filteredCartes = filteredCartes.filter(carte => 
+        carte.membre.departement === departement
+      )
+    }
+
+    // Filtre par statut
+    if (statut && statut !== 'all') {
+      filteredCartes = filteredCartes.filter(carte => 
+        carte.statutCalcule === statut
+      )
+    }
+
+    // Filtre par type de carte
+    if (typeCarte && typeCarte !== 'all') {
+      filteredCartes = filteredCartes.filter(carte => 
+        carte.typeCarte === typeCarte
+      )
+    }
+
+    // Filtre par onglet
+    if (tab && tab !== 'toutes') {
+      if (tab === 'actives') {
+        filteredCartes = filteredCartes.filter(carte => carte.statutCalcule === 'Active')
+      } else if (tab === 'expirees') {
+        filteredCartes = filteredCartes.filter(carte => carte.statutCalcule === 'Expirée')
+      } else if (tab === 'suspendues') {
+        filteredCartes = filteredCartes.filter(carte => carte.statutCalcule === 'Suspendue')
+      }
+    }
+
+    // Pagination côté client pour l'instant
+    const total = filteredCartes.length
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    const paginatedCartes = filteredCartes.slice(startIndex, endIndex)
+
     return NextResponse.json({
-      cartes,
+      cartes: paginatedCartes,
       pagination: {
-        total: parseInt(countResult.rows[0].total),
+        total,
         page,
         limit,
-        totalPages: Math.ceil(parseInt(countResult.rows[0].total) / limit)
+        totalPages: Math.ceil(total / limit)
       }
     })
   } catch (error) {
