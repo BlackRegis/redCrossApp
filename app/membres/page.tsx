@@ -7,8 +7,16 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Pagination } from "@/components/ui/pagination"
-import { Search, Plus, Filter, Download } from "lucide-react"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationEllipsis,
+  PaginationPrevious,
+  PaginationNext
+} from "@/components/ui/pagination"
+import { Search, Plus, Edit, Trash2, Eye, Filter, Download } from 'lucide-react'
 import Link from "next/link"
 
 interface Membre {
@@ -468,10 +476,16 @@ export default function MembresPage() {
                     <TableCell className="font-mono text-sm">{membre.numeroCarte}</TableCell>
                     <TableCell className="text-right">
                       <Link href={`/membres/${membre.id}`}>
-                        <Button variant="ghost" size="sm">
-                          Voir Détails
+                        <Button variant="ghost" size="sm" title="Voir les détails">
+                          <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -3,200 +3,104 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Home, Users, CreditCard, Activity, Briefcase, Settings, ChevronRight, ChevronLeft, BarChart2, User } from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import {
-  Home,
-  Users,
-  Building2,
-  CreditCard,
-  Calendar,
-  BarChart3,
-  Settings,
-  Menu,
-  X,
-  ChevronDown,
-  ChevronRight,
-  Crown,
-} from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-interface SidebarProps {
-  className?: string
-}
-
-const menuItems = [
-  {
-    title: "Tableau de Bord",
-    href: "/",
-    icon: Home,
-  },
-  {
-    title: "Membres",
-    href: "/membres",
-    icon: Users,
-    submenu: [
-      { title: "Liste des Membres", href: "/membres" },
-      { title: "Nouveau Membre", href: "/membres/nouveau" },
-    ],
-  },
-  {
-    title: "Organisation",
-    href: "/organisation",
-    icon: Building2,
-  },
-  {
-    title: "Bureau Exécutif",
-    href: "/bureau-executif",
-    icon: Crown,
-  },
-  {
-    title: "Cartes de Membre",
-    href: "/cartes",
-    icon: CreditCard,
-  },
-  {
-    title: "Activités",
-    href: "/activites",
-    icon: Calendar,
-  },
-  {
-    title: "Rapports",
-    href: "/rapports",
-    icon: BarChart3,
-  },
-  {
-    title: "Paramètres",
-    href: "/parametres",
-    icon: Settings,
-  },
-]
-
-// Sample user data for the profile button
-const currentUser = {
-  name: "John Doe",
-  avatar: "/placeholder.svg?height=40&width=40&text=JD",
-}
-
-export function Sidebar({ className }: SidebarProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [expandedItems, setExpandedItems] = useState<string[]>([])
+export function Sidebar() {
   const pathname = usePathname()
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
-  const toggleExpanded = (title: string) => {
-    setExpandedItems((prev) => (prev.includes(title) ? prev.filter((item) => item !== title) : [...prev, title]))
+  const navItems = [
+    { href: "/", icon: Home, label: "Accueil" },
+    { href: "/membres", icon: Users, label: "Membres" },
+    { href: "/cartes", icon: CreditCard, label: "Cartes" },
+    { href: "/activites", icon: Activity, label: "Activités" },
+    { href: "/bureau-executif", icon: Briefcase, label: "Bureau Exécutif" },
+    { href: "/organisation", icon: Briefcase, label: "Organisation" },
+    { href: "/rapports", icon: BarChart2, label: "Rapports" },
+    { href: "/parametres", icon: Settings, label: "Paramètres" },
+  ]
+
+  const user = {
+    name: "John Doe",
+    avatar: "/placeholder.svg?height=32&width=32&text=JD", // Placeholder image
   }
 
-  const sidebarContent = (
-    <div className="flex flex-col h-full bg-red-600 text-white">
-      {/* Header */}
-      <div className="p-6 border-b border-red-500">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-            <svg viewBox="0 0 24 24" className="w-6 h-6 text-red-600 fill-current">
-              <path d="M12 2L12 10L20 10L20 14L12 14L12 22L8 22L8 14L0 14L0 10L8 10L8 2L12 2Z" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="font-bold text-lg text-white">Croix Rouge</h2>
-            <p className="text-sm text-red-100">République du Congo</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => (
-          <div key={item.title}>
-            <div className="flex items-center">
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1",
-                  pathname === item.href ? "bg-red-700 text-white" : "text-red-100 hover:bg-red-700 hover:text-white",
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                <span>{item.title}</span>
-              </Link>
-              {item.submenu && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => toggleExpanded(item.title)}
-                  className="p-1 h-8 w-8 text-red-100 hover:bg-red-700 hover:text-white"
-                >
-                  {expandedItems.includes(item.title) ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </Button>
-              )}
-            </div>
-
-            {item.submenu && expandedItems.includes(item.title) && (
-              <div className="ml-8 mt-2 space-y-1">
-                {item.submenu.map((subItem) => (
-                  <Link
-                    key={subItem.href}
-                    href={subItem.href}
-                    className={cn(
-                      "block px-3 py-2 rounded-lg text-sm transition-colors",
-                      pathname === subItem.href
-                        ? "bg-red-800 text-white"
-                        : "text-red-200 hover:bg-red-700 hover:text-white",
-                    )}
-                  >
-                    {subItem.title}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </nav>
-
-      {/* Footer - User Profile Button */}
-      <div className="p-4 border-t border-red-500">
-        <Button variant="ghost" className="w-full justify-start text-white hover:bg-red-700 hover:text-white">
-          <Avatar className="h-8 w-8 mr-3">
-            <AvatarImage src={currentUser.avatar || "/placeholder.svg"} alt={currentUser.name} />
-            <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <span className="text-sm font-medium">{currentUser.name}</span>
+  return (
+    <aside
+      className={cn(
+        "flex flex-col h-screen border-r bg-background transition-all duration-300",
+        isCollapsed ? "w-20" : "w-64",
+      )}
+    >
+      <div className="flex items-center justify-between h-16 px-4 border-b">
+        {!isCollapsed && <h1 className="text-2xl font-bold text-red-600">Croix Rouge</h1>}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="ml-auto"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
         </Button>
       </div>
-    </div>
-  )
-
-  return (
-    <>
-      {/* Mobile menu button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="fixed top-4 left-4 z-50 lg:hidden"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
-
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setIsOpen(false)} />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed left-0 top-0 z-40 h-full w-64 bg-red-600 border-r border-red-500 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:z-0",
-          isOpen ? "translate-x-0" : "-translate-x-full",
-          className,
-        )}
-      >
-        {sidebarContent}
-      </aside>
-    </>
+      <nav className="flex-1 px-2 py-4 space-y-1">
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "flex items-center gap-3 rounded-md px-3 py-2 text-gray-900 transition-all hover:bg-gray-100",
+              pathname === item.href && "bg-gray-100 text-red-600",
+              isCollapsed && "justify-center",
+            )}
+          >
+            <item.icon className="h-5 w-5" />
+            {!isCollapsed && <span>{item.label}</span>}
+          </Link>
+        ))}
+      </nav>
+      <div className="border-t p-4">
+        <Collapsible open={!isCollapsed} onOpenChange={setIsCollapsed} className="w-full">
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full flex items-center justify-start gap-3 px-3 py-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
+                <AvatarFallback>
+                  <User className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+              {!isCollapsed && <span className="font-medium">{user.name}</span>}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2 space-y-1">
+            <Link
+              href="/profile"
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-gray-900 transition-all hover:bg-gray-100",
+                isCollapsed && "justify-center",
+              )}
+            >
+              <User className="h-5 w-5" />
+              {!isCollapsed && <span>Mon Profil</span>}
+            </Link>
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full flex items-center gap-3 rounded-md px-3 py-2 text-gray-900 transition-all hover:bg-gray-100",
+                isCollapsed && "justify-center",
+              )}
+            >
+              <Settings className="h-5 w-5" />
+              {!isCollapsed && <span>Déconnexion</span>}
+            </Button>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    </aside>
   )
 }

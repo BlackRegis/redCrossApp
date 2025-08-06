@@ -3,428 +3,175 @@
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Building2, MapPin, Users, Plus, Edit, Crown, User, Briefcase, Phone, Mail } from "lucide-react"
+import { Search, Plus, Edit, Trash2 } from 'lucide-react'
 
-interface BureauMembre {
+interface MembreBureau {
   id: string
   nom: string
   prenom: string
-  poste: "Président" | "Secrétaire Général" | "Trésorier"
+  poste: string
+  departement: string
   email: string
   telephone: string
-  dateNomination: string
-  mandatFin: string
-  photo?: string
+  imageUrl: string
 }
 
-interface BureauExecutif {
-  id: string
-  nom: string
-  type: "nation" | "departement" | "arrondissement"
-  niveau: string
-  membres: BureauMembre[]
-}
-
-const bureauxData: BureauExecutif[] = [
+const membresBureauData: MembreBureau[] = [
   {
-    id: "congo-national",
-    nom: "République du Congo",
-    type: "nation",
-    niveau: "National",
-    membres: [
-      {
-        id: "1",
-        nom: "Mukendi",
-        prenom: "Jean",
-        poste: "Président",
-        email: "president@croixrouge-congo.org",
-        telephone: "+242 123 456 789",
-        dateNomination: "2023-01-15",
-        mandatFin: "2027-01-15",
-      },
-      {
-        id: "2",
-        nom: "Kabila",
-        prenom: "Marie",
-        poste: "Secrétaire Général",
-        email: "secretaire@croixrouge-congo.org",
-        telephone: "+242 987 654 321",
-        dateNomination: "2023-01-15",
-        mandatFin: "2027-01-15",
-      },
-      {
-        id: "3",
-        nom: "Tshisekedi",
-        prenom: "Paul",
-        poste: "Trésorier",
-        email: "tresorier@croixrouge-congo.org",
-        telephone: "+242 555 123 456",
-        dateNomination: "2023-01-15",
-        mandatFin: "2027-01-15",
-      },
-    ],
+    id: "1",
+    nom: "MABIALA",
+    prenom: "Jean-Luc",
+    poste: "Président National",
+    departement: "Direction Générale",
+    email: "jl.mabiala@croixrouge.cg",
+    telephone: "+242 06 123 4567",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=JLM",
   },
   {
-    id: "brazzaville-dept",
-    nom: "Brazzaville",
-    type: "departement",
-    niveau: "Départemental",
-    membres: [
-      {
-        id: "4",
-        nom: "Ngouabi",
-        prenom: "Sophie",
-        poste: "Président",
-        email: "president.brazzaville@croixrouge-congo.org",
-        telephone: "+242 666 789 123",
-        dateNomination: "2023-02-01",
-        mandatFin: "2027-02-01",
-      },
-      {
-        id: "5",
-        nom: "Sassou",
-        prenom: "André",
-        poste: "Secrétaire Général",
-        email: "secretaire.brazzaville@croixrouge-congo.org",
-        telephone: "+242 777 456 789",
-        dateNomination: "2023-02-01",
-        mandatFin: "2027-02-01",
-      },
-      {
-        id: "6",
-        nom: "Opangault",
-        prenom: "Claudine",
-        poste: "Trésorier",
-        email: "tresorier.brazzaville@croixrouge-congo.org",
-        telephone: "+242 888 321 654",
-        dateNomination: "2023-02-01",
-        mandatFin: "2027-02-01",
-      },
-    ],
+    id: "2",
+    nom: "NDZAMBA",
+    prenom: "Sylvie",
+    poste: "Secrétaire Général",
+    departement: "Secrétariat Général",
+    email: "s.ndzamba@croixrouge.cg",
+    telephone: "+242 05 987 6543",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=SN",
   },
   {
-    id: "bacongo-arr",
-    nom: "Lumumba",
-    type: "arrondissement",
-    niveau: "Arrondissement",
-    membres: [
-      {
-        id: "7",
-        nom: "Nziengi",
-        prenom: "Olivier",
-        poste: "Président",
-        email: "president.lumumba@croixrouge-congo.org",
-        telephone: "+242 06 663 5880",
-        dateNomination: "2020-03-01",
-        mandatFin: "2025-03-01",
-      },
-      {
-        id: "8",
-        nom: "Kolelas",
-        prenom: "Jeanne",
-        poste: "Secrétaire Général",
-        email: "secretaire.bacongo@croixrouge-congo.org",
-        telephone: "+242 111 369 852",
-        dateNomination: "2023-03-01",
-        mandatFin: "2027-03-01",
-      },
-      {
-        id: "9",
-        nom: "Yhombi",
-        prenom: "Robert",
-        poste: "Trésorier",
-        email: "tresorier.bacongo@croixrouge-congo.org",
-        telephone: "+242 222 741 963",
-        dateNomination: "2023-03-01",
-        mandatFin: "2027-03-01",
-      },
-    ],
+    id: "3",
+    nom: "LOUBASSOU",
+    prenom: "Bernard",
+    poste: "Trésorier National",
+    departement: "Finances",
+    email: "b.loubassou@croixrouge.cg",
+    telephone: "+242 04 111 2233",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=BL",
   },
   {
-    id: "poto-poto-arr",
-    nom: "Poto-Poto",
-    type: "arrondissement",
-    niveau: "Arrondissement",
-    membres: [
-      {
-        id: "10",
-        nom: "Poaty",
-        prenom: "Sylvie",
-        poste: "Président",
-        email: "president.poto-poto@croixrouge-congo.org",
-        telephone: "+242 333 852 741",
-        dateNomination: "2023-03-15",
-        mandatFin: "2027-03-15",
-      },
-    ],
-  },
-]
-
-// Sample data for executive members
-const executiveMembers = [
-  {
-    id: "exec1",
-    name: "Dr. Émile Ngoma",
-    title: "Président National",
-    email: "emile.ngoma@example.com",
-    phone: "+242 06 123 4567",
-    imageUrl: "/placeholder.svg?height=100&width=100&text=EN",
+    id: "4",
+    nom: "NGOMA",
+    prenom: "Alain",
+    poste: "Chef Département Opérations",
+    departement: "Opérations",
+    email: "a.ngoma@croixrouge.cg",
+    telephone: "+242 06 222 3344",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=AN",
   },
   {
-    id: "exec2",
-    name: "Mme. Chantal Mboumba",
-    title: "Secrétaire Générale",
-    email: "chantal.mboumba@example.com",
-    phone: "+242 06 765 4321",
+    id: "5",
+    nom: "MBOUMBA",
+    prenom: "Chantal",
+    poste: "Chef Département Santé",
+    departement: "Santé",
+    email: "c.mboumba@croixrouge.cg",
+    telephone: "+242 05 333 4455",
     imageUrl: "/placeholder.svg?height=100&width=100&text=CM",
   },
   {
-    id: "exec3",
-    name: "M. David Nkounkou",
-    title: "Trésorier",
-    email: "david.nkounkou@example.com",
-    phone: "+242 05 987 6543",
-    imageUrl: "/placeholder.svg?height=100&width=100&text=DN",
-  },
-  {
-    id: "exec4",
-    name: "Dr. Sylvie Kaba",
-    title: "Directrice des Programmes",
-    email: "sylvie.kaba@example.com",
-    phone: "+242 05 111 2233",
-    imageUrl: "/placeholder.svg?height=100&width=100&text=SK",
+    id: "6",
+    nom: "ONDONGO",
+    prenom: "Patrick",
+    poste: "Responsable RH",
+    departement: "Ressources Humaines",
+    email: "p.ondongo@croixrouge.cg",
+    telephone: "+242 04 555 6677",
+    imageUrl: "/placeholder.svg?height=100&width=100&text=PO",
   },
 ]
 
 export default function BureauExecutifPage() {
-  const [selectedBureau, setSelectedBureau] = useState<BureauExecutif | null>(null)
-  const [activeTab, setActiveTab] = useState("national")
+  const [searchTerm, setSearchTerm] = useState("")
 
-  const getPosteIcon = (poste: string) => {
-    switch (poste) {
-      case "Président":
-        return <Crown className="h-4 w-4 text-yellow-600" />
-      case "Secrétaire Général":
-        return <User className="h-4 w-4 text-blue-600" />
-      case "Trésorier":
-        return <Briefcase className="h-4 w-4 text-green-600" />
-      default:
-        return <User className="h-4 w-4" />
-    }
-  }
-
-  const getPosteColor = (poste: string) => {
-    switch (poste) {
-      case "Président":
-        return "bg-yellow-100 text-yellow-800"
-      case "Secrétaire Général":
-        return "bg-blue-100 text-blue-800"
-      case "Trésorier":
-        return "bg-green-100 text-green-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getInitials = (prenom: string, nom: string) => {
-    return `${prenom.charAt(0)}${nom.charAt(0)}`
-  }
-
-  const filteredBureaux = (type: string) => {
-    return bureauxData.filter((bureau) => bureau.type === type)
-  }
-
-  const renderBureauCard = (bureau: BureauExecutif) => (
-    <Card key={bureau.id} className="cursor-pointer hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              {bureau.type === "nation" && <Building2 className="h-5 w-5 text-blue-600" />}
-              {bureau.type === "departement" && <MapPin className="h-5 w-5 text-green-600" />}
-              {bureau.type === "arrondissement" && <Users className="h-5 w-5 text-orange-600" />}
-              {bureau.nom}
-            </CardTitle>
-            <CardDescription>{bureau.niveau}</CardDescription>
-          </div>
-          <Button variant="outline" size="sm">
-            <Edit className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {bureau.membres.map((membre) => (
-            <div key={membre.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={membre.photo || "/placeholder.svg"} />
-                <AvatarFallback>{getInitials(membre.prenom, membre.nom)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium">
-                    {membre.prenom} {membre.nom}
-                  </span>
-                  <Badge className={getPosteColor(membre.poste)} variant="secondary">
-                    {getPosteIcon(membre.poste)}
-                    <span className="ml-1">{membre.poste}</span>
-                  </Badge>
-                </div>
-                <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
-                  <div className="flex items-center space-x-1">
-                    <Mail className="h-3 w-3" />
-                    <span>{membre.email}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Phone className="h-3 w-3" />
-                    <span>{membre.telephone}</span>
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">
-                  Mandat: {new Date(membre.dateNomination).toLocaleDateString("fr-FR")} -{" "}
-                  {new Date(membre.mandatFin).toLocaleDateString("fr-FR")}
-                </div>
-              </div>
-            </div>
-          ))}
-          {bureau.membres.length < 3 && (
-            <div className="flex items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-lg">
-              <Button variant="ghost" className="text-muted-foreground">
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter un membre
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+  const filteredMembres = membresBureauData.filter(
+    (membre) =>
+      membre.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      membre.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      membre.poste.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      membre.departement.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  const handleEdit = (id: string) => {
+    console.log("Modifier le membre du bureau:", id)
+    // Implement navigation to edit page or open a modal
+  }
+
+  const handleDelete = (id: string) => {
+    console.log("Supprimer le membre du bureau:", id)
+    // Implement deletion logic, e.g., API call
+    if (confirm("Êtes-vous sûr de vouloir supprimer ce membre du bureau ?")) {
+      alert(`Membre ${id} supprimé (simulation)`)
+    }
+  }
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Bureau Exécutif</h1>
-          <p className="text-gray-600 mt-1">Gestion des bureaux exécutifs à tous les niveaux</p>
+          <p className="text-gray-600 mt-1">Gérez les membres du bureau exécutif de la Croix Rouge.</p>
         </div>
         <Button className="bg-red-600 hover:bg-red-700">
           <Plus className="h-4 w-4 mr-2" />
-          Nouveau Bureau
+          Ajouter un Membre
         </Button>
       </div>
 
-      {/* Executive Members */}
-      <div className="container mx-auto py-8">
-        <h1 className="text-3xl font-bold mb-6">Bureau Exécutif National</h1>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {executiveMembers.map((member) => (
-            <Card key={member.id}>
-              <CardHeader className="flex flex-col items-center text-center">
-                <Avatar className="h-24 w-24 mb-4">
-                  <AvatarImage src={member.imageUrl || "/placeholder.svg"} alt={member.name} />
-                  <AvatarFallback>
-                    {member.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <CardTitle className="text-xl">{member.name}</CardTitle>
-                <CardDescription className="text-muted-foreground">{member.title}</CardDescription>
-              </CardHeader>
-              <CardContent className="text-center text-sm">
-                <p className="mb-1">Email: {member.email}</p>
-                <p>Téléphone: {member.phone}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Bureaux Nationaux</CardTitle>
-            <Building2 className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{filteredBureaux("nation").length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Bureaux Départementaux</CardTitle>
-            <MapPin className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{filteredBureaux("departement").length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Bureaux d'Arrondissement</CardTitle>
-            <Users className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{filteredBureaux("arrondissement").length}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Dirigeants</CardTitle>
-            <Crown className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {bureauxData.reduce((total, bureau) => total + bureau.membres.length, 0)}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
       <Card>
         <CardHeader>
-          <CardTitle>Bureaux Exécutifs</CardTitle>
-          <CardDescription>Organisation hiérarchique des bureaux exécutifs</CardDescription>
+          <CardTitle>Rechercher un Membre</CardTitle>
+          <CardDescription>Recherchez un membre du bureau par nom, poste ou département.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="national">National</TabsTrigger>
-              <TabsTrigger value="departemental">Départemental</TabsTrigger>
-              <TabsTrigger value="arrondissement">Arrondissement</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="national" className="space-y-6">
-              <div className="grid grid-cols-1 gap-6">
-                {filteredBureaux("nation").map((bureau) => renderBureauCard(bureau))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="departemental" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {filteredBureaux("departement").map((bureau) => renderBureauCard(bureau))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="arrondissement" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredBureaux("arrondissement").map((bureau) => renderBureauCard(bureau))}
-              </div>
-            </TabsContent>
-          </Tabs>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Rechercher un membre..."
+              className="w-full rounded-lg bg-background pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
         </CardContent>
       </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredMembres.length > 0 ? (
+          filteredMembres.map((membre) => (
+            <Card key={membre.id} className="flex flex-col items-center p-6 text-center">
+              <Avatar className="h-24 w-24 mb-4">
+                <AvatarImage src={membre.imageUrl || "/placeholder.svg"} alt={`${membre.prenom} ${membre.nom}`} />
+                <AvatarFallback>{membre.prenom.charAt(0) + membre.nom.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <h3 className="text-xl font-semibold">
+                {membre.prenom} {membre.nom}
+              </h3>
+              <p className="text-red-600 font-medium">{membre.poste}</p>
+              <p className="text-sm text-muted-foreground">{membre.departement}</p>
+              <div className="mt-4 text-sm text-gray-700">
+                <p>{membre.email}</p>
+                <p>{membre.telephone}</p>
+              </div>
+              <div className="flex mt-4 space-x-2">
+                <Button variant="outline" size="sm" onClick={() => handleEdit(membre.id)}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Modifier
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => handleDelete(membre.id)}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer
+                </Button>
+              </div>
+            </Card>
+          ))
+        ) : (
+          <div className="col-span-full text-center text-muted-foreground py-8">
+            Aucun membre du bureau exécutif trouvé.
+          </div>
+        )}
+      </div>
     </div>
   )
 }

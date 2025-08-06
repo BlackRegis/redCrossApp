@@ -1,30 +1,32 @@
-import { sql } from "@vercel/postgres"
-import { NextResponse } from "next/server"
+import { neon } from '@neondatabase/serverless';
+import { NextRequest, NextResponse } from 'next/server';
+
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function GET() {
   try {
-    const { rows } = await sql`SELECT * FROM departments ORDER BY name ASC;`
-    return NextResponse.json(rows, { status: 200 })
+    const departements = await sql`SELECT * FROM departements ORDER BY name ASC`;
+    return NextResponse.json(departements);
   } catch (error) {
-    console.error("Error fetching departments:", error)
-    return NextResponse.json({ error: "Failed to fetch departments" }, { status: 500 })
+    console.error('Error fetching departements:', error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { name, head_of_department, contact_email } = await request.json()
+    const { name, description } = await req.json();
     if (!name) {
-      return NextResponse.json({ error: "Department name is required" }, { status: 400 })
+      return NextResponse.json({ message: 'Name is required' }, { status: 400 });
     }
-    const { rows } = await sql`
-      INSERT INTO departments (name, head_of_department, contact_email)
-      VALUES (${name}, ${head_of_department || null}, ${contact_email || null})
+    const newDepartement = await sql`
+      INSERT INTO departements (name, description)
+      VALUES (${name}, ${description || null})
       RETURNING *;
-    `
-    return NextResponse.json(rows[0], { status: 201 })
+    `;
+    return NextResponse.json(newDepartement[0], { status: 201 });
   } catch (error) {
-    console.error("Error creating department:", error)
-    return NextResponse.json({ error: "Failed to create department" }, { status: 500 })
+    console.error('Error creating departement:', error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

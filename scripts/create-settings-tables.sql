@@ -1,65 +1,32 @@
--- Create settings table
-CREATE TABLE IF NOT EXISTS settings (
+CREATE TABLE IF NOT EXISTS app_settings (
     id SERIAL PRIMARY KEY,
-    setting_key VARCHAR(255) UNIQUE NOT NULL,
-    setting_value TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Insert initial settings (example)
-INSERT INTO settings (setting_key, setting_value) VALUES
-('app_name', 'Croix Rouge Congolaise - Système de Gestion')
-ON CONFLICT (setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES
-('contact_email', 'contact@croixrouge-cg.org')
-ON CONFLICT (setting_key) DO NOTHING;
-
-INSERT INTO settings (setting_key, setting_value) VALUES
-('phone_number', '+242 06 123 4567')
-ON CONFLICT (setting_key) DO NOTHING;
-
--- Create departments table
-CREATE TABLE IF NOT EXISTS departments (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) UNIQUE NOT NULL,
-    head_of_department VARCHAR(255),
+    app_name VARCHAR(255) NOT NULL,
+    app_description TEXT,
     contact_email VARCHAR(255),
+    contact_phone VARCHAR(50),
+    address TEXT,
+    logo_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert initial departments (example)
-INSERT INTO departments (name, head_of_department, contact_email) VALUES
-('Brazzaville', 'Jean Dupont', 'jean.dupont@example.com')
-ON CONFLICT (name) DO NOTHING;
-
-INSERT INTO departments (name, head_of_department, contact_email) VALUES
-('Pointe-Noire', 'Marie Curie', 'marie.curie@example.com')
-ON CONFLICT (name) DO NOTHING;
-
--- Create arrondissements table
-CREATE TABLE IF NOT EXISTS arrondissements (
+CREATE TABLE IF NOT EXISTS user_settings (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    department_id INTEGER NOT NULL,
-    population INTEGER,
+    user_id VARCHAR(255) UNIQUE NOT NULL, -- Assuming user_id comes from an auth system
+    theme VARCHAR(50) DEFAULT 'system',
+    notifications_enabled BOOLEAN DEFAULT TRUE,
+    language VARCHAR(10) DEFAULT 'fr',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (name, department_id),
-    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert initial arrondissements (example)
-INSERT INTO arrondissements (name, department_id, population) VALUES
-('Makélékélé', (SELECT id FROM departments WHERE name = 'Brazzaville'), 300000)
-ON CONFLICT (name, department_id) DO NOTHING;
+-- Insert initial data for app_settings if table is empty
+INSERT INTO app_settings (app_name, app_description, contact_email, contact_phone, address, logo_url)
+SELECT 'Croix Rouge Congo', 'Application de gestion des membres et activités de la Croix Rouge Congolaise', 'contact@croixrouge.cg', '+242 06 123 4567', '123 Avenue de la Paix, Brazzaville, Congo', '/logo.png'
+WHERE NOT EXISTS (SELECT 1 FROM app_settings);
 
-INSERT INTO arrondissements (name, department_id, population) VALUES
-('Bacongo', (SELECT id FROM departments WHERE name = 'Brazzaville'), 250000)
-ON CONFLICT (name, department_id) DO NOTHING;
-
-INSERT INTO arrondissements (name, department_id, population) VALUES
-('Lumumba', (SELECT id FROM departments WHERE name = 'Pointe-Noire'), 400000)
-ON CONFLICT (name, department_id) DO NOTHING;
+-- Insert initial data for a default user_settings (example)
+-- This would typically be handled during user registration
+-- INSERT INTO user_settings (user_id, theme, notifications_enabled, language)
+-- SELECT 'default_user_id', 'system', TRUE, 'fr'
+-- WHERE NOT EXISTS (SELECT 1 FROM user_settings WHERE user_id = 'default_user_id');

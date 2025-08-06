@@ -1,83 +1,78 @@
-import { sql } from "@vercel/postgres"
-import { NextResponse } from "next/server"
+import { neon } from '@neondatabase/serverless';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+const sql = neon(process.env.DATABASE_URL!);
+
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = params
-    const { rows } = await sql`SELECT * FROM members WHERE id = ${id};`
-    if (rows.length === 0) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 })
+    const { id } = params;
+    const membre = await sql`SELECT * FROM membres WHERE id = ${id}`;
+    if (membre.length === 0) {
+      return NextResponse.json({ message: 'Membre not found' }, { status: 404 });
     }
-    return NextResponse.json(rows[0], { status: 200 })
+    return NextResponse.json(membre[0]);
   } catch (error) {
-    console.error(`Error fetching member with ID ${params.id}:`, error)
-    return NextResponse.json({ error: "Failed to fetch member" }, { status: 500 })
+    console.error(`Error fetching membre with ID ${params.id}:`, error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = params
+    const { id } = params;
     const {
-      nom,
-      prenom,
-      date_naissance,
-      sexe,
-      adresse,
-      telephone,
-      email,
-      profession,
-      departement,
-      arrondissement,
-      date_adhesion,
-      statut,
-      notes,
-    } = await request.json()
+      nom, prenom, email, telephone, departement, arrondissement, statut,
+      dateAdhesion, dateNaissance, age, profession, typeAdhesion, numeroCarte, sexe, adresse
+    } = await req.json();
 
-    if (!nom || !prenom) {
-      return NextResponse.json({ error: "Nom and Prenom are required" }, { status: 400 })
+    if (!nom || !prenom || !email || !telephone || !departement || !statut) {
+      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
     }
 
-    const { rows } = await sql`
-      UPDATE members
+    const updatedMembre = await sql`
+      UPDATE membres
       SET
         nom = ${nom},
         prenom = ${prenom},
-        date_naissance = ${date_naissance || null},
+        email = ${email},
+        telephone = ${telephone},
+        departement = ${departement},
+        arrondissement = ${arrondissement || null},
+        statut = ${statut},
+        date_adhesion = ${dateAdhesion || null},
+        date_naissance = ${dateNaissance || null},
+        age = ${age || null},
+        profession = ${profession || null},
+        type_adhesion = ${typeAdhesion || null},
+        numero_carte = ${numeroCarte || null},
         sexe = ${sexe || null},
         adresse = ${adresse || null},
-        telephone = ${telephone || null},
-        email = ${email || null},
-        profession = ${profession || null},
-        departement = ${departement || null},
-        arrondissement = ${arrondissement || null},
-        date_adhesion = ${date_adhesion || null},
-        statut = ${statut || "Actif"},
-        notes = ${notes || null},
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
       RETURNING *;
-    `
-    if (rows.length === 0) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 })
+    `;
+
+    if (updatedMembre.length === 0) {
+      return NextResponse.json({ message: 'Membre not found for update' }, { status: 404 });
     }
-    return NextResponse.json(rows[0], { status: 200 })
+
+    return NextResponse.json(updatedMembre[0]);
   } catch (error) {
-    console.error(`Error updating member with ID ${params.id}:`, error)
-    return NextResponse.json({ error: "Failed to update member" }, { status: 500 })
+    console.error(`Error updating membre with ID ${params.id}:`, error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id } = params
-    const { rowCount } = await sql`DELETE FROM members WHERE id = ${id};`
-    if (rowCount === 0) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 })
+    const { id } = params;
+    const result = await sql`DELETE FROM membres WHERE id = ${id} RETURNING id;`;
+    if (result.length === 0) {
+      return NextResponse.json({ message: 'Membre not found for deletion' }, { status: 404 });
     }
-    return NextResponse.json({ message: "Member deleted successfully" }, { status: 200 })
+    return NextResponse.json({ message: 'Membre deleted successfully', id: result[0].id });
   } catch (error) {
-    console.error(`Error deleting member with ID ${params.id}:`, error)
-    return NextResponse.json({ error: "Failed to delete member" }, { status: 500 })
+    console.error(`Error deleting membre with ID ${params.id}:`, error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

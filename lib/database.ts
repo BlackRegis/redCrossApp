@@ -1,4 +1,10 @@
-import { sql } from "@vercel/postgres"
+import { neon } from '@neondatabase/serverless';
+
+// This is a simple example. In a real application, you might want to
+// use a more robust database client or ORM, and handle connection pooling.
+
+// Ensure DATABASE_URL is set in your environment variables
+const sql = neon(process.env.DATABASE_URL!);
 
 // Fonctions pour les paramètres d'application
 export async function saveAppSettings(settings: any) {
@@ -237,5 +243,3 @@ export async function getMembreDetails(id: string) {
     return null
   }
 }
-
-export { sql }

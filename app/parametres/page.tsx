@@ -1,259 +1,198 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Edit, Trash2, PlusCircle } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
+import { Loader2 } from 'lucide-react'
 
 interface AppSettings {
   app_name: string
+  app_description: string
   contact_email: string
-  phone_number: string
-}
-
-interface Department {
-  id: string
-  name: string
-  head_of_department: string
-  contact_email: string
-}
-
-interface Arrondissement {
-  id: string
-  name: string
-  department_id: string
-  population: number
+  contact_phone: string
+  address: string
+  logo_url: string
 }
 
 export default function ParametresPage() {
+  const { toast } = useToast()
   const [appSettings, setAppSettings] = useState<AppSettings>({
     app_name: "",
+    app_description: "",
     contact_email: "",
-    phone_number: "",
+    contact_phone: "",
+    address: "",
+    logo_url: "",
   })
-  const [departments, setDepartments] = useState<Department[]>([])
-  const [arrondissements, setArrondissements] = useState<Arrondissement[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
 
-  // Fetch app settings
   useEffect(() => {
     const fetchAppSettings = async () => {
       try {
-        const res = await fetch("/api/settings/app")
-        if (res.ok) {
-          const data = await res.json()
-          setAppSettings(data)
-        } else {
-          console.error("Failed to fetch app settings")
+        const response = await fetch("/api/settings/app")
+        if (!response.ok) {
+          throw new Error("Failed to fetch app settings")
         }
+        const data = await response.json()
+        setAppSettings(data)
       } catch (error) {
         console.error("Error fetching app settings:", error)
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les paramètres de l'application.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
       }
     }
     fetchAppSettings()
-  }, [])
+  }, [toast])
 
-  // Fetch departments
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const res = await fetch("/api/departements")
-        if (res.ok) {
-          const data = await res.json()
-          setDepartments(data)
-        } else {
-          console.error("Failed to fetch departments")
-        }
-      } catch (error) {
-        console.error("Error fetching departments:", error)
-      }
-    }
-    fetchDepartments()
-  }, [])
-
-  // Fetch arrondissements (assuming an API route for them)
-  useEffect(() => {
-    const fetchArrondissements = async () => {
-      try {
-        const res = await fetch("/api/arrondissements") // You'd need to create this API route
-        if (res.ok) {
-          const data = await res.json()
-          setArrondissements(data)
-        } else {
-          console.error("Failed to fetch arrondissements")
-        }
-      } catch (error) {
-        console.error("Error fetching arrondissements:", error)
-      }
-    }
-    fetchArrondissements()
-  }, [])
-
-  const handleAppSettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target
     setAppSettings((prev) => ({ ...prev, [id]: value }))
   }
 
-  const handleSaveAppSettings = async () => {
+  const handleSaveAppSettings = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSaving(true)
     try {
-      const res = await fetch("/api/settings/app", {
+      const response = await fetch("/api/settings/app", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(appSettings),
       })
-      if (res.ok) {
-        alert("Paramètres de l'application mis à jour avec succès!")
-      } else {
-        alert("Échec de la mise à jour des paramètres de l'application.")
+
+      if (!response.ok) {
+        throw new Error("Failed to save app settings")
       }
+
+      toast({
+        title: "Succès",
+        description: "Les paramètres de l'application ont été mis à jour.",
+      })
     } catch (error) {
       console.error("Error saving app settings:", error)
-      alert("Erreur lors de la sauvegarde des paramètres de l'application.")
+      toast({
+        title: "Erreur",
+        description: "Impossible d'enregistrer les paramètres de l'application.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
     }
   }
 
-  // Dummy functions for department/arrondissement management (to be implemented with actual API calls)
-  const handleAddDepartment = () => alert("Ajouter un département (fonctionnalité à implémenter)")
-  const handleEditDepartment = (id: string) => alert(`Modifier le département ${id} (fonctionnalité à implémenter)`)
-  const handleDeleteDepartment = (id: string) => alert(`Supprimer le département ${id} (fonctionnalité à implémenter)`)
-
-  const handleAddArrondissement = () => alert("Ajouter un arrondissement (fonctionnalité à implémenter)")
-  const handleEditArrondissement = (id: string) =>
-    alert(`Modifier l'arrondissement ${id} (fonctionnalité à implémenter)`)
-  const handleDeleteArrondissement = (id: string) =>
-    alert(`Supprimer l'arrondissement ${id} (fonctionnalité à implémenter)`)
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Paramètres</h1>
+            <p className="text-gray-600 mt-1">Gérez les paramètres de votre application.</p>
+          </div>
+        </div>
+        <p>Chargement des paramètres...</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Paramètres du Système</h1>
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Paramètres</h1>
+          <p className="text-gray-600 mt-1">Gérez les paramètres de votre application.</p>
+        </div>
+      </div>
 
-      <Tabs defaultValue="general" className="w-full">
+      <Tabs defaultValue="general" className="space-y-4">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="general">Général</TabsTrigger>
-          <TabsTrigger value="departements">Départements</TabsTrigger>
-          <TabsTrigger value="arrondissements">Arrondissements</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="security">Sécurité</TabsTrigger>
         </TabsList>
-
         <TabsContent value="general">
           <Card>
             <CardHeader>
               <CardTitle>Paramètres Généraux de l'Application</CardTitle>
               <CardDescription>Configurez les informations de base de votre application.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="app_name">Nom de l'Application</Label>
-                <Input id="app_name" value={appSettings.app_name} onChange={handleAppSettingsChange} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="contact_email">Email de Contact</Label>
-                <Input
-                  id="contact_email"
-                  type="email"
-                  value={appSettings.contact_email}
-                  onChange={handleAppSettingsChange}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone_number">Numéro de Téléphone</Label>
-                <Input
-                  id="phone_number"
-                  type="tel"
-                  value={appSettings.phone_number}
-                  onChange={handleAppSettingsChange}
-                />
-              </div>
-              <Button onClick={handleSaveAppSettings}>Enregistrer les modifications</Button>
+            <CardContent>
+              <form onSubmit={handleSaveAppSettings} className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="app_name" className="text-sm font-medium">
+                    Nom de l'Application
+                  </label>
+                  <Input id="app_name" value={appSettings.app_name} onChange={handleInputChange} />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="app_description" className="text-sm font-medium">
+                    Description de l'Application
+                  </label>
+                  <Textarea id="app_description" value={appSettings.app_description} onChange={handleInputChange} rows={3} />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="contact_email" className="text-sm font-medium">
+                    Email de Contact
+                  </label>
+                  <Input id="contact_email" type="email" value={appSettings.contact_email} onChange={handleInputChange} />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="contact_phone" className="text-sm font-medium">
+                    Téléphone de Contact
+                  </label>
+                  <Input id="contact_phone" value={appSettings.contact_phone} onChange={handleInputChange} />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="address" className="text-sm font-medium">
+                    Adresse
+                  </label>
+                  <Textarea id="address" value={appSettings.address} onChange={handleInputChange} rows={3} />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="logo_url" className="text-sm font-medium">
+                    URL du Logo
+                  </label>
+                  <Input id="logo_url" value={appSettings.logo_url} onChange={handleInputChange} />
+                </div>
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Enregistrer les modifications
+                  </Button>
+                </div>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="departements">
+        <TabsContent value="notifications">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>Gestion des Départements</CardTitle>
-              <Button size="sm" onClick={handleAddDepartment}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Ajouter Département
-              </Button>
+            <CardHeader>
+              <CardTitle>Paramètres de Notifications</CardTitle>
+              <CardDescription>Gérez vos préférences de notification.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Responsable</TableHead>
-                    <TableHead>Email de Contact</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {departments.map((dept) => (
-                    <TableRow key={dept.id}>
-                      <TableCell className="font-medium">{dept.name}</TableCell>
-                      <TableCell>{dept.head_of_department}</TableCell>
-                      <TableCell>{dept.contact_email}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditDepartment(dept.id)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleDeleteDepartment(dept.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <p>Contenu des paramètres de notifications...</p>
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="arrondissements">
+        <TabsContent value="security">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle>Gestion des Arrondissements</CardTitle>
-              <Button size="sm" onClick={handleAddArrondissement}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Ajouter Arrondissement
-              </Button>
+            <CardHeader>
+              <CardTitle>Paramètres de Sécurité</CardTitle>
+              <CardDescription>Gérez les paramètres de sécurité de votre compte.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom</TableHead>
-                    <TableHead>Département</TableHead>
-                    <TableHead>Population</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {arrondissements.map((arr) => {
-                    const departmentName = departments.find((d) => d.id === arr.department_id)?.name || "Inconnu"
-                    return (
-                      <TableRow key={arr.id}>
-                        <TableCell className="font-medium">{arr.name}</TableCell>
-                        <TableCell>{departmentName}</TableCell>
-                        <TableCell>{arr.population.toLocaleString()}</TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="sm" onClick={() => handleEditArrondissement(arr.id)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteArrondissement(arr.id)}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
+              <p>Contenu des paramètres de sécurité...</p>
             </CardContent>
           </Card>
         </TabsContent>
