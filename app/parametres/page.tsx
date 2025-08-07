@@ -6,13 +6,14 @@ import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
 import { 
   Edit, 
   Trash2, 
@@ -138,8 +139,7 @@ export default function ParametresPage() {
           const arrData = await arrRes.json()
           setArrondissements(arrData)
         }
-        const data = await response.json()
-        setAppSettings(data)
+        // Les données sont déjà chargées dans les appels précédents
       } catch (error) {
         console.error("Erreur lors du chargement des données:", error)
       } finally {
@@ -196,7 +196,6 @@ export default function ParametresPage() {
 
   const handleSaveAppSettings = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSaving(true)
     try {
       setSaving(true)
       const res = await fetch("/api/settings/app", {

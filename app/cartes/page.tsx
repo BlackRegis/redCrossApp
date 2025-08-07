@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Search,
@@ -57,7 +58,7 @@ const ITEMS_PER_PAGE = 10
 export default function CartesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("")
-  const [selectedCarte, setSelectedCarte] = useState<CarteMembre | null>(null)
+  const [selectedCarte, setSelectedCarte] = useState<Carte | null>(null)
   const [activeTab, setActiveTab] = useState("toutes")
 
   // Hooks personnalisés
@@ -132,7 +133,7 @@ export default function CartesPage() {
   const cartesExpirees = cartes.filter(c => c.statutCalcule === "Expirée").length
   const cartesExpirantBientot = cartes.filter(c => isExpiringSoon(c.dateExpiration)).length
 
-  const renderCartePreview = (carte: CarteMembre) => {
+  const renderCartePreview = (carte: Carte) => {
     const nomComplet = `${carte.membre.prenom} ${carte.membre.nom}`
     const cardBgColor = "from-red-600 to-red-700"
 
@@ -286,7 +287,7 @@ export default function CartesPage() {
               <CardDescription>Recherchez et filtrez les cartes d'adhésion</CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={clearFilters} size="sm">
+              <Button variant="outline" onClick={handleClearFilters} size="sm">
                 Effacer les filtres
               </Button>
               <Button variant="outline" size="sm">
@@ -294,9 +295,6 @@ export default function CartesPage() {
                 Exporter
               </Button>
             </div>
-            <Button variant="outline" onClick={handleClearFilters} size="sm">
-              Effacer les filtres
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -593,20 +591,17 @@ export default function CartesPage() {
                       <Printer className="h-4 w-4 mr-2" />
                       Imprimer la Carte
                     </Button>
-                    <Button variant="secondary" size="icon" title="Imprimer la carte">
-                      <Printer className="h-5 w-5" />
-                    </Button>
                   </div>
-                </Card>
-              ))
-            ) : (
-              <div className="col-span-full text-center text-muted-foreground py-8">
-                Aucune carte trouvée avec les filtres actuels.
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            <div className="text-center text-muted-foreground py-8">
+              Sélectionnez une carte pour voir les détails.
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
