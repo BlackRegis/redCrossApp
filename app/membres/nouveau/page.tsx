@@ -1,276 +1,337 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon, PlusCircle } from 'lucide-react'
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
+import { ArrowLeft, Save, UserPlus } from "lucide-react"
 import Link from "next/link"
 
+interface Departement {
+  id: number
+  nom: string
+  code: string
+  arrondissements: Array<{
+    id: number
+    nom: string
+    code: string
+  }>
+}
+
 export default function NouveauMembrePage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [departements, setDepartements] = useState<Departement[]>([])
+  const [selectedDepartement, setSelectedDepartement] = useState<string>("")
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
+    date_naissance: "",
+    sexe: "",
+    adresse: "",
+    telephone: "",
     email: "",
     telephone: "",
     dateNaissance: undefined as Date | undefined,
     sexe: "",
     profession: "",
-    adresse: "",
-    departement: "",
-    arrondissement: "",
-    typeAdhesion: "",
-    dateAdhesion: undefined as Date | undefined,
-    numeroCarte: "",
+    date_adhesion: new Date().toISOString().split('T')[0],
+    statut: "Actif",
+    numero_carte: "",
+    notes: ""
   })
 
-  const departements = ["Brazzaville", "Kouilou", "Niari", "Bouenza", "Pool", "Plateaux"]
-  const arrondissements = {
-    Brazzaville: ["Bacongo", "Poto-Poto", "Moungali", "Ouenzé", "Talangaï"],
-    Kouilou: ["Pointe-Noire"],
-    Niari: ["Dolisie"],
-    Bouenza: ["Nkayi"],
-    Pool: ["Kinkala"],
-    Plateaux: ["Djambala"],
+  // Charger les départements
+  useEffect(() => {
+    const fetchDepartements = async () => {
+      try {
+        const response = await fetch('/api/departements')
+        const data = await response.json()
+        setDepartements(data)
+      } catch (error) {
+        console.error('Erreur lors du chargement des départements:', error)
+      }
+    }
+
+    fetchDepartements()
+  }, [])
+
+  // Générer un numéro de carte automatiquement
+  useEffect(() => {
+    if (!formData.numero_carte) {
+      const timestamp = Date.now().toString().slice(-6)
+      setFormData(prev => ({
+        ...prev,
+        numero_carte: `CRC-${timestamp}-${new Date().getFullYear()}`
+      }))
+    }
+  }, [formData.numero_carte])
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { id, value } = e.target
-    setFormData((prev) => ({ ...prev, [id]: value }))
-  }
-
-  const handleSelectChange = (id: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [id]: value }))
-  }
-
-  const handleDateChange = (id: string, date: Date | undefined) => {
-    setFormData((prev) => ({ ...prev, [id]: date }))
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Nouveau membre soumis:", formData)
-    // Here you would typically send data to an API
-    alert("Nouveau membre ajouté (simulation)!")
-    // Reset form or redirect
+    setLoading(true)
+
+    try {
+      // Trouver l'ID du département sélectionné
+      const departement = departements.find(d => d.nom === selectedDepartement)
+      const departement_id = departement?.id || null
+
+      const response = await fetch('/api/membres', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          departement_id,
+          arrondissement_id: null // Pour l'instant, on ne gère pas les arrondissements
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        alert('Membre créé avec succès !')
+        router.push('/membres')
+      } else {
+        const error = await response.json()
+        alert(`Erreur: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Erreur lors de la création:', error)
+      alert('Erreur lors de la création du membre')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className="p-6 space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Ajouter un Nouveau Membre</h1>
-          <p className="text-gray-600 mt-1">Remplissez les informations pour enregistrer un nouveau membre.</p>
+        <div className="flex items-center gap-4">
+          <Link href="/membres">
+            <Button variant="outline" size="sm">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Retour
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Nouveau Membre</h1>
+            <p className="text-gray-600 mt-1">Ajouter un nouveau membre à la Croix Rouge</p>
+          </div>
         </div>
-        <Link href="/membres">
-          <Button variant="outline">Retour à la liste des membres</Button>
-        </Link>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations Personnelles</CardTitle>
-            <CardDescription>Détails de base sur le membre.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="nom" className="text-sm font-medium">
-                Nom
-              </label>
-              <Input id="nom" value={formData.nom} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="prenom" className="text-sm font-medium">
-                Prénom
-              </label>
-              <Input id="prenom" value={formData.prenom} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <Input id="email" type="email" value={formData.email} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="telephone" className="text-sm font-medium">
-                Téléphone
-              </label>
-              <Input id="telephone" value={formData.telephone} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="dateNaissance" className="text-sm font-medium">
-                Date de Naissance
-              </label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.dateNaissance && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.dateNaissance ? (
-                      format(formData.dateNaissance, "PPP")
-                    ) : (
-                      <span>Sélectionner une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.dateNaissance}
-                    onSelect={(date) => handleDateChange("dateNaissance", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="sexe" className="text-sm font-medium">
-                Sexe
-              </label>
-              <Select value={formData.sexe} onValueChange={(value) => handleSelectChange("sexe", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le sexe" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="M">Masculin</SelectItem>
-                  <SelectItem value="F">Féminin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <label htmlFor="profession" className="text-sm font-medium">
-                Profession
-              </label>
-              <Input id="profession" value={formData.profession} onChange={handleChange} />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <label htmlFor="adresse" className="text-sm font-medium">
-                Adresse
-              </label>
-              <Textarea id="adresse" value={formData.adresse} onChange={handleChange} rows={3} />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Formulaire */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Informations du Membre
+          </CardTitle>
+          <CardDescription>
+            Remplissez les informations du nouveau membre
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Informations personnelles */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="nom">Nom *</Label>
+                <Input
+                  id="nom"
+                  value={formData.nom}
+                  onChange={(e) => handleInputChange('nom', e.target.value)}
+                  required
+                />
+              </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Informations d'Adhésion</CardTitle>
-            <CardDescription>Détails relatifs à l'adhésion du membre à la Croix Rouge.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="departement" className="text-sm font-medium">
-                Département
-              </label>
-              <Select value={formData.departement} onValueChange={(value) => handleSelectChange("departement", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un département" />
-                </SelectTrigger>
-                <SelectContent>
-                  {departements.map((dept) => (
-                    <SelectItem key={dept} value={dept}>
-                      {dept}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label htmlFor="prenom">Prénom *</Label>
+                <Input
+                  id="prenom"
+                  value={formData.prenom}
+                  onChange={(e) => handleInputChange('prenom', e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="date_naissance">Date de naissance *</Label>
+                <Input
+                  id="date_naissance"
+                  type="date"
+                  value={formData.date_naissance}
+                  onChange={(e) => handleInputChange('date_naissance', e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="sexe">Sexe *</Label>
+                <Select value={formData.sexe} onValueChange={(value) => handleInputChange('sexe', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="homme">Homme</SelectItem>
+                    <SelectItem value="femme">Femme</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {/* Contact */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="telephone">Téléphone *</Label>
+                <Input
+                  id="telephone"
+                  value={formData.telephone}
+                  onChange={(e) => handleInputChange('telephone', e.target.value)}
+                  placeholder="+242 06 123 4567"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="exemple@email.com"
+                />
+              </div>
+            </div>
+
+            {/* Adresse */}
             <div className="space-y-2">
-              <label htmlFor="arrondissement" className="text-sm font-medium">
-                Arrondissement
-              </label>
-              <Select
-                value={formData.arrondissement}
-                onValueChange={(value) => handleSelectChange("arrondissement", value)}
-                disabled={!formData.departement}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un arrondissement" />
-                </SelectTrigger>
-                <SelectContent>
-                  {formData.departement &&
-                    arrondissements[formData.departement as keyof typeof arrondissements]?.map((arr) => (
-                      <SelectItem key={arr} value={arr}>
-                        {arr}
+              <Label htmlFor="adresse">Adresse</Label>
+              <Textarea
+                id="adresse"
+                value={formData.adresse}
+                onChange={(e) => handleInputChange('adresse', e.target.value)}
+                placeholder="Adresse complète"
+                rows={3}
+              />
+            </div>
+
+            {/* Profession et département */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="profession">Profession</Label>
+                <Input
+                  id="profession"
+                  value={formData.profession}
+                  onChange={(e) => handleInputChange('profession', e.target.value)}
+                  placeholder="Médecin, Infirmier, etc."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="departement">Département</Label>
+                <Select value={selectedDepartement} onValueChange={setSelectedDepartement}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un département" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departements.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.nom}>
+                        {dept.nom}
                       </SelectItem>
                     ))}
-                </SelectContent>
-              </Select>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-2">
-              <label htmlFor="typeAdhesion" className="text-sm font-medium">
-                Type d'Adhésion
-              </label>
-              <Select value={formData.typeAdhesion} onValueChange={(value) => handleSelectChange("typeAdhesion", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le type d'adhésion" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Membre Actif">Membre Actif</SelectItem>
-                  <SelectItem value="Volontaire">Volontaire</SelectItem>
-                  <SelectItem value="Membre Bienfaiteur">Membre Bienfaiteur</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label htmlFor="dateAdhesion" className="text-sm font-medium">
-                Date d'Adhésion
-              </label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !formData.dateAdhesion && "text-muted-foreground",
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {formData.dateAdhesion ? (
-                      format(formData.dateAdhesion, "PPP")
-                    ) : (
-                      <span>Sélectionner une date</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={formData.dateAdhesion}
-                    onSelect={(date) => handleDateChange("dateAdhesion", date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <label htmlFor="numeroCarte" className="text-sm font-medium">
-                Numéro de Carte (si applicable)
-              </label>
-              <Input id="numeroCarte" value={formData.numeroCarte} onChange={handleChange} />
-            </div>
-          </CardContent>
-        </Card>
 
-        <div className="flex justify-end gap-2">
-          <Button type="submit" className="bg-red-600 hover:bg-red-700">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Ajouter Membre
-          </Button>
-        </div>
-      </form>
+            {/* Adhésion */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="date_adhesion">Date d'adhésion</Label>
+                <Input
+                  id="date_adhesion"
+                  type="date"
+                  value={formData.date_adhesion}
+                  onChange={(e) => handleInputChange('date_adhesion', e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="statut">Statut</Label>
+                <Select value={formData.statut} onValueChange={(value) => handleInputChange('statut', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Actif">Actif</SelectItem>
+                    <SelectItem value="Inactif">Inactif</SelectItem>
+                    <SelectItem value="Suspendu">Suspendu</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="numero_carte">Numéro de carte</Label>
+                <Input
+                  id="numero_carte"
+                  value={formData.numero_carte}
+                  onChange={(e) => handleInputChange('numero_carte', e.target.value)}
+                  placeholder="Généré automatiquement"
+                />
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                placeholder="Informations supplémentaires..."
+                rows={3}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-4">
+              <Link href="/membres">
+                <Button variant="outline" type="button">
+                  Annuler
+                </Button>
+              </Link>
+              <Button type="submit" disabled={loading} className="bg-red-600 hover:bg-red-700">
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Création...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Créer le membre
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

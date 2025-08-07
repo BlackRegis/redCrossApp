@@ -1,7 +1,4 @@
-import { sql } from './db';
-
-// This is a simple example. In a real application, you might want to
-// use a more robust database client or ORM, and handle connection pooling.
+import { sql } from "./db"
 
 // Fonctions pour les paramètres d'application
 export async function saveAppSettings(settings: any) {

@@ -1,30 +1,74 @@
-import { sql } from '../../../lib/db';
-import { NextRequest, NextResponse } from 'next/server';
+import { sql } from "../../../lib/db"
+import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
-    const departements = await sql`SELECT * FROM departements ORDER BY name ASC`;
-    return NextResponse.json(departements);
+    const result = await sql`
+      SELECT 
+        d.id,
+        d.nom,
+        d.code,
+        d.chef_lieu,
+        d.population,
+        d.superficie,
+        d.created_at,
+        d.updated_at
+      FROM departements d
+      ORDER BY d.nom
+    `
+
+    const departements = result.rows.map(row => ({
+      id: row.id,
+      nom: row.nom,
+      code: row.code,
+      chef_lieu: row.chef_lieu,
+      population: row.population,
+      superficie: row.superficie,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }))
+
+    return NextResponse.json(departements)
   } catch (error) {
-    console.error('Error fetching departements:', error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Erreur lors de la récupération des départements:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la récupération des départements' },
+      { status: 500 }
+    )
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, description } = await req.json();
-    if (!name) {
-      return NextResponse.json({ message: 'Name is required' }, { status: 400 });
-    }
-    const newDepartement = await sql`
-      INSERT INTO departements (name, description)
-      VALUES (${name}, ${description || null})
-      RETURNING *;
-    `;
-    return NextResponse.json(newDepartement[0], { status: 201 });
+    const body = await request.json()
+    
+    const {
+      nom,
+      code,
+      chef_lieu,
+      population,
+      superficie
+    } = body
+
+    const result = await sql`
+      INSERT INTO departements (
+        nom, code, chef_lieu, population, superficie
+      ) VALUES (
+        ${nom}, ${code}, ${chef_lieu}, ${population}, ${superficie}
+      )
+      RETURNING id
+    `
+
+    return NextResponse.json({ 
+      success: true, 
+      id: result.rows[0].id,
+      message: 'Département créé avec succès' 
+    })
   } catch (error) {
-    console.error('Error creating departement:', error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Erreur lors de la création du département:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la création du département' },
+      { status: 500 }
+    )
   }
 }

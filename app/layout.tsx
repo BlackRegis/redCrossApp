@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
+import { Inter } from "next/font/google"
+import { Sidebar } from "@/components/sidebar"
+import { Toaster } from "@/components/ui/sonner"
 import "./globals.css"
 import { cn } from "@/lib/utils"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -29,14 +31,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
-      <body className={cn("min-h-screen bg-background font-sans antialiased", GeistSans.className)}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 flex flex-col">{children}</main>
-          </div>
-        </ThemeProvider>
+    <html lang="fr">
+      <body className={inter.className}>
+        <div className="flex h-screen bg-gray-50">
+          <Sidebar />
+          <main className="flex-1 overflow-auto">{children}</main>
+        </div>
+        <Toaster />
       </body>
     </html>
   )

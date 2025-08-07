@@ -1,53 +1,110 @@
-import { sql } from '../../../../lib/db';
-import { NextRequest, NextResponse } from 'next/server';
+import { sql } from "../../../../lib/db"
+import { NextResponse } from "next/server"
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = params;
-    const departement = await sql`SELECT * FROM departements WHERE id = ${id}`;
-    if (departement.length === 0) {
-      return NextResponse.json({ message: 'Departement not found' }, { status: 404 });
+    const { id } = await params
+
+    const result = await sql`
+      SELECT 
+        d.id,
+        d.nom,
+        d.code,
+        d.chef_lieu,
+        d.population,
+        d.superficie,
+        d.created_at,
+        d.updated_at
+      FROM departements d
+      WHERE d.id = ${id}
+    `
+
+    if (result.rows.length === 0) {
+      return NextResponse.json(
+        { error: 'Département non trouvé' },
+        { status: 404 }
+      )
     }
-    return NextResponse.json(departement[0]);
+
+    const departement = result.rows[0]
+    return NextResponse.json({
+      id: departement.id,
+      nom: departement.nom,
+      code: departement.code,
+      chef_lieu: departement.chef_lieu,
+      population: departement.population,
+      superficie: departement.superficie,
+      createdAt: departement.created_at,
+      updatedAt: departement.updated_at
+    })
   } catch (error) {
-    console.error(`Error fetching departement with ID ${params.id}:`, error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Erreur lors de la récupération du département:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la récupération du département' },
+      { status: 500 }
+    )
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = params;
-    const { name, description } = await req.json();
-    if (!name) {
-      return NextResponse.json({ message: 'Name is required' }, { status: 400 });
-    }
-    const updatedDepartement = await sql`
-      UPDATE departements
-      SET name = ${name}, description = ${description || null}, updated_at = CURRENT_TIMESTAMP
+    const { id } = await params
+    const body = await request.json()
+    
+    const {
+      nom,
+      code,
+      chef_lieu,
+      population,
+      superficie
+    } = body
+
+    await sql`
+      UPDATE departements 
+      SET nom = ${nom}, code = ${code}, chef_lieu = ${chef_lieu}, 
+          population = ${population}, superficie = ${superficie}, updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
-      RETURNING *;
-    `;
-    if (updatedDepartement.length === 0) {
-      return NextResponse.json({ message: 'Departement not found for update' }, { status: 404 });
-    }
-    return NextResponse.json(updatedDepartement[0]);
+    `
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Département mis à jour avec succès' 
+    })
   } catch (error) {
-    console.error(`Error updating departement with ID ${params.id}:`, error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Erreur lors de la mise à jour du département:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la mise à jour du département' },
+      { status: 500 }
+    )
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = params;
-    const result = await sql`DELETE FROM departements WHERE id = ${id} RETURNING id;`;
-    if (result.length === 0) {
-      return NextResponse.json({ message: 'Departement not found for deletion' }, { status: 404 });
-    }
-    return NextResponse.json({ message: 'Departement deleted successfully', id: result[0].id });
+    const { id } = await params
+
+    await sql`
+      DELETE FROM departements WHERE id = ${id}
+    `
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Département supprimé avec succès' 
+    })
   } catch (error) {
-    console.error(`Error deleting departement with ID ${params.id}:`, error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Erreur lors de la suppression du département:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la suppression du département' },
+      { status: 500 }
+    )
   }
 }

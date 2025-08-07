@@ -1,76 +1,163 @@
-import { sql } from '../../../../lib/db';
-import { NextRequest, NextResponse } from 'next/server';
+import { sql } from "../../../../lib/db"
+import { NextResponse } from "next/server"
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
-    const membre = await sql`SELECT * FROM membres WHERE id = ${id}`;
-    if (membre.length === 0) {
-      return NextResponse.json({ message: 'Membre not found' }, { status: 404 });
+    const { id } = params
+
+    const result = await sql`
+      SELECT 
+        m.id,
+        m.nom,
+        m.prenom,
+        m.email,
+        m.telephone,
+        m.adresse,
+        m.profession,
+        m.date_naissance,
+        m.sexe,
+        m.date_adhesion,
+        m.statut,
+        m.numero_carte,
+        m.notes,
+        d.nom as departement_nom,
+        d.id as departement_id,
+        a.nom as arrondissement_nom,
+        a.id as arrondissement_id,
+        EXTRACT(YEAR FROM AGE(CURRENT_DATE, m.date_naissance)) as age
+      FROM membres m
+      LEFT JOIN departements d ON m.departement_id = d.id
+      LEFT JOIN arrondissements a ON m.arrondissement_id = a.id
+      WHERE m.id = ${id}
+    `
+
+    if (result.rows.length === 0) {
+      return NextResponse.json(
+        { error: 'Membre non trouvé' },
+        { status: 404 }
+      )
     }
-    return NextResponse.json(membre[0]);
+
+    const row = result.rows[0]
+    const membre = {
+      id: row.id,
+      nom: row.nom,
+      prenom: row.prenom,
+      email: row.email,
+      telephone: row.telephone,
+      adresse: row.adresse,
+      profession: row.profession,
+      dateNaissance: row.date_naissance,
+      sexe: row.sexe === 'homme' ? 'M' : row.sexe === 'femme' ? 'F' : row.sexe,
+      dateAdhesion: row.date_adhesion,
+      statut: row.statut,
+      numeroCarte: row.numero_carte,
+      notes: row.notes,
+      departement: row.departement_nom,
+      departementId: row.departement_id,
+      arrondissement: row.arrondissement_nom,
+      arrondissementId: row.arrondissement_id,
+      age: row.age ? parseInt(row.age) : null
+    }
+
+    return NextResponse.json(membre)
   } catch (error) {
-    console.error(`Error fetching membre with ID ${params.id}:`, error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Erreur lors de la récupération du membre:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la récupération du membre' },
+      { status: 500 }
+    )
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
+    const { id } = params
+    const body = await request.json()
+    
     const {
-      nom, prenom, email, telephone, departement, arrondissement, statut,
-      dateAdhesion, dateNaissance, age, profession, typeAdhesion, numeroCarte, sexe, adresse
-    } = await req.json();
+      nom,
+      prenom,
+      date_naissance,
+      sexe,
+      adresse,
+      telephone,
+      email,
+      profession,
+      departement_id,
+      arrondissement_id,
+      date_adhesion,
+      statut,
+      numero_carte,
+      notes
+    } = body
 
-    if (!nom || !prenom || !email || !telephone || !departement || !statut) {
-      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
-    }
-
-    const updatedMembre = await sql`
-      UPDATE membres
-      SET
+    const result = await sql`
+      UPDATE membres SET
         nom = ${nom},
         prenom = ${prenom},
-        email = ${email},
+        date_naissance = ${date_naissance},
+        sexe = ${sexe},
+        adresse = ${adresse},
         telephone = ${telephone},
-        departement = ${departement},
-        arrondissement = ${arrondissement || null},
+        email = ${email},
+        profession = ${profession},
+        departement_id = ${departement_id},
+        arrondissement_id = ${arrondissement_id},
+        date_adhesion = ${date_adhesion},
         statut = ${statut},
-        date_adhesion = ${dateAdhesion || null},
-        date_naissance = ${dateNaissance || null},
-        age = ${age || null},
-        profession = ${profession || null},
-        type_adhesion = ${typeAdhesion || null},
-        numero_carte = ${numeroCarte || null},
-        sexe = ${sexe || null},
-        adresse = ${adresse || null},
-        updated_at = CURRENT_TIMESTAMP
+        numero_carte = ${numero_carte},
+        notes = ${notes}
       WHERE id = ${id}
-      RETURNING *;
-    `;
+      RETURNING id
+    `
 
-    if (updatedMembre.length === 0) {
-      return NextResponse.json({ message: 'Membre not found for update' }, { status: 404 });
+    if (result.rows.length === 0) {
+      return NextResponse.json(
+        { error: 'Membre non trouvé' },
+        { status: 404 }
+      )
     }
 
-    return NextResponse.json(updatedMembre[0]);
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Membre mis à jour avec succès' 
+    })
   } catch (error) {
-    console.error(`Error updating membre with ID ${params.id}:`, error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Erreur lors de la mise à jour du membre:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la mise à jour du membre' },
+      { status: 500 }
+    )
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params;
-    const result = await sql`DELETE FROM membres WHERE id = ${id} RETURNING id;`;
-    if (result.length === 0) {
-      return NextResponse.json({ message: 'Membre not found for deletion' }, { status: 404 });
-    }
-    return NextResponse.json({ message: 'Membre deleted successfully', id: result[0].id });
+    const { id } = params
+
+    const result = await sql`
+      DELETE FROM membres WHERE id = ${id}
+    `
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Membre supprimé avec succès' 
+    })
   } catch (error) {
-    console.error(`Error deleting membre with ID ${params.id}:`, error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error('Erreur lors de la suppression du membre:', error)
+    return NextResponse.json(
+      { error: 'Erreur lors de la suppression du membre' },
+      { status: 500 }
+    )
   }
 }
