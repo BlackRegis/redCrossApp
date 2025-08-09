@@ -128,7 +128,8 @@ export default function CartesPage() {
     setSelectedCarte(null)
   }
 
-  // Calculer les statistiques basées sur les données actuelles
+  // Calculer les statistiques globales (toujours basées sur toutes les cartes)
+  // Ces statistiques ne changent pas selon l'onglet sélectionné
   const cartesActives = cartes.filter(c => c.statutCalcule === "Active").length
   const cartesExpirees = cartes.filter(c => c.statutCalcule === "Expirée").length
   const cartesExpirantBientot = cartes.filter(c => isExpiringSoon(c.dateExpiration)).length
@@ -378,7 +379,14 @@ export default function CartesPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Liste des Cartes ({cartes.length})</CardTitle>
+              <CardTitle>
+              Liste des Cartes ({activeTab === 'toutes' ? pagination.total : cartes.length})
+              {activeTab !== 'toutes' && (
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  (filtrées par {activeTab})
+                </span>
+              )}
+            </CardTitle>
               <CardDescription>
                 Page {pagination.currentPage} sur {pagination.totalPages}
               </CardDescription>
@@ -406,7 +414,16 @@ export default function CartesPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {cartes.map((carte) => {
+                        {cartes
+                          .filter(carte => {
+                            // Filtrer selon l'onglet sélectionné
+                            if (activeTab === 'toutes') return true
+                            if (activeTab === 'actives') return carte.statutCalcule === 'Active'
+                            if (activeTab === 'expirees') return carte.statutCalcule === 'Expirée'
+                            if (activeTab === 'suspendues') return carte.statutCalcule === 'Suspendue'
+                            return true
+                          })
+                          .map((carte) => {
                           const nomComplet = `${carte.membre.prenom} ${carte.membre.nom}`
                           return (
                             <TableRow

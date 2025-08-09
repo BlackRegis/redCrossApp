@@ -442,6 +442,7 @@ async function seedComplete() {
     // 3. Créer les activités
     console.log('\n🌱 3. Création des activités...');
     const activeMemberIds = memberIds.filter((_, index) => index < 10); // Utiliser les 10 premiers membres
+    const activiteIds = [];
 
     for (let i = 0; i < activites.length; i++) {
       const activite = activites[i];
@@ -449,17 +450,70 @@ async function seedComplete() {
       const date_fin = generateEndDate(date_debut);
       const responsable = activeMemberIds[Math.floor(Math.random() * activeMemberIds.length)];
       
-      await client.query(`
+      const activiteResult = await client.query(`
         INSERT INTO activites (
           titre, description, type, date_debut, date_fin, lieu, statut, 
           participants_max, budget, responsable_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id
       `, [
         activite.titre, activite.description, activite.type, date_debut, date_fin,
         activite.lieu, 'Planifiée', activite.participants_max, activite.budget, responsable
       ]);
       
+      activiteIds.push(activiteResult.rows[0].id);
       console.log(`✅ Activité "${activite.titre}" créée`);
+    }
+
+    // 3.5. Créer les participants aux activités
+    console.log('\n🌱 3.5. Création des participants aux activités...');
+    
+    for (let i = 0; i < activiteIds.length; i++) {
+      const activiteId = activiteIds[i];
+      const activite = activites[i];
+      
+      // Déterminer le nombre de participants pour cette activité (entre 60% et 100% du max)
+      const nbParticipants = Math.floor(
+        activite.participants_max * (0.6 + Math.random() * 0.4)
+      );
+      
+      // Sélectionner aléatoirement des membres pour participer
+      const participantsSelectionnes = [];
+      const membresDisponibles = [...memberIds];
+      
+      for (let j = 0; j < Math.min(nbParticipants, membresDisponibles.length); j++) {
+        const randomIndex = Math.floor(Math.random() * membresDisponibles.length);
+        const membreId = membresDisponibles.splice(randomIndex, 1)[0];
+        participantsSelectionnes.push(membreId);
+      }
+      
+      // Créer les inscriptions pour cette activité
+      for (let j = 0; j < participantsSelectionnes.length; j++) {
+        const membreId = participantsSelectionnes[j];
+        
+        // Déterminer le statut du participant (majorité inscrits, quelques présents/absents)
+        let statut = 'Inscrit';
+        const random = Math.random();
+        if (random > 0.85) {
+          statut = 'Présent';
+        } else if (random > 0.95) {
+          statut = 'Absent';
+        }
+        
+        // Générer une date d'inscription (avant la date de début de l'activité)
+        const activiteInfo = await client.query('SELECT date_debut FROM activites WHERE id = $1', [activiteId]);
+        const dateDebutActivite = new Date(activiteInfo.rows[0].date_debut);
+        const dateInscription = new Date(dateDebutActivite);
+        dateInscription.setDate(dateInscription.getDate() - Math.floor(Math.random() * 30) - 1); // 1-30 jours avant
+        
+        await client.query(`
+          INSERT INTO activite_participants (
+            activite_id, membre_id, statut, date_inscription
+          ) VALUES ($1, $2, $3, $4)
+        `, [activiteId, membreId, statut, dateInscription.toISOString()]);
+      }
+      
+      console.log(`✅ ${participantsSelectionnes.length} participants ajoutés à l'activité "${activite.titre}"`);
     }
 
     // 4. Créer les cartes de membres
@@ -541,7 +595,11 @@ async function seedComplete() {
         (SELECT COUNT(*) FROM activites) as activites_count,
         (SELECT COUNT(*) FROM cartes_membres) as cartes_count,
         (SELECT COUNT(*) FROM membres WHERE statut = 'Actif') as membres_actifs,
-        (SELECT SUM(budget) FROM activites) as budget_total
+        (SELECT SUM(budget) FROM activites) as budget_total,
+        (SELECT COUNT(*) FROM activite_participants) as participants_total,
+        (SELECT COUNT(DISTINCT membre_id) FROM activite_participants) as membres_participants,
+        (SELECT COUNT(*) FROM activite_participants WHERE statut = 'Présent') as participants_presents,
+        (SELECT COUNT(*) FROM activite_participants WHERE statut = 'Absent') as participants_absents
     `);
     
     const finalStats = stats.rows[0];
@@ -552,6 +610,10 @@ async function seedComplete() {
     console.log(`   - Activités: ${finalStats.activites_count}`);
     console.log(`   - Cartes de membres: ${finalStats.cartes_count}`);
     console.log(`   - Budget total: ${finalStats.budget_total?.toLocaleString('fr-FR')} FCFA`);
+    console.log(`   - Participants aux activités: ${finalStats.participants_total}`);
+    console.log(`   - Membres participants: ${finalStats.membres_participants}`);
+    console.log(`   - Présences: ${finalStats.participants_presents}`);
+    console.log(`   - Absences: ${finalStats.participants_absents}`);
 
     // Statistiques des cartes
     const cartesStats = await client.query(`
@@ -566,6 +628,40 @@ async function seedComplete() {
     console.log('\n📋 Répartition des cartes par statut:');
     cartesStats.rows.forEach(row => {
       console.log(`   - ${row.statut}: ${row.nombre} cartes`);
+    });
+
+    // Statistiques des participants aux activités
+    const participantsStats = await client.query(`
+      SELECT 
+        statut,
+        COUNT(*) as nombre
+      FROM activite_participants 
+      GROUP BY statut
+      ORDER BY statut
+    `);
+    
+    console.log('\n📋 Répartition des participants par statut:');
+    participantsStats.rows.forEach(row => {
+      console.log(`   - ${row.statut}: ${row.nombre} participants`);
+    });
+
+    // Top 5 des activités les plus populaires
+    const topActivites = await client.query(`
+      SELECT 
+        a.titre,
+        COUNT(ap.id) as nb_participants,
+        a.participants_max
+      FROM activites a
+      LEFT JOIN activite_participants ap ON a.id = ap.activite_id
+      GROUP BY a.id, a.titre, a.participants_max
+      ORDER BY nb_participants DESC
+      LIMIT 5
+    `);
+    
+    console.log('\n🏆 Top 5 des activités les plus populaires:');
+    topActivites.rows.forEach((row, index) => {
+      const taux = ((row.nb_participants / row.participants_max) * 100).toFixed(1);
+      console.log(`   ${index + 1}. ${row.titre}: ${row.nb_participants}/${row.participants_max} (${taux}%)`);
     });
 
     console.log('\n🎉 Seeding complet terminé avec succès !');

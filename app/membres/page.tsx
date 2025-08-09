@@ -77,7 +77,7 @@ export default function MembresPage() {
   
   // Créer un objet arrondissements pour les filtres
   const arrondissements = departements.reduce((acc, dept) => {
-    acc[dept.nom] = dept.arrondissements.map((arr: { nom: string }) => arr.nom)
+    acc[dept.nom] = dept.arrondissements?.map((arr: { nom: string }) => arr.nom) || []
     return acc
   }, {} as Record<string, string[]>)
 

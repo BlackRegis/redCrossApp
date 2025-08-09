@@ -203,8 +203,18 @@ export default function ParametresPage() {
       })
       
       if (res.ok) {
+        const result = await res.json()
+        console.log("Paramètres sauvegardés:", result)
+        // Recharger les données pour s'assurer qu'elles sont à jour
+        const fetchRes = await fetch("/api/settings/app")
+        if (fetchRes.ok) {
+          const updatedSettings = await fetchRes.json()
+          setAppSettings(updatedSettings)
+        }
         alert("Paramètres de l'application mis à jour avec succès!")
       } else {
+        const errorData = await res.json()
+        console.error("Erreur API:", errorData)
         alert("Échec de la mise à jour des paramètres de l'application.")
       }
     } catch (error) {

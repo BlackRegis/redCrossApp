@@ -15,39 +15,76 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = (page - 1) * limit
 
-    // Pour l'instant, utiliser une requête simple sans filtres complexes
-    // Nous ajouterons les filtres progressivement
-    const result = await sql`
-      SELECT 
-        cm.id,
-        cm.numero_carte,
-        cm.date_emission,
-        cm.date_expiration,
-        cm.statut,
-        cm.type_carte,
-        cm.created_at,
-        cm.updated_at,
-        m.id as membre_id,
-        m.nom,
-        m.prenom,
-        m.email,
-        m.telephone,
-        m.statut as membre_statut,
-        d.nom as departement_nom,
-        a.nom as arrondissement_nom,
-        CASE 
-          WHEN cm.date_expiration < CURRENT_DATE THEN 'Expirée'
-          WHEN cm.statut = 'Suspendue' THEN 'Suspendue'
-          WHEN cm.statut = 'Remplacée' THEN 'Remplacée'
-          ELSE 'Active'
-        END as statut_calculé
-      FROM cartes_membres cm
-      JOIN membres m ON cm.membre_id = m.id
-      LEFT JOIN departements d ON m.departement_id = d.id
-      LEFT JOIN arrondissements a ON m.arrondissement_id = a.id
-      ORDER BY cm.created_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `
+    // Déterminer si on veut toutes les cartes (pour les statistiques) ou seulement une page
+    const wantAllCartes = searchParams.get('all') === 'true' || tab === 'toutes'
+    
+    let result
+    if (wantAllCartes) {
+      // Récupérer toutes les cartes pour les statistiques
+      result = await sql`
+        SELECT 
+          cm.id,
+          cm.numero_carte,
+          cm.date_emission,
+          cm.date_expiration,
+          cm.statut,
+          cm.type_carte,
+          cm.created_at,
+          cm.updated_at,
+          m.id as membre_id,
+          m.nom,
+          m.prenom,
+          m.email,
+          m.telephone,
+          m.statut as membre_statut,
+          d.nom as departement_nom,
+          a.nom as arrondissement_nom,
+          CASE 
+            WHEN cm.date_expiration < CURRENT_DATE THEN 'Expirée'
+            WHEN cm.statut = 'Suspendue' THEN 'Suspendue'
+            WHEN cm.statut = 'Remplacée' THEN 'Remplacée'
+            ELSE 'Active'
+          END as statut_calculé
+        FROM cartes_membres cm
+        JOIN membres m ON cm.membre_id = m.id
+        LEFT JOIN departements d ON m.departement_id = d.id
+        LEFT JOIN arrondissements a ON m.arrondissement_id = a.id
+        ORDER BY cm.created_at DESC
+      `
+    } else {
+      // Récupérer seulement une page pour l'affichage
+      result = await sql`
+        SELECT 
+          cm.id,
+          cm.numero_carte,
+          cm.date_emission,
+          cm.date_expiration,
+          cm.statut,
+          cm.type_carte,
+          cm.created_at,
+          cm.updated_at,
+          m.id as membre_id,
+          m.nom,
+          m.prenom,
+          m.email,
+          m.telephone,
+          m.statut as membre_statut,
+          d.nom as departement_nom,
+          a.nom as arrondissement_nom,
+          CASE 
+            WHEN cm.date_expiration < CURRENT_DATE THEN 'Expirée'
+            WHEN cm.statut = 'Suspendue' THEN 'Suspendue'
+            WHEN cm.statut = 'Remplacée' THEN 'Remplacée'
+            ELSE 'Active'
+          END as statut_calculé
+        FROM cartes_membres cm
+        JOIN membres m ON cm.membre_id = m.id
+        LEFT JOIN departements d ON m.departement_id = d.id
+        LEFT JOIN arrondissements a ON m.arrondissement_id = a.id
+        ORDER BY cm.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `
+    }
 
     // Compter le total
     const countResult = await sql`
@@ -127,17 +164,22 @@ export async function GET(request: Request) {
 
     // Pagination côté client pour l'instant
     const total = filteredCartes.length
-    const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedCartes = filteredCartes.slice(startIndex, endIndex)
+    let finalCartes = filteredCartes
+    
+    // Si on ne veut pas toutes les cartes, appliquer la pagination
+    if (!wantAllCartes) {
+      const startIndex = (page - 1) * limit
+      const endIndex = startIndex + limit
+      finalCartes = filteredCartes.slice(startIndex, endIndex)
+    }
 
     return NextResponse.json({
-      cartes: paginatedCartes,
+      cartes: finalCartes,
       pagination: {
         total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit)
+        page: wantAllCartes ? 1 : page,
+        limit: wantAllCartes ? total : limit,
+        totalPages: wantAllCartes ? 1 : Math.ceil(total / limit)
       }
     })
   } catch (error) {

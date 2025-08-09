@@ -76,6 +76,10 @@ export function useCartes() {
         limit: filters.limit.toString()
       })
 
+      // Toujours récupérer toutes les cartes pour les statistiques globales
+      // La pagination et le filtrage se fait côté client
+      params.set('all', 'true')
+
       const response = await fetch(`/api/cartes?${params}`)
       
       if (!response.ok) {
